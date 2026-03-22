@@ -1,36 +1,56 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# JEE Test Series (CBT Mock)
 
-## Getting Started
+Next.js + PostgreSQL (Prisma) mock-test platform that implements a JEE-style CBT engine:
 
-First, run the development server:
+- 3-hour style master timer (auto-submit on zero)
+- Bento-grid **question palette** with JEE state colors
+- LaTeX rendering via MathJax v3
+- Event-based time tracking + basic post-test analytics
+- Offline-first queue (IndexedDB outbox) + heartbeat sync
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+See the architecture blueprint in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Prerequisites
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- Node.js **22.x or 24.x** recommended (Prisma may not work on non‑LTS Node builds)
+- PostgreSQL 16+ (or Docker)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Local Setup (Recommended: Docker)
 
-## Learn More
+1) Start Postgres + Redis
 
-To learn more about Next.js, take a look at the following resources:
+`npm run db:up`
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+2) Run migrations and seed sample data
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+`npm run db:migrate`
 
-## Deploy on Vercel
+`npm run db:seed`
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+3) Start the app
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+`npm run dev`
+
+Open `http://localhost:3000`.
+
+## Environment
+
+Copy `.env.example` → `.env` and adjust if needed.
+
+- `DATABASE_URL`
+- `REDIS_URL` (optional; Redis isn’t required for the current feature set)
+- `NEXT_PUBLIC_IDLE_TIMEOUT_MS` (default 300000)
+- `NEXT_PUBLIC_HEARTBEAT_INTERVAL_MS` (default 30000)
+
+## What’s Implemented
+
+- Student flow: Home → Start → Attempt → Report
+- APIs: tests, attempts, responses, events, submit, report
+- Marking schemes supported in scoring:
+	- `MAINS_SINGLE`
+	- `MAINS_NUMERICAL` / `ADV_NAT`
+	- `ADV_MULTI_CORRECT` (subset partial marking)
+
+## Notes
+
+- This repository includes basic exam-like restrictions (context menu + basic copy/paste blocking) and logs tab/fullscreen changes; it is not a secure proctoring system.

@@ -1,0 +1,159 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+  engineType = "binary"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum MarkingSchemeType {
+  MAINS_SINGLE
+  MAINS_NUMERICAL
+  ADV_MULTI_CORRECT
+  ADV_NAT
+}
+
+enum AttemptStatus {
+  IN_PROGRESS
+  SUBMITTED
+  AUTO_SUBMITTED
+}
+
+enum PaletteStatus {
+  NOT_VISITED
+  VISITED_NOT_ANSWERED
+  ANSWERED_SAVED
+  MARKED_FOR_REVIEW
+  ANSWERED_MARKED_FOR_REVIEW
+}
+
+enum ActivityType {
+  QUESTION_LOAD
+  NAVIGATE
+  SAVE_NEXT
+  MARK_REVIEW_NEXT
+  CLEAR_RESPONSE
+  PALETTE_CLICK
+  IDLE_START
+  IDLE_END
+  TAB_HIDDEN
+  TAB_VISIBLE
+  FULLSCREEN_ENTER
+  FULLSCREEN_EXIT
+  HEARTBEAT
+  SUBMIT
+}
+
+model SubjectCategory {
+  id        Int        @id
+  name      String     @unique
+  questions Question[]
+
+  @@map("SubjectCategories")
+}
+
+model Question {
+  id                String            @id @default(uuid()) @db.Uuid
+  subjectId         Int
+  topicName         String
+  questionText      String
+  options           Json
+  correctAnswer     Json
+  markingSchemeType MarkingSchemeType
+  difficultyRank    Int?
+
+  subject SubjectCategory @relation(fields: [subjectId], references: [id])
+  tests   TestQuestion[]
+  responses QuestionResponse[]
+  activities ActivityLog[]
+
+  @@index([subjectId])
+  @@map("Questions")
+}
+
+model TestSeries {
+  id                   String         @id @default(uuid()) @db.Uuid
+  title                String
+  totalDurationMinutes Int            @default(180)
+  isAdvancedFormat     Boolean        @default(false)
+  createdAt            DateTime       @default(now())
+
+  questions TestQuestion[]
+  attempts  StudentAttempt[]
+
+  @@map("TestSeries")
+}
+
+model TestQuestion {
+  testId     String @db.Uuid
+  questionId String @db.Uuid
+  orderIndex Int
+
+  test     TestSeries @relation(fields: [testId], references: [id], onDelete: Cascade)
+  question Question   @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@id([testId, questionId])
+  @@index([testId, orderIndex])
+  @@map("TestQuestions")
+}
+
+model StudentAttempt {
+  id             String        @id @default(uuid()) @db.Uuid
+  studentId      String        @db.Uuid
+  testId         String        @db.Uuid
+  startTimestamp DateTime      @default(now())
+  endTimestamp   DateTime?
+  overallScore   Float?
+  status         AttemptStatus @default(IN_PROGRESS)
+
+  questionOrder Json
+  optionOrders  Json
+
+  test       TestSeries        @relation(fields: [testId], references: [id])
+  responses  QuestionResponse[]
+  activities ActivityLog[]
+
+  @@index([studentId])
+  @@index([testId])
+  @@map("StudentAttempts")
+}
+
+model QuestionResponse {
+  id             BigInt       @id @default(autoincrement())
+  attemptId      String       @db.Uuid
+  questionId     String       @db.Uuid
+  selectedAnswer Json?
+  paletteStatus  PaletteStatus
+  timeSpentSeconds Int        @default(0)
+  lastUpdated    DateTime     @default(now())
+
+  attempt  StudentAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  question Question       @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@unique([attemptId, questionId])
+  @@index([attemptId])
+  @@index([questionId])
+  @@map("QuestionResponses")
+}
+
+model ActivityLog {
+  id         BigInt       @id @default(autoincrement())
+  attemptId  String       @db.Uuid
+  questionId String?      @db.Uuid
+  type       ActivityType
+  payload    Json?
+  createdAt  DateTime     @default(now())
+
+  attempt  StudentAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  question Question?      @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@index([attemptId, createdAt])
+  @@index([questionId])
+  @@map("ActivityLogs")
+}

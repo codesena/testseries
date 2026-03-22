@@ -3,6 +3,10 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --muted: #f3f4f6;
+  --muted-foreground: #4b5563;
+  --border: #e5e7eb;
+  --card: #ffffff;
 }
 
 @theme inline {
@@ -16,7 +20,29 @@
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;
+    --muted: #111827;
+    --muted-foreground: #9ca3af;
+    --border: #1f2937;
+    --card: #0b0b0b;
   }
+}
+
+html[data-theme="light"] {
+  --background: #ffffff;
+  --foreground: #171717;
+  --muted: #f3f4f6;
+  --muted-foreground: #4b5563;
+  --border: #e5e7eb;
+  --card: #ffffff;
+}
+
+html[data-theme="dark"] {
+  --background: #0a0a0a;
+  --foreground: #ededed;
+  --muted: #111827;
+  --muted-foreground: #9ca3af;
+  --border: #1f2937;
+  --card: #0b0b0b;
 }
 
 body {
