@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/server/db";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { getAuthUserId } from "@/server/auth";
+import { LogoutButton } from "@/components/LogoutButton";
 
 export const dynamic = "force-dynamic";
 
@@ -11,6 +12,11 @@ export default async function Home() {
     if (!userId) {
         redirect("/login");
     }
+
+    const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { name: true },
+    });
 
     const tests = await prisma.testSeries.findMany({
         orderBy: { createdAt: "desc" },
@@ -31,8 +37,12 @@ export default async function Home() {
                     <div>
                         <div className="text-lg font-semibold">JEE Test Series</div>
                         <div className="text-sm opacity-70">CBT-style mock platform</div>
+                        <div className="text-xs opacity-60">Student: {user?.name ?? "—"}</div>
                     </div>
-                    <ThemeToggle />
+                    <div className="flex items-center gap-3">
+                        <ThemeToggle />
+                        <LogoutButton />
+                    </div>
                 </div>
             </header>
 

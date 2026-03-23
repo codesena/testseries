@@ -18,6 +18,11 @@ export async function GET(
         return json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { name: true },
+    });
+
     const params = ParamsSchema.safeParse(await ctx.params);
     if (!params.success) {
         return json({ error: "Invalid attempt id" }, { status: 400 });
@@ -148,6 +153,7 @@ export async function GET(
         attempt: {
             id: attempt.id,
             studentId: attempt.studentId,
+            studentName: user?.name ?? null,
             status: attempt.status,
             score: attempt.overallScore,
             startTimestamp: attempt.startTimestamp,

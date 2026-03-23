@@ -35,5 +35,6 @@ export type AttemptPayload = {
         test: { id: string; title: string; totalDurationMinutes: number };
         questions: AttemptQuestion[];
         responses: AttemptResponse[];
+        studentName: string | null;
     };
 };

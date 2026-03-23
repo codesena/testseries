@@ -8,6 +8,7 @@ type ReportPayload = {
     attempt: {
         id: string;
         studentId: string;
+        studentName: string | null;
         status: string;
         score: number | null;
         startTimestamp: string;
@@ -109,7 +110,7 @@ export function AttemptReportClient({ attemptId }: { attemptId: string }) {
                     Attempt {data.attempt.id.slice(0, 8)} · Status {data.attempt.status}
                 </div>
 
-                <div className="mt-1 text-xs opacity-60">Student: {data.attempt.studentId.slice(0, 8)}</div>
+                <div className="mt-1 text-xs opacity-60">Student: {data.attempt.studentName ?? "—"}</div>
 
                 <div className="mt-6 grid gap-3 md:grid-cols-4">
                     <div className="rounded-lg border p-4" style={{ borderColor: "var(--border)", background: "var(--card)" }}>

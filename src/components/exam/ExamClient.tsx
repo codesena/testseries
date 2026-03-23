@@ -72,6 +72,7 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
     const [questions, setQuestions] = useState<AttemptQuestion[]>([]);
     const [testTitle, setTestTitle] = useState<string>("");
     const [durationSeconds, setDurationSeconds] = useState<number>(180 * 60);
+    const [studentName, setStudentName] = useState<string | null>(null);
 
     const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
     const [paletteByQid, setPaletteByQid] = useState<PaletteByQid>({});
@@ -217,6 +218,7 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
                 setQuestions(data.attempt.questions);
                 setTestTitle(data.attempt.test.title);
                 setDurationSeconds(data.attempt.test.totalDurationMinutes * 60);
+                setStudentName(data.attempt.studentName);
 
                 const serverNowMs = Date.parse(data.attempt.serverNow);
                 serverOffsetMsRef.current = serverNowMs - Date.now();
@@ -735,6 +737,7 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
                             <div className="text-xs opacity-70">
                                 Attempt: {attemptId.slice(0, 8)} · Idle: {idlePaused ? "paused" : "active"}
                             </div>
+                            <div className="text-xs opacity-60">Student: {studentName ?? "—"}</div>
                         </div>
 
                         <div className="flex items-center gap-4">
