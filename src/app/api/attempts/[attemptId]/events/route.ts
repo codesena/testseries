@@ -41,5 +41,11 @@ export async function POST(
         select: { id: true, createdAt: true },
     });
 
-    return NextResponse.json({ ok: true, event: created });
+    return NextResponse.json({
+        ok: true,
+        event: {
+            id: String(created.id),
+            createdAt: created.createdAt,
+        },
+    });
 }

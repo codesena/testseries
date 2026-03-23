@@ -19,6 +19,21 @@ function statusLabel(s: PaletteStatus) {
     }
 }
 
+function statusBadgeClass(s: PaletteStatus) {
+    switch (s) {
+        case "NOT_VISITED":
+            return "bg-[var(--muted)] text-[var(--foreground)]";
+        case "VISITED_NOT_ANSWERED":
+            return "bg-amber-300 text-amber-950";
+        case "ANSWERED_SAVED":
+            return "bg-emerald-400 text-emerald-950";
+        case "MARKED_FOR_REVIEW":
+            return "bg-violet-400 text-violet-950";
+        case "ANSWERED_MARKED_FOR_REVIEW":
+            return "bg-violet-700 text-white";
+    }
+}
+
 export function QuestionView({
     question,
     answer,
@@ -48,8 +63,15 @@ export function QuestionView({
                     <div className="text-xs opacity-70">
                         {question.subject.name} · {question.topicName}
                     </div>
-                    <div className="text-sm opacity-70 mt-1">
-                        Status: {statusLabel(paletteStatus)}
+                    <div className="mt-2 flex items-center gap-2">
+                        <div className="text-xs opacity-70">Status</div>
+                        <span
+                            className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${statusBadgeClass(
+                                paletteStatus,
+                            )}`}
+                        >
+                            {statusLabel(paletteStatus)}
+                        </span>
                     </div>
                 </div>
                 <button
