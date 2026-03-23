@@ -1,10 +1,17 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { prisma } from "@/server/db";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { getAuthUserId } from "@/server/auth";
 
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
+    const userId = await getAuthUserId();
+    if (!userId) {
+        redirect("/login");
+    }
+
     const tests = await prisma.testSeries.findMany({
         orderBy: { createdAt: "desc" },
         select: {

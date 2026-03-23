@@ -1,6 +1,7 @@
 import { prisma } from "@/server/db";
 import { PaletteStatus } from "@prisma/client";
-import { NextResponse } from "next/server";
+import { getAuthUserId } from "@/server/auth";
+import { json } from "@/server/json";
 import { z } from "zod";
 
 export const runtime = "nodejs";
@@ -22,14 +23,19 @@ export async function POST(
     req: Request,
     ctx: { params: Promise<{ attemptId: string }> },
 ) {
+    const userId = await getAuthUserId();
+    if (!userId) {
+        return json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const params = ParamsSchema.safeParse(await ctx.params);
     if (!params.success) {
-        return NextResponse.json({ error: "Invalid attempt id" }, { status: 400 });
+        return json({ error: "Invalid attempt id" }, { status: 400 });
     }
 
     const body = UpsertResponseSchema.safeParse(await req.json().catch(() => null));
     if (!body.success) {
-        return NextResponse.json(
+        return json(
             { error: "Invalid request", details: body.error.flatten() },
             { status: 400 },
         );
@@ -38,6 +44,14 @@ export async function POST(
     const { attemptId } = params.data;
     const { questionId, selectedAnswer, paletteStatus, timeDeltaSeconds, action } =
         body.data;
+
+    const ownsAttempt = await prisma.studentAttempt.findFirst({
+        where: { id: attemptId, studentId: userId },
+        select: { id: true },
+    });
+    if (!ownsAttempt) {
+        return json({ error: "Attempt not found" }, { status: 404 });
+    }
 
     const response = await prisma.questionResponse.upsert({
         where: { attemptId_questionId: { attemptId, questionId } },
@@ -72,5 +86,5 @@ export async function POST(
         },
     });
 
-    return NextResponse.json({ response });
+    return json({ response });
 }

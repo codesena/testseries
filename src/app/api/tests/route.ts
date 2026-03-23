@@ -1,5 +1,5 @@
 import { prisma } from "@/server/db";
-import { NextResponse } from "next/server";
+import { json } from "@/server/json";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -17,5 +17,5 @@ export async function GET() {
         },
     });
 
-    return NextResponse.json({ tests });
+    return json({ tests });
 }

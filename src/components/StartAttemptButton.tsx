@@ -29,7 +29,12 @@ export function StartAttemptButton({ testId }: { testId: string }) {
                         });
                         router.push(`/attempt/${res.attemptId}`);
                     } catch (e) {
-                        setError(e instanceof Error ? e.message : "Failed to start");
+                        const msg = e instanceof Error ? e.message : "Failed to start";
+                        if (msg.startsWith("401")) {
+                            router.push("/login");
+                            return;
+                        }
+                        setError(msg);
                     } finally {
                         setLoading(false);
                     }

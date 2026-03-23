@@ -1,6 +1,7 @@
 import { prisma } from "@/server/db";
+import { getAuthUserId } from "@/server/auth";
 import { evaluateResponse } from "@/server/evaluate";
-import { NextResponse } from "next/server";
+import { json } from "@/server/json";
 import { z } from "zod";
 
 export const runtime = "nodejs";
@@ -12,13 +13,18 @@ export async function GET(
     _req: Request,
     ctx: { params: Promise<{ attemptId: string }> },
 ) {
-    const params = ParamsSchema.safeParse(await ctx.params);
-    if (!params.success) {
-        return NextResponse.json({ error: "Invalid attempt id" }, { status: 400 });
+    const userId = await getAuthUserId();
+    if (!userId) {
+        return json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const attempt = await prisma.studentAttempt.findUnique({
-        where: { id: params.data.attemptId },
+    const params = ParamsSchema.safeParse(await ctx.params);
+    if (!params.success) {
+        return json({ error: "Invalid attempt id" }, { status: 400 });
+    }
+
+    const attempt = await prisma.studentAttempt.findFirst({
+        where: { id: params.data.attemptId, studentId: userId },
         select: {
             id: true,
             studentId: true,
@@ -46,7 +52,7 @@ export async function GET(
     });
 
     if (!attempt) {
-        return NextResponse.json({ error: "Attempt not found" }, { status: 404 });
+        return json({ error: "Attempt not found" }, { status: 404 });
     }
 
     const questionIds = attempt.responses.map((r) => r.questionId);
@@ -71,6 +77,11 @@ export async function GET(
 
     let timeCorrect = 0;
     let timeIncorrect = 0;
+
+    const totalTimeSeconds = attempt.responses.reduce(
+        (acc, r) => acc + r.timeSpentSeconds,
+        0,
+    );
 
     const perQuestion = attempt.responses.map((r) => {
         const q = byId.get(r.questionId);
@@ -133,7 +144,7 @@ export async function GET(
         }))
         .sort((a, b) => a.accuracy - b.accuracy);
 
-    return NextResponse.json({
+    return json({
         attempt: {
             id: attempt.id,
             studentId: attempt.studentId,
@@ -145,6 +156,7 @@ export async function GET(
         },
         analytics: {
             subjectSummary: subjectAgg,
+            totalTimeSeconds,
             timeOnCorrectSeconds: timeCorrect,
             timeOnIncorrectSeconds: timeIncorrect,
             attemptPath,

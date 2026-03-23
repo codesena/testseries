@@ -19,6 +19,7 @@ type ReportPayload = {
             string,
             { totalTimeSeconds: number; correct: number; incorrect: number; unattempted: number }
         >;
+        totalTimeSeconds: number;
         timeOnCorrectSeconds: number;
         timeOnIncorrectSeconds: number;
         topicAccuracy: Array<{ topic: string; accuracy: number; correct: number; total: number }>;
@@ -50,6 +51,7 @@ function fmtCompact(s: number) {
 export function AttemptReportClient({ attemptId }: { attemptId: string }) {
     const [data, setData] = useState<ReportPayload | null>(null);
     const [error, setError] = useState<string | null>(null);
+    const [redirecting, setRedirecting] = useState(false);
 
     useEffect(() => {
         let cancelled = false;
@@ -58,7 +60,13 @@ export function AttemptReportClient({ attemptId }: { attemptId: string }) {
                 const res = await apiGet<ReportPayload>(`/api/attempts/${attemptId}/report`);
                 if (!cancelled) setData(res);
             } catch (e) {
-                setError(e instanceof Error ? e.message : "Failed to load report");
+                const msg = e instanceof Error ? e.message : "Failed to load report";
+                if (msg.startsWith("401")) {
+                    setRedirecting(true);
+                    window.location.href = "/login";
+                    return;
+                }
+                setError(msg);
             }
         })();
         return () => {
@@ -77,7 +85,7 @@ export function AttemptReportClient({ attemptId }: { attemptId: string }) {
     if (!data) {
         return (
             <div className="min-h-screen flex items-center justify-center">
-                <div className="text-sm opacity-70">Loading report…</div>
+                <div className="text-sm opacity-70">{redirecting ? "Redirecting…" : "Loading report…"}</div>
             </div>
         );
     }
@@ -103,10 +111,14 @@ export function AttemptReportClient({ attemptId }: { attemptId: string }) {
 
                 <div className="mt-1 text-xs opacity-60">Student: {data.attempt.studentId.slice(0, 8)}</div>
 
-                <div className="mt-6 grid gap-3 md:grid-cols-3">
+                <div className="mt-6 grid gap-3 md:grid-cols-4">
                     <div className="rounded-lg border p-4" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
                         <div className="text-xs opacity-70">Score</div>
                         <div className="text-2xl font-semibold">{data.attempt.score ?? "—"}</div>
+                    </div>
+                    <div className="rounded-lg border p-4" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
+                        <div className="text-xs opacity-70">Total Time Spent</div>
+                        <div className="text-lg font-semibold">{fmt(data.analytics.totalTimeSeconds)}</div>
                     </div>
                     <div className="rounded-lg border p-4" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
                         <div className="text-xs opacity-70">Time on Correct</div>

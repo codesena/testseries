@@ -1,7 +1,7 @@
 import { prisma } from "@/server/db";
+import { getAuthUserId } from "@/server/auth";
+import { json } from "@/server/json";
 import { shuffled } from "@/server/utils/shuffle";
-import { cookies } from "next/headers";
-import { NextResponse } from "next/server";
 import { z } from "zod";
 
 export const runtime = "nodejs";
@@ -11,32 +11,19 @@ const CreateAttemptSchema = z.object({
     testId: z.string().uuid(),
 });
 
-async function getOrCreateStudentId(): Promise<string> {
-    const cookieStore = await cookies();
-    const existing = cookieStore.get("student_id")?.value;
-    if (existing && z.string().uuid().safeParse(existing).success) return existing;
-
-    const newId = crypto.randomUUID();
-    cookieStore.set("student_id", newId, {
-        httpOnly: true,
-        sameSite: "lax",
-        secure: process.env.NODE_ENV === "production",
-        path: "/",
-        maxAge: 60 * 60 * 24 * 365,
-    });
-    return newId;
-}
-
 export async function POST(req: Request) {
+    const userId = await getAuthUserId();
+    if (!userId) {
+        return json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const parsed = CreateAttemptSchema.safeParse(await req.json().catch(() => null));
     if (!parsed.success) {
-        return NextResponse.json(
+        return json(
             { error: "Invalid request", details: parsed.error.flatten() },
             { status: 400 },
         );
     }
-
-    const studentId = await getOrCreateStudentId();
 
     const test = await prisma.testSeries.findUnique({
         where: { id: parsed.data.testId },
@@ -51,7 +38,7 @@ export async function POST(req: Request) {
     });
 
     if (!test) {
-        return NextResponse.json({ error: "Test not found" }, { status: 404 });
+        return json({ error: "Test not found" }, { status: 404 });
     }
 
     const baseQuestionOrder = test.questions.map((q) => q.questionId);
@@ -72,7 +59,7 @@ export async function POST(req: Request) {
 
     const attempt = await prisma.studentAttempt.create({
         data: {
-            studentId,
+            studentId: userId,
             testId: test.id,
             status: "IN_PROGRESS",
             questionOrder,
@@ -89,5 +76,5 @@ export async function POST(req: Request) {
         },
     });
 
-    return NextResponse.json({ attemptId: attempt.id });
+    return json({ attemptId: attempt.id });
 }

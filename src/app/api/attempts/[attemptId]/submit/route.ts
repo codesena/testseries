@@ -1,6 +1,7 @@
 import { prisma } from "@/server/db";
+import { getAuthUserId } from "@/server/auth";
 import { evaluateResponse } from "@/server/evaluate";
-import { NextResponse } from "next/server";
+import { json } from "@/server/json";
 import { z } from "zod";
 
 export const runtime = "nodejs";
@@ -12,13 +13,18 @@ export async function POST(
     _req: Request,
     ctx: { params: Promise<{ attemptId: string }> },
 ) {
-    const params = ParamsSchema.safeParse(await ctx.params);
-    if (!params.success) {
-        return NextResponse.json({ error: "Invalid attempt id" }, { status: 400 });
+    const userId = await getAuthUserId();
+    if (!userId) {
+        return json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const attempt = await prisma.studentAttempt.findUnique({
-        where: { id: params.data.attemptId },
+    const params = ParamsSchema.safeParse(await ctx.params);
+    if (!params.success) {
+        return json({ error: "Invalid attempt id" }, { status: 400 });
+    }
+
+    const attempt = await prisma.studentAttempt.findFirst({
+        where: { id: params.data.attemptId, studentId: userId },
         select: {
             id: true,
             status: true,
@@ -30,11 +36,11 @@ export async function POST(
     });
 
     if (!attempt) {
-        return NextResponse.json({ error: "Attempt not found" }, { status: 404 });
+        return json({ error: "Attempt not found" }, { status: 404 });
     }
 
     if (attempt.status !== "IN_PROGRESS") {
-        return NextResponse.json({ error: "Attempt already submitted" }, { status: 409 });
+        return json({ error: "Attempt already submitted" }, { status: 409 });
     }
 
     const questionIds = attempt.responses.map((r) => r.questionId);
@@ -73,5 +79,5 @@ export async function POST(
         },
     });
 
-    return NextResponse.json({ ok: true, score });
+    return json({ ok: true, score });
 }

@@ -250,7 +250,12 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
 
                 void flushOutbox();
             } catch (e) {
-                setLoadError(e instanceof Error ? e.message : "Failed to load attempt");
+                const msg = e instanceof Error ? e.message : "Failed to load attempt";
+                if (msg.startsWith("401")) {
+                    router.push("/login");
+                    return;
+                }
+                setLoadError(msg);
             } finally {
                 setLoading(false);
             }
