@@ -135,6 +135,40 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
         }
     }
 
+    function flushActiveQuestionTimeKeepalive(reason: string) {
+        if (!activeQuestionId) return;
+
+        const local = timeByQid[activeQuestionId] ?? 0;
+        const synced = syncedTimeByQidRef.current[activeQuestionId] ?? 0;
+        const delta = Math.max(0, local - synced);
+        if (delta <= 0) return;
+
+        syncedTimeByQidRef.current[activeQuestionId] = local;
+        const payload = {
+            questionId: activeQuestionId,
+            paletteStatus: paletteByQid[activeQuestionId] ?? "VISITED_NOT_ANSWERED",
+            timeDeltaSeconds: delta,
+            action: "NAVIGATE" as const,
+        };
+
+        try {
+            fetch(`/api/attempts/${attemptId}/responses`, {
+                method: "POST",
+                headers: { "content-type": "application/json" },
+                body: JSON.stringify(payload),
+                keepalive: true,
+            });
+            fetch(`/api/attempts/${attemptId}/events`, {
+                method: "POST",
+                headers: { "content-type": "application/json" },
+                body: JSON.stringify({ type: "HEARTBEAT", questionId: activeQuestionId, payload: { reason } }),
+                keepalive: true,
+            });
+        } catch {
+            // Best-effort only.
+        }
+    }
+
     function logEvent(type: string, questionId?: string, payload?: unknown) {
         void safePost(
             `/api/attempts/${attemptId}/events`,
@@ -322,6 +356,17 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
             document.removeEventListener("fullscreenchange", onFs);
         };
     }, [activeQuestionId]);
+
+    // Best-effort flush on tab close / navigation away
+    useEffect(() => {
+        const onPageHide = () => {
+            flushActiveQuestionTimeKeepalive("pagehide");
+            void persistSnapshot();
+        };
+        window.addEventListener("pagehide", onPageHide);
+        return () => window.removeEventListener("pagehide", onPageHide);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [activeQuestionId, paletteByQid, timeByQid]);
 
     // Security-ish UX hardening
     useEffect(() => {
@@ -767,7 +812,13 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
                                     className={`text-sm px-2 py-1 rounded border ${activeSubjectId === s.id ? "font-medium" : "opacity-80"
                                         }`}
                                     style={{ borderColor: "var(--border)", background: "var(--muted)" }}
-                                    onClick={() => setActiveSubjectId(s.id)}
+                                    onClick={() => {
+                                        setActiveSubjectId(s.id);
+                                        const firstInSubject = questions.find((q) => q.subject.id === s.id);
+                                        if (firstInSubject && firstInSubject.id !== activeQuestionId) {
+                                            goToQuestion(firstInSubject.id);
+                                        }
+                                    }}
                                 >
                                     {s.name}
                                 </button>

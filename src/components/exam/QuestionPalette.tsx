@@ -6,15 +6,28 @@ import type { PaletteStatus } from "@/components/exam/palette";
 function paletteClass(status: PaletteStatus) {
     switch (status) {
         case "NOT_VISITED":
-            return "bg-gray-100 text-gray-900";
+            return "bg-[var(--muted)] text-[var(--foreground)]";
         case "VISITED_NOT_ANSWERED":
-            return "bg-orange-100 text-orange-900";
+            return "bg-amber-300 text-amber-950";
         case "ANSWERED_SAVED":
-            return "bg-green-100 text-green-900";
+            return "bg-emerald-400 text-emerald-950";
         case "MARKED_FOR_REVIEW":
-            return "bg-purple-100 text-purple-900";
+            return "bg-violet-400 text-violet-950";
         case "ANSWERED_MARKED_FOR_REVIEW":
-            return "bg-purple-200 text-purple-900";
+            return "bg-violet-700 text-white";
+    }
+}
+
+function paletteBadge(status: PaletteStatus) {
+    switch (status) {
+        case "ANSWERED_SAVED":
+            return "✓";
+        case "MARKED_FOR_REVIEW":
+            return "R";
+        case "ANSWERED_MARKED_FOR_REVIEW":
+            return "✓R";
+        default:
+            return null;
     }
 }
 
@@ -41,14 +54,16 @@ export function QuestionPalette({
                         onClick={() => onPick(q.id)}
                         className={`rounded border aspect-square text-sm flex items-center justify-center ${paletteClass(
                             status,
-                        )} ${active ? "ring-2 ring-black/50" : ""}`}
+                        )} ${active ? "ring-2 ring-black/50 dark:ring-white/40" : ""}`}
                         style={{ borderColor: "var(--border)" }}
                         title={`${idx + 1}`}
                     >
                         <span className="relative">
                             {idx + 1}
-                            {status === "ANSWERED_MARKED_FOR_REVIEW" ? (
-                                <span className="absolute -top-2 -right-2 text-[10px]">✓</span>
+                            {paletteBadge(status) ? (
+                                <span className="absolute -top-2 -right-2 text-[10px] font-semibold">
+                                    {paletteBadge(status)}
+                                </span>
                             ) : null}
                         </span>
                     </button>
@@ -58,16 +73,20 @@ export function QuestionPalette({
             <div className="col-span-6 mt-4 text-xs opacity-70">
                 <div className="grid grid-cols-2 gap-2">
                     <div className="flex items-center gap-2">
-                        <span className="inline-block w-3 h-3 rounded bg-gray-100 border" /> Not visited
+                        <span
+                            className="inline-block w-3 h-3 rounded border"
+                            style={{ background: "var(--muted)", borderColor: "var(--border)" }}
+                        />
+                        Not visited
                     </div>
                     <div className="flex items-center gap-2">
-                        <span className="inline-block w-3 h-3 rounded bg-orange-100 border" /> Visited
+                        <span className="inline-block w-3 h-3 rounded bg-amber-300 border" /> Visited
                     </div>
                     <div className="flex items-center gap-2">
-                        <span className="inline-block w-3 h-3 rounded bg-green-100 border" /> Answered
+                        <span className="inline-block w-3 h-3 rounded bg-emerald-400 border" /> Answered
                     </div>
                     <div className="flex items-center gap-2">
-                        <span className="inline-block w-3 h-3 rounded bg-purple-100 border" /> Marked
+                        <span className="inline-block w-3 h-3 rounded bg-violet-400 border" /> Marked
                     </div>
                 </div>
             </div>

@@ -7,6 +7,7 @@ import { apiGet } from "@/lib/api";
 type ReportPayload = {
     attempt: {
         id: string;
+        studentId: string;
         status: string;
         score: number | null;
         startTimestamp: string;
@@ -21,6 +22,16 @@ type ReportPayload = {
         timeOnCorrectSeconds: number;
         timeOnIncorrectSeconds: number;
         topicAccuracy: Array<{ topic: string; accuracy: number; correct: number; total: number }>;
+        perQuestion: Array<{
+            questionId: string;
+            subject: string;
+            topicName: string;
+            timeSpentSeconds: number;
+            attempted: boolean;
+            correct: boolean;
+            paletteStatus: string;
+            marks: number;
+        }>;
     };
 };
 
@@ -28,6 +39,12 @@ function fmt(s: number) {
     const mm = Math.floor(s / 60);
     const ss = s % 60;
     return `${mm}m ${ss}s`;
+}
+
+function fmtCompact(s: number) {
+    const mm = Math.floor(s / 60);
+    const ss = s % 60;
+    return mm > 0 ? `${mm}m ${ss}s` : `${ss}s`;
 }
 
 export function AttemptReportClient({ attemptId }: { attemptId: string }) {
@@ -84,6 +101,8 @@ export function AttemptReportClient({ attemptId }: { attemptId: string }) {
                     Attempt {data.attempt.id.slice(0, 8)} · Status {data.attempt.status}
                 </div>
 
+                <div className="mt-1 text-xs opacity-60">Student: {data.attempt.studentId.slice(0, 8)}</div>
+
                 <div className="mt-6 grid gap-3 md:grid-cols-3">
                     <div className="rounded-lg border p-4" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
                         <div className="text-xs opacity-70">Score</div>
@@ -128,6 +147,42 @@ export function AttemptReportClient({ attemptId }: { attemptId: string }) {
                             </div>
                         ))}
                     </div>
+                </div>
+
+                <div className="mt-8">
+                    <h2 className="text-lg font-semibold">Per-Question Time</h2>
+                    <div className="mt-3 rounded-lg border overflow-hidden" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
+                        <table className="w-full text-sm">
+                            <thead className="text-xs opacity-70" style={{ background: "var(--muted)" }}>
+                                <tr>
+                                    <th className="text-left px-3 py-2 w-12">#</th>
+                                    <th className="text-left px-3 py-2">Subject</th>
+                                    <th className="text-left px-3 py-2">Topic</th>
+                                    <th className="text-left px-3 py-2 w-28">Time</th>
+                                    <th className="text-left px-3 py-2 w-24">Result</th>
+                                    <th className="text-left px-3 py-2 w-20">Marks</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {data.analytics.perQuestion
+                                    .slice()
+                                    .sort((a, b) => b.timeSpentSeconds - a.timeSpentSeconds)
+                                    .map((q, idx) => (
+                                        <tr key={q.questionId} className="border-t" style={{ borderColor: "var(--border)" }}>
+                                            <td className="px-3 py-2 opacity-70">{idx + 1}</td>
+                                            <td className="px-3 py-2">{q.subject}</td>
+                                            <td className="px-3 py-2">{q.topicName}</td>
+                                            <td className="px-3 py-2 font-mono">{fmtCompact(q.timeSpentSeconds)}</td>
+                                            <td className="px-3 py-2">
+                                                {!q.attempted ? "—" : q.correct ? "Correct" : "Incorrect"}
+                                            </td>
+                                            <td className="px-3 py-2">{q.marks.toFixed(2)}</td>
+                                        </tr>
+                                    ))}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div className="mt-2 text-xs opacity-60">Sorted by time spent (desc).</div>
                 </div>
             </main>
         </div>

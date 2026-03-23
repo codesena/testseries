@@ -21,6 +21,7 @@ export async function GET(
         where: { id: params.data.attemptId },
         select: {
             id: true,
+            studentId: true,
             status: true,
             overallScore: true,
             startTimestamp: true,
@@ -135,6 +136,7 @@ export async function GET(
     return NextResponse.json({
         attempt: {
             id: attempt.id,
+            studentId: attempt.studentId,
             status: attempt.status,
             score: attempt.overallScore,
             startTimestamp: attempt.startTimestamp,
