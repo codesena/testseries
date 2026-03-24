@@ -27,11 +27,14 @@ export default async function TestStartPage({
     return (
         <div className="min-h-screen flex flex-col">
             <header className="border-b" style={{ borderColor: "var(--border)" }}>
-                <div className="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
-                    <Link href="/" className="text-sm underline">
-                        ← Back
+                <div className="max-w-3xl mx-auto px-4 py-4 flex items-center">
+                    <Link
+                        href="/"
+                        className="text-xs rounded-full border px-3 py-1 ui-click"
+                        style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                    >
+                        Back
                     </Link>
-                    <div className="text-sm opacity-70">Start Test</div>
                 </div>
             </header>
 

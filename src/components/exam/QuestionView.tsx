@@ -204,14 +204,16 @@ export function QuestionView({
                                         }}
                                     />
                                     <div className="min-w-0">
-                                        <div className="text-xs opacity-70">
-                                            ({o.key})
+                                        <div className="flex items-baseline gap-2 min-w-0">
+                                            <span className="text-xs opacity-70 shrink-0">
+                                                ({o.key})
+                                            </span>
+                                            {o.text ? (
+                                                <span className="text-sm min-w-0">
+                                                    <MathJax dynamic>{o.text}</MathJax>
+                                                </span>
+                                            ) : null}
                                         </div>
-                                        {o.text ? (
-                                            <div className="text-sm">
-                                                <MathJax dynamic>{o.text}</MathJax>
-                                            </div>
-                                        ) : null}
 
                                         {o.imageUrl ? (
                                             <div
