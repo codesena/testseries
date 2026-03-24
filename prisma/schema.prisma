@@ -73,6 +73,7 @@ model Question {
   tests   TestQuestion[]
   responses QuestionResponse[]
   activities ActivityLog[]
+  issueReports QuestionIssueReport[]
 
   @@index([subjectId])
   @@map("Questions")
@@ -112,6 +113,8 @@ model User {
   createdAt    DateTime        @default(now())
   updatedAt    DateTime        @updatedAt
 
+  issueReports QuestionIssueReport[]
+
   @@map("Users")
 }
 
@@ -130,6 +133,7 @@ model StudentAttempt {
   test       TestSeries        @relation(fields: [testId], references: [id])
   responses  QuestionResponse[]
   activities ActivityLog[]
+  issueReports QuestionIssueReport[]
 
   @@index([studentId])
   @@index([testId])
@@ -168,4 +172,23 @@ model ActivityLog {
   @@index([attemptId, createdAt])
   @@index([questionId])
   @@map("ActivityLogs")
+}
+
+model QuestionIssueReport {
+  id        BigInt   @id @default(autoincrement())
+  attemptId String   @db.Uuid
+  questionId String  @db.Uuid
+  userId    String   @db.Uuid
+  issue     String
+  details   String?
+  createdAt DateTime @default(now())
+
+  attempt  StudentAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  question Question       @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  user     User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([attemptId, createdAt])
+  @@index([questionId, createdAt])
+  @@index([userId, createdAt])
+  @@map("QuestionIssueReports")
 }

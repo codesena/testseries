@@ -752,7 +752,7 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
                             <div className="text-sm font-mono">{formatTime(timeLeftSeconds)}</div>
                             <ThemeToggle />
                             <button
-                                className="px-3 py-1.5 rounded border text-sm ui-click"
+                                className="text-xs rounded-full border px-3 py-1 ui-click"
                                 style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                                 onClick={() => setSubmitConfirmOpen(true)}
                                 disabled={submitting}
@@ -767,6 +767,7 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
                     <main className="p-4">
                         {activeQuestion ? (
                             <QuestionView
+                                attemptId={attemptId}
                                 question={activeQuestion}
                                 answer={answersByQid[activeQuestion.id] ?? null}
                                 paletteStatus={paletteByQid[activeQuestion.id] ?? "NOT_VISITED"}
@@ -827,8 +828,8 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
                                 <button
                                     key={s.id}
                                     className={`text-sm px-2 py-1 rounded border ui-click ${activeSubjectId === s.id
-                                            ? "font-medium ring-2 ring-black/30 dark:ring-white/30"
-                                            : "opacity-80"
+                                        ? "font-medium ring-2 ring-black/30 dark:ring-white/30"
+                                        : "opacity-80"
                                         }`}
                                     style={{
                                         borderColor: "var(--border)",
@@ -883,7 +884,7 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
                             <div className="mt-4 flex items-center justify-end gap-2">
                                 <button
                                     type="button"
-                                    className="px-3 py-2 rounded border text-sm ui-click"
+                                    className="text-xs rounded-full border px-3 py-1 ui-click"
                                     style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                                     onClick={() => setSubmitConfirmOpen(false)}
                                     disabled={submitting}
@@ -892,7 +893,7 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
                                 </button>
                                 <button
                                     type="button"
-                                    className="px-3 py-2 rounded border text-sm font-medium ui-click"
+                                    className="text-xs font-medium rounded-full border px-3 py-1 ui-click"
                                     style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                                     onClick={() => {
                                         setSubmitConfirmOpen(false);
