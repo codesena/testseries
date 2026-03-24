@@ -43,7 +43,7 @@ export function QuestionPalette({
     onPick: (questionId: string) => void;
 }) {
     return (
-        <div className="grid grid-cols-6 gap-2">
+        <div className="grid grid-cols-5 sm:grid-cols-6 gap-2">
             {questions.map((q, idx) => {
                 const status = paletteByQid[q.id] ?? "NOT_VISITED";
                 const active = q.id === activeQuestionId;
@@ -52,7 +52,7 @@ export function QuestionPalette({
                         key={q.id}
                         type="button"
                         onClick={() => onPick(q.id)}
-                        className={`rounded border aspect-square text-sm flex items-center justify-center ui-click ${paletteClass(
+                        className={`rounded border aspect-square text-xs sm:text-sm flex items-center justify-center ui-click ${paletteClass(
                             status,
                         )} ${active ? "ring-2 ring-black/50 dark:ring-white/40" : ""}`}
                         style={{ borderColor: "var(--border)" }}
@@ -70,7 +70,7 @@ export function QuestionPalette({
                 );
             })}
 
-            <div className="col-span-6 mt-4 text-xs opacity-70">
+            <div className="col-span-5 sm:col-span-6 mt-4 text-xs opacity-70">
                 <div className="grid grid-cols-2 gap-2">
                     <div className="flex items-center gap-2">
                         <span

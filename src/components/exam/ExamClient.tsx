@@ -750,8 +750,8 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
                     className="relative z-40 border-b"
                     style={{ borderColor: "var(--border)", background: "var(--card)" }}
                 >
-                    <div className="px-4 py-3 flex items-center justify-between gap-4">
-                        <div className="min-w-0">
+                    <div className="px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                        <div className="min-w-0 w-full">
                             <div className="font-semibold truncate">{testTitle}</div>
                             <div className="text-xs opacity-70">
                                 Attempt: {attemptId.slice(0, 8)} · Idle: {idlePaused ? "paused" : "active"}
@@ -759,8 +759,8 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
                             <div className="text-xs opacity-60">Student: {studentName ?? "—"}</div>
                         </div>
 
-                        <div className="flex items-center gap-4">
-                            <div className="text-sm font-mono">{formatTime(timeLeftSeconds)}</div>
+                        <div className="flex items-center flex-wrap gap-3 self-start sm:self-auto">
+                            <div className="text-xs sm:text-sm font-mono">{formatTime(timeLeftSeconds)}</div>
                             <ThemeToggle />
                             <button
                                 className="text-xs rounded-full border px-3 py-1 ui-click"
@@ -829,9 +829,8 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
                         className="border-t lg:border-t-0 lg:border-l p-4"
                         style={{ borderColor: "var(--border)", background: "var(--card)" }}
                     >
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-center">
                             <div className="font-medium">Question Palette</div>
-                            <div className="text-xs opacity-70">Bento grid</div>
                         </div>
 
                         <div className="mt-3 flex flex-wrap gap-2">
