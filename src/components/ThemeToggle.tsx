@@ -67,7 +67,7 @@ export function ThemeToggle() {
     return (
         <label className="text-sm flex items-center gap-2">
             <span className="opacity-70">Theme</span>
-            <div className="relative" ref={popoverRef}>
+            <div className="relative z-50" ref={popoverRef}>
                 <button
                     type="button"
                     className="text-xs rounded-full border px-3 py-1 ui-click"
@@ -87,7 +87,7 @@ export function ThemeToggle() {
                 {open ? (
                     <div
                         role="menu"
-                        className="absolute right-0 mt-2 min-w-36 rounded-lg border p-1"
+                        className="absolute right-0 z-50 mt-2 min-w-36 rounded-lg border p-1"
                         style={{ borderColor: "var(--border)", background: "var(--card)" }}
                     >
                         <button

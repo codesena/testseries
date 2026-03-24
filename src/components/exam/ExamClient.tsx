@@ -736,7 +736,7 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
         <MathJaxContext version={3} config={mathjaxConfig}>
             <div className="min-h-screen flex flex-col">
                 <header
-                    className="border-b"
+                    className="relative z-40 border-b"
                     style={{ borderColor: "var(--border)", background: "var(--card)" }}
                 >
                     <div className="px-4 py-3 flex items-center justify-between gap-4">

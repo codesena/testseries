@@ -64,7 +64,7 @@ export async function POST(
         return json({ error: "Question not part of attempt" }, { status: 400 });
     }
 
-    const created = await prisma.questionIssueReport.create({
+    const created = await (prisma as any).questionIssueReport.create({
         data: {
             attemptId: attempt.id,
             questionId: params.data.questionId,
