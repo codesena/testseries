@@ -97,6 +97,9 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
     const idleLoggedRef = useRef(false);
     const lastActivityRef = useRef<number>(Date.now());
 
+    const [submitConfirmOpen, setSubmitConfirmOpen] = useState(false);
+    const [submitting, setSubmitting] = useState(false);
+
     const activeQuestion = useMemo(
         () => questions.find((q) => q.id === activeQuestionId) ?? null,
         [questions, activeQuestionId],
@@ -683,6 +686,8 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
     }
 
     async function submit() {
+        if (submitting) return;
+        setSubmitting(true);
         try {
             if (activeQuestionId) {
                 const local = timeByQid[activeQuestionId] ?? 0;
@@ -703,6 +708,8 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
         } catch {
             await enqueueOutbox({ attemptId, kind: "submit", payload: {} });
             router.push(`/attempt/${attemptId}/report`);
+        } finally {
+            setSubmitting(false);
         }
     }
 
@@ -747,11 +754,8 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
                             <button
                                 className="px-3 py-1.5 rounded border text-sm ui-click"
                                 style={{ borderColor: "var(--border)", background: "var(--muted)" }}
-                                onClick={() => {
-                                    const ok = window.confirm("Do you really want to submit?");
-                                    if (!ok) return;
-                                    void submit();
-                                }}
+                                onClick={() => setSubmitConfirmOpen(true)}
+                                disabled={submitting}
                             >
                                 Submit
                             </button>
@@ -858,6 +862,50 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
                         </div>
                     </aside>
                 </div>
+
+                {submitConfirmOpen ? (
+                    <div
+                        className="fixed inset-0 z-50 flex items-center justify-center p-4"
+                        style={{ background: "rgba(0,0,0,0.45)" }}
+                        role="dialog"
+                        aria-modal="true"
+                        aria-label="Submit confirmation"
+                    >
+                        <div
+                            className="w-full max-w-sm rounded-lg border p-4"
+                            style={{ borderColor: "var(--border)", background: "var(--card)" }}
+                        >
+                            <div className="text-base font-semibold">Submit Test?</div>
+                            <div className="mt-1 text-sm opacity-70">
+                                Do you really want to submit?
+                            </div>
+
+                            <div className="mt-4 flex items-center justify-end gap-2">
+                                <button
+                                    type="button"
+                                    className="px-3 py-2 rounded border text-sm ui-click"
+                                    style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                                    onClick={() => setSubmitConfirmOpen(false)}
+                                    disabled={submitting}
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="button"
+                                    className="px-3 py-2 rounded border text-sm font-medium ui-click"
+                                    style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                                    onClick={() => {
+                                        setSubmitConfirmOpen(false);
+                                        void submit();
+                                    }}
+                                    disabled={submitting}
+                                >
+                                    {submitting ? "Submitting…" : "Submit"}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                ) : null}
             </div>
         </MathJaxContext>
     );
