@@ -317,6 +317,33 @@ async function main() {
                 asNumber(getProp(props, "Difficulty")) ??
                 asNumberFromText(getProp(props, "Difficulty"));
 
+            // Notion databases often contain an empty placeholder/template row.
+            // If the row is completely empty across all relevant fields, skip it.
+            const isCompletelyEmptyRow =
+                !testTitle &&
+                !subjectName &&
+                !topicName &&
+                !questionText &&
+                !type &&
+                orderIndexNum == null &&
+                !optA &&
+                !optB &&
+                !optC &&
+                !optD &&
+                !optAImg &&
+                !optBImg &&
+                !optCImg &&
+                !optDImg &&
+                !correctOpt &&
+                correctInt == null &&
+                !imageUrlsRaw &&
+                difficultyRank == null;
+
+            if (isCompletelyEmptyRow) {
+                console.warn(`Skipping empty Notion row: ${page.id}`);
+                continue;
+            }
+
             const missing: string[] = [];
             if (!testTitle) missing.push("Test Title");
             if (!subjectName) missing.push("Subject");
