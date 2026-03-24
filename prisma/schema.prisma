@@ -63,6 +63,7 @@ model Question {
   subjectId         Int
   topicName         String
   questionText      String
+  imageUrls         Json?
   options           Json
   correctAnswer     Json
   markingSchemeType MarkingSchemeType

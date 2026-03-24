@@ -84,6 +84,24 @@ export function QuestionView({
             </div>
 
             <div className="mt-4 text-base leading-relaxed">
+                {question.imageUrls?.length ? (
+                    <div className="mb-3 grid gap-2">
+                        {question.imageUrls.map((url) => (
+                            <div
+                                key={url}
+                                className="rounded border p-2"
+                                style={{ borderColor: "var(--border)", background: "var(--card)" }}
+                            >
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img
+                                    src={url}
+                                    alt="Question"
+                                    className="max-w-full h-auto"
+                                />
+                            </div>
+                        ))}
+                    </div>
+                ) : null}
                 <MathJax dynamic>{question.questionText}</MathJax>
             </div>
 
@@ -140,9 +158,28 @@ export function QuestionView({
                                         <div className="text-xs opacity-70">
                                             {idx + 1}. ({o.key})
                                         </div>
-                                        <div className="text-sm">
-                                            <MathJax dynamic>{o.text}</MathJax>
-                                        </div>
+                                        {o.text ? (
+                                            <div className="text-sm">
+                                                <MathJax dynamic>{o.text}</MathJax>
+                                            </div>
+                                        ) : null}
+
+                                        {o.imageUrl ? (
+                                            <div
+                                                className="mt-2 rounded border p-2"
+                                                style={{
+                                                    borderColor: "var(--border)",
+                                                    background: "var(--card)",
+                                                }}
+                                            >
+                                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                <img
+                                                    src={o.imageUrl}
+                                                    alt={`Option ${o.key}`}
+                                                    className="max-w-full h-auto"
+                                                />
+                                            </div>
+                                        ) : null}
                                     </div>
                                 </div>
                             </label>

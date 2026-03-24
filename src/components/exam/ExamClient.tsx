@@ -573,22 +573,23 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
         return questions.findIndex((q) => q.id === activeQuestionId);
     }
 
+    function currentQuestionIndexInActiveSubject() {
+        if (!activeQuestionId) return -1;
+        return questionsInActiveSubject.findIndex((q) => q.id === activeQuestionId);
+    }
+
     function goNext() {
-        const idx = currentQuestionIndexInAll();
-        const next = questions[idx + 1];
-        if (next) {
-            setActiveSubjectId(next.subject.id);
-            goToQuestion(next.id);
-        }
+        const idx = activeSubjectId ? currentQuestionIndexInActiveSubject() : currentQuestionIndexInAll();
+        const list = activeSubjectId ? questionsInActiveSubject : questions;
+        const next = list[idx + 1];
+        if (next) goToQuestion(next.id);
     }
 
     function goPrev() {
-        const idx = currentQuestionIndexInAll();
-        const prev = questions[idx - 1];
-        if (prev) {
-            setActiveSubjectId(prev.subject.id);
-            goToQuestion(prev.id);
-        }
+        const idx = activeSubjectId ? currentQuestionIndexInActiveSubject() : currentQuestionIndexInAll();
+        const list = activeSubjectId ? questionsInActiveSubject : questions;
+        const prev = list[idx - 1];
+        if (prev) goToQuestion(prev.id);
     }
 
     function saveAndNext() {

@@ -24,6 +24,7 @@ CREATE TABLE "Questions" (
     "subjectId" INTEGER NOT NULL,
     "topicName" TEXT NOT NULL,
     "questionText" TEXT NOT NULL,
+    "imageUrls" JSONB,
     "options" JSONB NOT NULL,
     "correctAnswer" JSONB NOT NULL,
     "markingSchemeType" "MarkingSchemeType" NOT NULL,
@@ -50,6 +51,18 @@ CREATE TABLE "TestQuestions" (
     "orderIndex" INTEGER NOT NULL,
 
     CONSTRAINT "TestQuestions_pkey" PRIMARY KEY ("testId","questionId")
+);
+
+-- CreateTable
+CREATE TABLE "Users" (
+    "id" UUID NOT NULL,
+    "name" TEXT NOT NULL,
+    "username" TEXT NOT NULL,
+    "passwordHash" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Users_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -100,6 +113,9 @@ CREATE INDEX "Questions_subjectId_idx" ON "Questions"("subjectId");
 
 -- CreateIndex
 CREATE INDEX "TestQuestions_testId_orderIndex_idx" ON "TestQuestions"("testId", "orderIndex");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Users_username_key" ON "Users"("username");
 
 -- CreateIndex
 CREATE INDEX "StudentAttempts_studentId_idx" ON "StudentAttempts"("studentId");

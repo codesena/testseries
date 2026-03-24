@@ -42,7 +42,8 @@ export async function POST(req: Request) {
     }
 
     const baseQuestionOrder = test.questions.map((q) => q.questionId);
-    const questionOrder = shuffled(baseQuestionOrder);
+    // Keep test-defined ordering (no random shuffle) so questions stay sequential by section.
+    const questionOrder = baseQuestionOrder;
 
     const questions = await prisma.question.findMany({
         where: { id: { in: questionOrder } },

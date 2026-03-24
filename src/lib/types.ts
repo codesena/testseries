@@ -7,13 +7,14 @@ export type TestListItem = {
     _count: { questions: number };
 };
 
-export type QuestionOption = { key: string; text: string };
+export type QuestionOption = { key: string; text: string; imageUrl?: string | null };
 
 export type AttemptQuestion = {
     id: string;
     subject: { id: number; name: string };
     topicName: string;
     questionText: string;
+    imageUrls: string[] | null;
     options: QuestionOption[];
     markingSchemeType: string;
 };
