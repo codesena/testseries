@@ -83,6 +83,8 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
 
     const [timeLeftSeconds, setTimeLeftSeconds] = useState<number>(durationSeconds);
 
+    const [attemptStartMs, setAttemptStartMs] = useState<number | null>(null);
+
     const autoSubmittedRef = useRef(false);
 
     const serverOffsetMsRef = useRef<number>(0);
@@ -225,7 +227,16 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
 
                 const serverNowMs = Date.parse(data.attempt.serverNow);
                 serverOffsetMsRef.current = serverNowMs - Date.now();
-                attemptStartMsRef.current = Date.parse(data.attempt.startTimestamp);
+
+                const nextAttemptStartMs = Date.parse(data.attempt.startTimestamp);
+                attemptStartMsRef.current = nextAttemptStartMs;
+                setAttemptStartMs(nextAttemptStartMs);
+
+                // Initialize remaining time immediately (important when duration equals default).
+                const nextDurationSeconds = data.attempt.test.totalDurationMinutes * 60;
+                const nowServer = Date.now() + serverOffsetMsRef.current;
+                const elapsedSeconds = Math.floor((nowServer - nextAttemptStartMs) / 1000);
+                setTimeLeftSeconds(nextDurationSeconds - elapsedSeconds);
 
                 const initPalette: PaletteByQid = {};
                 const initAnswers: AnswerByQid = {};
@@ -274,11 +285,11 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
 
     // Master timer tick
     useEffect(() => {
-        if (!attemptStartMsRef.current) return;
+        if (attemptStartMs == null) return;
 
         const timer = window.setInterval(() => {
             const nowServer = Date.now() + serverOffsetMsRef.current;
-            const elapsedSeconds = Math.floor((nowServer - attemptStartMsRef.current) / 1000);
+            const elapsedSeconds = Math.floor((nowServer - attemptStartMs) / 1000);
             const left = durationSeconds - elapsedSeconds;
             setTimeLeftSeconds(left);
 
@@ -288,7 +299,7 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
         }, 250);
 
         return () => window.clearInterval(timer);
-    }, [durationSeconds]);
+    }, [attemptStartMs, durationSeconds]);
 
     useEffect(() => {
         if (timeLeftSeconds > 0) return;
