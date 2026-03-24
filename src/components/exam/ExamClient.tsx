@@ -745,9 +745,13 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
                             <div className="text-sm font-mono">{formatTime(timeLeftSeconds)}</div>
                             <ThemeToggle />
                             <button
-                                className="px-3 py-1.5 rounded border text-sm"
+                                className="px-3 py-1.5 rounded border text-sm ui-click"
                                 style={{ borderColor: "var(--border)", background: "var(--muted)" }}
-                                onClick={submit}
+                                onClick={() => {
+                                    const ok = window.confirm("Do you really want to submit?");
+                                    if (!ok) return;
+                                    void submit();
+                                }}
                             >
                                 Submit
                             </button>
@@ -771,28 +775,28 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
 
                         <div className="mt-4 flex flex-wrap gap-2">
                             <button
-                                className="px-3 py-2 rounded border text-sm"
+                                className="px-3 py-2 rounded border text-sm ui-click"
                                 style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                                 onClick={goPrev}
                             >
                                 Previous
                             </button>
                             <button
-                                className="px-3 py-2 rounded border text-sm"
+                                className="px-3 py-2 rounded border text-sm ui-click"
                                 style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                                 onClick={saveAndNext}
                             >
                                 Save & Next
                             </button>
                             <button
-                                className="px-3 py-2 rounded border text-sm"
+                                className="px-3 py-2 rounded border text-sm ui-click"
                                 style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                                 onClick={markForReviewAndNext}
                             >
                                 Mark for Review & Next
                             </button>
                             <button
-                                className="px-3 py-2 rounded border text-sm"
+                                className="px-3 py-2 rounded border text-sm ui-click"
                                 style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                                 onClick={clearResponse}
                             >
@@ -818,9 +822,14 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
                             {subjects.map((s) => (
                                 <button
                                     key={s.id}
-                                    className={`text-sm px-2 py-1 rounded border ${activeSubjectId === s.id ? "font-medium" : "opacity-80"
+                                    className={`text-sm px-2 py-1 rounded border ui-click ${activeSubjectId === s.id
+                                            ? "font-medium ring-2 ring-black/30 dark:ring-white/30"
+                                            : "opacity-80"
                                         }`}
-                                    style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                                    style={{
+                                        borderColor: "var(--border)",
+                                        background: activeSubjectId === s.id ? "var(--card)" : "var(--muted)",
+                                    }}
                                     onClick={() => {
                                         setActiveSubjectId(s.id);
                                         const firstInSubject = questions.find((q) => q.subject.id === s.id);

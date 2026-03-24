@@ -7,7 +7,7 @@ export function LogoutButton() {
 
     return (
         <button
-            className="px-3 py-1.5 rounded border text-sm"
+            className="px-3 py-1.5 rounded border text-sm ui-click"
             style={{ borderColor: "var(--border)", background: "var(--muted)" }}
             disabled={loggingOut}
             onClick={async () => {

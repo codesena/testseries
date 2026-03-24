@@ -75,7 +75,7 @@ export function QuestionView({
                     </div>
                 </div>
                 <button
-                    className="text-sm underline opacity-80 hover:opacity-100"
+                    className="text-sm underline opacity-80 hover:opacity-100 ui-click"
                     onClick={onClear}
                     type="button"
                 >
@@ -108,12 +108,12 @@ export function QuestionView({
             <div className="mt-5 grid gap-2">
                 {scheme === "MAINS_NUMERICAL" || scheme === "ADV_NAT" ? (
                     <label
-                        className="rounded border p-3"
+                        className="rounded border p-3 ui-click"
                         style={{ borderColor: "var(--border)", background: "var(--card)" }}
                     >
                         <div className="text-xs opacity-70">Enter numerical answer</div>
                         <input
-                            className="mt-2 w-full rounded border px-3 py-2 bg-transparent"
+                            className="mt-2 w-full rounded border px-3 py-2 bg-transparent ui-field"
                             style={{ borderColor: "var(--border)" }}
                             inputMode="decimal"
                             value={numericValue}
@@ -122,7 +122,7 @@ export function QuestionView({
                         />
                     </label>
                 ) : (
-                    question.options.map((o, idx) => {
+                    question.options.map((o) => {
                         const checked =
                             scheme === "ADV_MULTI_CORRECT"
                                 ? selectedMulti.has(o.key)
@@ -131,11 +131,9 @@ export function QuestionView({
                         return (
                             <label
                                 key={o.key}
-                                className="rounded border p-3 cursor-pointer"
-                                style={{
-                                    borderColor: "var(--border)",
-                                    background: checked ? "var(--muted)" : "transparent",
-                                }}
+                                className={`rounded border p-3 cursor-pointer ui-click ${checked ? "bg-[var(--muted)]" : "bg-transparent"
+                                    }`}
+                                style={{ borderColor: "var(--border)" }}
                             >
                                 <div className="flex items-start gap-3">
                                     <input
@@ -156,7 +154,7 @@ export function QuestionView({
                                     />
                                     <div className="min-w-0">
                                         <div className="text-xs opacity-70">
-                                            {idx + 1}. ({o.key})
+                                            ({o.key})
                                         </div>
                                         {o.text ? (
                                             <div className="text-sm">

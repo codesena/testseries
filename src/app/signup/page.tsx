@@ -61,7 +61,7 @@ export default function SignupPage() {
                     <label className="grid gap-1">
                         <div className="text-sm font-medium">Name</div>
                         <input
-                            className="rounded border px-3 py-2"
+                            className="rounded border px-3 py-2 ui-field"
                             style={{ borderColor: "var(--border)", background: "var(--card)" }}
                             value={name}
                             onChange={(e) => setName(e.target.value)}
@@ -73,7 +73,7 @@ export default function SignupPage() {
                     <label className="grid gap-1">
                         <div className="text-sm font-medium">Username (Mobile No.)</div>
                         <input
-                            className="rounded border px-3 py-2"
+                            className="rounded border px-3 py-2 ui-field"
                             style={{ borderColor: "var(--border)", background: "var(--card)" }}
                             inputMode="numeric"
                             value={username}
@@ -87,7 +87,7 @@ export default function SignupPage() {
                     <label className="grid gap-1">
                         <div className="text-sm font-medium">Year of Birth (Password)</div>
                         <input
-                            className="rounded border px-3 py-2"
+                            className="rounded border px-3 py-2 ui-field"
                             style={{ borderColor: "var(--border)", background: "var(--card)" }}
                             inputMode="numeric"
                             value={birthYear}
@@ -99,7 +99,7 @@ export default function SignupPage() {
                     </label>
 
                     <button
-                        className="mt-2 px-4 py-2 rounded font-medium border"
+                        className="mt-2 px-4 py-2 rounded font-medium border ui-click"
                         style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                         disabled={loading}
                         type="submit"

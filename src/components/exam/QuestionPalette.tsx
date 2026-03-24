@@ -52,7 +52,7 @@ export function QuestionPalette({
                         key={q.id}
                         type="button"
                         onClick={() => onPick(q.id)}
-                        className={`rounded border aspect-square text-sm flex items-center justify-center ${paletteClass(
+                        className={`rounded border aspect-square text-sm flex items-center justify-center ui-click ${paletteClass(
                             status,
                         )} ${active ? "ring-2 ring-black/50 dark:ring-white/40" : ""}`}
                         style={{ borderColor: "var(--border)" }}

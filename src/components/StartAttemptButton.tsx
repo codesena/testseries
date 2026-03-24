@@ -12,7 +12,7 @@ export function StartAttemptButton({ testId }: { testId: string }) {
     return (
         <div className="flex flex-col gap-2">
             <button
-                className="px-4 py-2 rounded font-medium border"
+                className="px-4 py-2 rounded font-medium border ui-click"
                 style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                 disabled={loading}
                 onClick={async () => {

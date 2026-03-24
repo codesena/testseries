@@ -31,7 +31,7 @@ export function ThemeToggle() {
         <label className="text-sm flex items-center gap-2">
             <span className="opacity-70">Theme</span>
             <select
-                className="border rounded px-2 py-1 bg-transparent"
+                className="border rounded px-2 py-1 bg-transparent ui-field ui-click"
                 value={theme}
                 onChange={(e) => {
                     const next = e.target.value as Theme;
