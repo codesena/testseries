@@ -24,6 +24,15 @@ Run:
 
 - Local import: `npm run db:seed:notion`
 
+## Admin reports
+
+To view all candidate attempt reports (across all papers), open `/admin`.
+
+Admin access is controlled via env var:
+
+- `ADMIN_USERNAMES` (comma or space separated usernames)
+  - Example: `ADMIN_USERNAMES=9876543210,9123456789`
+
 ## Production import
 
 There is a separate “prod safety” wrapper:

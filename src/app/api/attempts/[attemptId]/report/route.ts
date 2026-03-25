@@ -1,5 +1,6 @@
 import { prisma } from "@/server/db";
-import { getAuthUserId } from "@/server/auth";
+import { getAuthUser } from "@/server/auth";
+import { isAdminUsername } from "@/server/admin";
 import { evaluateResponse } from "@/server/evaluate";
 import { json } from "@/server/json";
 import { z } from "zod";
@@ -13,15 +14,12 @@ export async function GET(
     _req: Request,
     ctx: { params: Promise<{ attemptId: string }> },
 ) {
-    const userId = await getAuthUserId();
-    if (!userId) {
+    const auth = await getAuthUser();
+    if (!auth) {
         return json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const user = await prisma.user.findUnique({
-        where: { id: userId },
-        select: { name: true },
-    });
+    const isAdmin = isAdminUsername(auth.username);
 
     const params = ParamsSchema.safeParse(await ctx.params);
     if (!params.success) {
@@ -29,7 +27,9 @@ export async function GET(
     }
 
     const attempt = await prisma.studentAttempt.findFirst({
-        where: { id: params.data.attemptId, studentId: userId },
+        where: isAdmin
+            ? { id: params.data.attemptId }
+            : { id: params.data.attemptId, studentId: auth.userId },
         select: {
             id: true,
             studentId: true,
@@ -59,6 +59,11 @@ export async function GET(
     if (!attempt) {
         return json({ error: "Attempt not found" }, { status: 404 });
     }
+
+    const student = await prisma.user.findUnique({
+        where: { id: attempt.studentId },
+        select: { name: true },
+    });
 
     const questionIds = attempt.responses.map((r) => r.questionId);
     const questions = await prisma.question.findMany({
@@ -153,7 +158,7 @@ export async function GET(
         attempt: {
             id: attempt.id,
             studentId: attempt.studentId,
-            studentName: user?.name ?? null,
+            studentName: student?.name ?? null,
             status: attempt.status,
             score: attempt.overallScore,
             startTimestamp: attempt.startTimestamp,

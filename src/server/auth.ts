@@ -74,3 +74,12 @@ export async function getAuthUserId(): Promise<string | null> {
     const verified = await verifyAuthToken(token);
     return verified?.userId ?? null;
 }
+
+export async function getAuthUser(): Promise<{ userId: string; username: string } | null> {
+    const cookieStore = await cookies();
+    const token = cookieStore.get(AUTH_COOKIE_NAME)?.value;
+    if (!token) return null;
+
+    const verified = await verifyAuthToken(token);
+    return verified;
+}
