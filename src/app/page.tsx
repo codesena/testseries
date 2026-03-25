@@ -2,8 +2,9 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { prisma } from "@/server/db";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { getAuthUserId } from "@/server/auth";
+import { getAuthUser } from "@/server/auth";
 import { LogoutButton } from "@/components/LogoutButton";
+import { isAdminUsername } from "@/server/admin";
 
 export const dynamic = "force-dynamic";
 
@@ -31,10 +32,13 @@ function fmtDate(d: Date) {
 }
 
 export default async function Home() {
-    const userId = await getAuthUserId();
-    if (!userId) {
+    const auth = await getAuthUser();
+    if (!auth) {
         redirect("/login");
     }
+
+    const userId = auth.userId;
+    const isAdmin = isAdminUsername(auth.username);
 
     const user = await prisma.user.findUnique({
         where: { id: userId },
@@ -102,6 +106,15 @@ export default async function Home() {
                         <div className="text-xs opacity-60">Student: {user?.name ?? "—"}</div>
                     </div>
                     <div className="flex items-center gap-3">
+                        {isAdmin ? (
+                            <Link
+                                href="/admin"
+                                className="text-xs rounded-full border px-3 py-1 ui-click"
+                                style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                            >
+                                Admin
+                            </Link>
+                        ) : null}
                         <ThemeToggle />
                         <LogoutButton />
                     </div>

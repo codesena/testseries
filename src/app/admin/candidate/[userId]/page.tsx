@@ -22,10 +22,11 @@ function fmtDate(d: Date | null) {
     }
 }
 
-export default async function AdminPage() {
+export default async function AdminCandidatePage(
+    props: { params: Promise<{ userId: string }> },
+) {
     const auth = await getAuthUser();
     if (!auth) redirect("/login");
-
     if (!isAdminUsername(auth.username)) {
         return (
             <div className="min-h-screen flex flex-col">
@@ -45,89 +46,105 @@ export default async function AdminPage() {
                 <main className="max-w-5xl mx-auto w-full px-4 py-8">
                     <div className="rounded-lg border p-4" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
                         <div className="text-sm font-medium">Access denied</div>
-                        <div className="mt-1 text-sm opacity-70">
-                            Your account is not allowed to view admin reports.
-                        </div>
+                        <div className="mt-1 text-sm opacity-70">Your account is not allowed to view admin reports.</div>
                     </div>
                 </main>
             </div>
         );
     }
 
-    const attemptAgg = await prisma.studentAttempt.groupBy({
-        by: ["studentId"],
+    const { userId } = await props.params;
+
+    const candidate = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { id: true, name: true, username: true },
+    });
+
+    if (!candidate) {
+        return (
+            <div className="min-h-screen flex flex-col">
+                <header className="border-b" style={{ borderColor: "var(--border)" }}>
+                    <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
+                        <Link
+                            href="/admin"
+                            className="text-xs rounded-full border px-3 py-1 ui-click"
+                            style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                        >
+                            ← Admin
+                        </Link>
+                        <div className="text-sm opacity-70">Candidate</div>
+                    </div>
+                </header>
+
+                <main className="max-w-5xl mx-auto w-full px-4 py-8">
+                    <div className="text-sm opacity-70">Candidate not found.</div>
+                </main>
+            </div>
+        );
+    }
+
+    const testAgg = await prisma.studentAttempt.groupBy({
+        by: ["testId"],
+        where: { studentId: userId },
         _count: { _all: true },
         _max: { startTimestamp: true },
         orderBy: { _max: { startTimestamp: "desc" } },
     });
 
-    const testPairs = await prisma.studentAttempt.groupBy({
-        by: ["studentId", "testId"],
-        _count: { _all: true },
+    const testIds = testAgg.map((t) => t.testId);
+    const tests = await prisma.testSeries.findMany({
+        where: { id: { in: testIds } },
+        select: { id: true, title: true },
     });
-
-    const testCountByStudentId = new Map<string, number>();
-    for (const row of testPairs) {
-        testCountByStudentId.set(row.studentId, (testCountByStudentId.get(row.studentId) ?? 0) + 1);
-    }
-
-    const studentIds = attemptAgg.map((a) => a.studentId);
-    const students = await prisma.user.findMany({
-        where: { id: { in: studentIds } },
-        select: { id: true, name: true, username: true },
-    });
-    const studentById = new Map(students.map((s) => [s.id, s] as const));
+    const testById = new Map(tests.map((t) => [t.id, t] as const));
 
     return (
         <div className="min-h-screen flex flex-col">
             <header className="border-b" style={{ borderColor: "var(--border)" }}>
                 <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
                     <Link
-                        href="/"
+                        href="/admin"
                         className="text-xs rounded-full border px-3 py-1 ui-click"
                         style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                     >
-                        Home
+                        ← Admin
                     </Link>
                     <div className="text-sm opacity-70">Admin</div>
                 </div>
             </header>
 
             <main className="max-w-5xl mx-auto w-full px-4 py-8">
-                <h1 className="text-2xl font-semibold">Candidates</h1>
-                <div className="mt-2 text-sm opacity-70">Select a candidate to view papers and reports.</div>
+                <h1 className="text-2xl font-semibold">Papers accessed</h1>
+                <div className="mt-2 text-sm opacity-70">
+                    {candidate.name} ({candidate.username})
+                </div>
 
                 <div className="mt-6 grid gap-3">
-                    {attemptAgg.map((a) => {
-                        const student = studentById.get(a.studentId);
-                        const studentLabel = student
-                            ? `${student.name} (${student.username})`
-                            : a.studentId;
-                        const paperCount = testCountByStudentId.get(a.studentId) ?? 0;
-                        const lastAttemptAt = a._max.startTimestamp;
-
+                    {testAgg.map((t) => {
+                        const test = testById.get(t.testId);
+                        const title = test?.title ?? t.testId;
                         return (
                             <div
-                                key={a.studentId}
+                                key={t.testId}
                                 className="rounded-lg border p-4"
                                 style={{ borderColor: "var(--border)", background: "var(--card)" }}
                             >
                                 <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                                     <div className="min-w-0">
-                                        <div className="font-medium truncate">{studentLabel}</div>
+                                        <div className="font-medium truncate">{title}</div>
                                         <div className="mt-1 text-xs opacity-60">
-                                            {paperCount} paper{paperCount === 1 ? "" : "s"} · {a._count._all} attempt{a._count._all === 1 ? "" : "s"}
-                                            {lastAttemptAt ? ` · Last ${fmtDate(lastAttemptAt)}` : ""}
+                                            {t._count._all} attempt{t._count._all === 1 ? "" : "s"}
+                                            {t._max.startTimestamp ? ` · Last ${fmtDate(t._max.startTimestamp)}` : ""}
                                         </div>
                                     </div>
 
-                                    <div className="flex items-center gap-2 shrink-0">
+                                    <div className="shrink-0">
                                         <Link
-                                            href={`/admin/candidate/${a.studentId}`}
+                                            href={`/admin/candidate/${candidate.id}/test/${t.testId}`}
                                             className="text-xs rounded-full border px-3 py-1 ui-click"
                                             style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                                         >
-                                            View papers →
+                                            View attempts →
                                         </Link>
                                     </div>
                                 </div>
@@ -135,8 +152,8 @@ export default async function AdminPage() {
                         );
                     })}
 
-                    {attemptAgg.length === 0 ? (
-                        <div className="text-sm opacity-70">No candidates found.</div>
+                    {testAgg.length === 0 ? (
+                        <div className="text-sm opacity-70">No papers found for this candidate.</div>
                     ) : null}
                 </div>
             </main>
