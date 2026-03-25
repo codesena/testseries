@@ -21,7 +21,11 @@ export default function SignupPage() {
         <div className="min-h-screen flex flex-col">
             <header className="border-b" style={{ borderColor: "var(--border)" }}>
                 <div className="max-w-md mx-auto px-4 py-4 flex items-center justify-between">
-                    <Link href="/" className="text-sm underline">
+                    <Link
+                        href="/"
+                        className="text-xs rounded-full border px-3 py-1 ui-click"
+                        style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                    >
                         ← Home
                     </Link>
                     <div className="text-sm opacity-70">Signup</div>

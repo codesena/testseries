@@ -87,13 +87,13 @@ export function ThemeToggle() {
                 {open ? (
                     <div
                         role="menu"
-                        className="absolute right-0 z-50 mt-2 min-w-36 rounded-lg border p-1"
+                        className="absolute right-0 z-50 mt-2 min-w-36 rounded-lg border p-1 flex flex-col gap-1"
                         style={{ borderColor: "var(--border)", background: "var(--card)" }}
                     >
                         <button
                             type="button"
                             role="menuitem"
-                            className="w-full text-left text-sm rounded-md px-3 py-2 ui-click"
+                            className="block w-full text-left text-sm rounded-md px-3 py-2 ui-click"
                             style={{ background: theme === "system" ? "var(--muted)" : "transparent" }}
                             onClick={() => setThemeAndClose("system")}
                         >
@@ -102,7 +102,7 @@ export function ThemeToggle() {
                         <button
                             type="button"
                             role="menuitem"
-                            className="w-full text-left text-sm rounded-md px-3 py-2 ui-click"
+                            className="block w-full text-left text-sm rounded-md px-3 py-2 ui-click"
                             style={{ background: theme === "light" ? "var(--muted)" : "transparent" }}
                             onClick={() => setThemeAndClose("light")}
                         >
@@ -111,7 +111,7 @@ export function ThemeToggle() {
                         <button
                             type="button"
                             role="menuitem"
-                            className="w-full text-left text-sm rounded-md px-3 py-2 ui-click"
+                            className="block w-full text-left text-sm rounded-md px-3 py-2 ui-click"
                             style={{ background: theme === "dark" ? "var(--muted)" : "transparent" }}
                             onClick={() => setThemeAndClose("dark")}
                         >
