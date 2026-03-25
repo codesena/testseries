@@ -101,6 +101,7 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
 
     const [submitConfirmOpen, setSubmitConfirmOpen] = useState(false);
     const [submitting, setSubmitting] = useState(false);
+    const submittingRef = useRef(false);
 
     const activeQuestion = useMemo(
         () => questions.find((q) => q.id === activeQuestionId) ?? null,
@@ -697,7 +698,8 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
     }
 
     async function submit() {
-        if (submitting) return;
+        if (submittingRef.current) return;
+        submittingRef.current = true;
         setSubmitting(true);
         try {
             if (activeQuestionId) {
@@ -720,6 +722,7 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
             await enqueueOutbox({ attemptId, kind: "submit", payload: {} });
             router.push(`/attempt/${attemptId}/report`);
         } finally {
+            submittingRef.current = false;
             setSubmitting(false);
         }
     }
@@ -766,7 +769,7 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
                                 className="text-xs rounded-full border px-3 py-1 ui-click shrink-0 whitespace-nowrap"
                                 style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                                 onClick={() => setSubmitConfirmOpen(true)}
-                                disabled={submitting}
+                                disabled={submitting || submitConfirmOpen}
                             >
                                 Submit
                             </button>
@@ -774,7 +777,9 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
                     </div>
                 </header>
 
-                <div className="flex-1 grid grid-cols-1 lg:grid-cols-[1fr_360px]">
+                <div
+                    className={`flex-1 grid grid-cols-1 lg:grid-cols-[1fr_360px] transition ${submitConfirmOpen ? "blur-sm pointer-events-none select-none" : ""}`}
+                >
                     <main className="p-4">
                         {activeQuestion ? (
                             <QuestionView
@@ -910,7 +915,6 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
                                     className="text-xs font-medium rounded-full border px-3 py-1 ui-click"
                                     style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                                     onClick={() => {
-                                        setSubmitConfirmOpen(false);
                                         void submit();
                                     }}
                                     disabled={submitting}

@@ -1,13 +1,14 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { apiPost } from "@/lib/api";
 
 export function StartAttemptButton({ testId }: { testId: string }) {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const loadingRef = useRef(false);
 
     return (
         <div className="flex flex-col gap-2">
@@ -16,6 +17,8 @@ export function StartAttemptButton({ testId }: { testId: string }) {
                 style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                 disabled={loading}
                 onClick={async () => {
+                    if (loadingRef.current) return;
+                    loadingRef.current = true;
                     setError(null);
                     setLoading(true);
                     try {
@@ -37,6 +40,7 @@ export function StartAttemptButton({ testId }: { testId: string }) {
                         setError(msg);
                     } finally {
                         setLoading(false);
+                        loadingRef.current = false;
                     }
                 }}
             >
