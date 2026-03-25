@@ -6,6 +6,18 @@ import type { AttemptQuestion } from "@/lib/types";
 import { apiPost } from "@/lib/api";
 import type { PaletteStatus } from "@/components/exam/palette";
 
+function isNullLikeToken(s: string): boolean {
+    const v = s.trim().toLowerCase();
+    return v === "" || v === "null" || v === "none" || v === "na" || v === "n/a" || v === "-";
+}
+
+function splitUrlList(raw: string): string[] {
+    return raw
+        .split(/\r?\n|,|;/g)
+        .map((s) => s.trim())
+        .filter((s) => !isNullLikeToken(s));
+}
+
 function statusLabel(s: PaletteStatus) {
     switch (s) {
         case "NOT_VISITED":
@@ -38,6 +50,7 @@ function statusBadgeClass(s: PaletteStatus) {
 
 export function QuestionView({
     attemptId,
+    questionNumber,
     question,
     answer,
     paletteStatus,
@@ -45,6 +58,7 @@ export function QuestionView({
     onClear,
 }: {
     attemptId: string;
+    questionNumber?: number;
     question: AttemptQuestion;
     answer: unknown;
     paletteStatus: PaletteStatus;
@@ -107,7 +121,7 @@ export function QuestionView({
                                 paletteStatus,
                             )}`}
                         >
-                            {statusLabel(paletteStatus)}
+                            Q{questionNumber ?? "?"} · {statusLabel(paletteStatus)}
                         </span>
                     </div>
                 </div>
@@ -136,18 +150,24 @@ export function QuestionView({
 
             <div className="mt-4 text-base leading-relaxed">
                 {question.imageUrls?.length ? (
-                    <div className="mb-3 grid gap-2">
+                    <div
+                        className={`mb-3 grid gap-2 mx-auto ${question.imageUrls.length > 1 ? "sm:grid-cols-2 max-w-3xl" : "max-w-4xl"
+                            }`}
+                    >
                         {question.imageUrls.map((url) => (
                             <div
                                 key={url}
-                                className="rounded border p-2"
+                                className={`rounded border p-2 flex items-center justify-center w-full relative ${question.imageUrls && question.imageUrls.length > 1
+                                    ? "h-44 sm:h-56"
+                                    : "h-64 sm:h-80"
+                                    }`}
                                 style={{ borderColor: "var(--border)", background: "var(--card)" }}
                             >
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img
                                     src={url}
                                     alt="Question"
-                                    className="max-w-full h-auto"
+                                    className="max-w-full max-h-full object-contain"
                                 />
                             </div>
                         ))}
@@ -178,6 +198,9 @@ export function QuestionView({
                             scheme === "ADV_MULTI_CORRECT"
                                 ? selectedMulti.has(o.key)
                                 : selectedSingle === o.key;
+
+                        const optionImageUrls = o.imageUrl ? splitUrlList(o.imageUrl) : [];
+                        const optionHasMultipleImages = optionImageUrls.length > 1;
 
                         return (
                             <label
@@ -215,20 +238,30 @@ export function QuestionView({
                                             ) : null}
                                         </div>
 
-                                        {o.imageUrl ? (
+                                        {optionImageUrls.length ? (
                                             <div
-                                                className="mt-2 rounded border p-2"
-                                                style={{
-                                                    borderColor: "var(--border)",
-                                                    background: "var(--card)",
-                                                }}
+                                                className={`mt-2 grid gap-2 ${optionHasMultipleImages ? "sm:grid-cols-2" : ""}`}
                                             >
-                                                {/* eslint-disable-next-line @next/next/no-img-element */}
-                                                <img
-                                                    src={o.imageUrl}
-                                                    alt={`Option ${o.key}`}
-                                                    className="max-w-full h-auto"
-                                                />
+                                                {optionImageUrls.map((url) => (
+                                                    <div
+                                                        key={url}
+                                                        className={`rounded border p-2 flex items-center justify-center w-full relative ${optionHasMultipleImages
+                                                            ? "h-32 sm:h-40"
+                                                            : "h-40 sm:h-48"
+                                                            }`}
+                                                        style={{
+                                                            borderColor: "var(--border)",
+                                                            background: "var(--card)",
+                                                        }}
+                                                    >
+                                                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                        <img
+                                                            src={url}
+                                                            alt={`Option ${o.key}`}
+                                                            className="max-w-full max-h-full object-contain"
+                                                        />
+                                                    </div>
+                                                ))}
                                             </div>
                                         ) : null}
                                     </div>

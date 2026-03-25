@@ -759,11 +759,11 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
                             <div className="text-xs opacity-60">Student: {studentName ?? "—"}</div>
                         </div>
 
-                        <div className="flex items-center flex-wrap gap-3 self-start sm:self-auto">
-                            <div className="text-xs sm:text-sm font-mono">{formatTime(timeLeftSeconds)}</div>
+                        <div className="flex items-center flex-nowrap gap-2 sm:gap-3 self-start sm:self-auto">
+                            <div className="text-xs sm:text-sm font-mono shrink-0 whitespace-nowrap">{formatTime(timeLeftSeconds)}</div>
                             <ThemeToggle />
                             <button
-                                className="text-xs rounded-full border px-3 py-1 ui-click"
+                                className="text-xs rounded-full border px-3 py-1 ui-click shrink-0 whitespace-nowrap"
                                 style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                                 onClick={() => setSubmitConfirmOpen(true)}
                                 disabled={submitting}
@@ -779,6 +779,10 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
                         {activeQuestion ? (
                             <QuestionView
                                 attemptId={attemptId}
+                                questionNumber={
+                                    Math.max(0, questions.findIndex((q) => q.id === activeQuestion.id)) +
+                                    1
+                                }
                                 question={activeQuestion}
                                 answer={answersByQid[activeQuestion.id] ?? null}
                                 paletteStatus={paletteByQid[activeQuestion.id] ?? "NOT_VISITED"}

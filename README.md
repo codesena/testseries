@@ -46,6 +46,8 @@ Copy `.env.example` → `.env` and adjust if needed.
 
 This repo supports seeding tests/questions from a Notion **database** (not a plain page).
 
+Full Notion setup + schema reference: [docs/NOTION.md](docs/NOTION.md).
+
 1) Create a Notion internal integration, copy the token, and share your Questions database with that integration.
 
 2) Add these to `.env`:
@@ -66,10 +68,11 @@ This repo supports seeding tests/questions from a Notion **database** (not a pla
 - `Type` (select: MCQ or Numerical)
 - `Question` (rich text; write LaTeX as `$...$` like in the sample seed)
 - `Option A` / `Option B` / `Option C` / `Option D` (rich text; MCQ only)
-- `Option A Image URL` / `Option B Image URL` / `Option C Image URL` / `Option D Image URL` (rich text; MCQ only; optional; enables image-only options)
+- `Option A Image URL` / `Option B Image URL` / `Option C Image URL` / `Option D Image URL` (rich text or url; MCQ only; optional; leave empty or `null` for no image)
 - `Correct Option` (select: A/B/C/D; MCQ only)
 - `Correct Integer` (number; Numerical only; must be an integer)
-- `Image URLs` (rich text; optional; comma or newline separated Cloudinary URLs)
+- `Question URLs` (rich text or url; optional; comma/newline/semicolon separated image URLs)
+	- Backward compatible alias: `Image URLs`
 - `Difficulty` (number; optional)
 
 4) Run the import:

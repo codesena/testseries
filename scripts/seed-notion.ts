@@ -45,6 +45,15 @@ function asAnyText(prop: any): string {
     return asRichTextPlain(prop) || asTitlePlain(prop) || "";
 }
 
+function asUrlPlain(prop: any): string {
+    if (prop?.type !== "url") return "";
+    return String(prop.url ?? "").trim();
+}
+
+function asAnyTextOrUrl(prop: any): string {
+    return asUrlPlain(prop) || asAnyText(prop);
+}
+
 function asBoolFromText(prop: any): boolean | null {
     const s = asAnyText(prop).trim().toLowerCase();
     if (!s) return null;
@@ -82,6 +91,14 @@ function normalizeImportedText(value: string): string {
     s = s.replace(/\\t(?![A-Za-z])/g, "\t");
 
     return s.trim();
+}
+
+function nullLikeToEmpty(value: string): string {
+    const s = value.trim();
+    if (!s) return "";
+    const lower = s.toLowerCase();
+    if (lower === "null" || lower === "none" || lower === "n/a" || lower === "na" || lower === "-") return "";
+    return s;
 }
 
 function assertBalancedDollarDelimiters(args: {
@@ -133,7 +150,8 @@ function parseImageUrls(raw: string): string[] {
     return raw
         .split(/\r?\n|,|;/g)
         .map((s) => s.trim())
-        .filter(Boolean);
+        .filter((s) => Boolean(nullLikeToEmpty(s)))
+        .map((s) => nullLikeToEmpty(s));
 }
 
 function subjectIdFromName(name: string): number {
@@ -244,7 +262,7 @@ async function main() {
         topicName: string;
         scheme: "MAINS_SINGLE" | "MAINS_NUMERICAL";
         questionText: string;
-        options: Record<string, string | { text: string; imageUrl?: string }>;
+        options: Record<string, string | { text: string; imageUrl: string | null }>;
         correctAnswer: string | number;
         difficultyRank: number | null;
         imageUrls: string[];
@@ -268,7 +286,7 @@ async function main() {
             // Test Title (rich_text or title), Duration Minutes (number), Advanced (checkbox),
             // Order (number), Subject (select), Topic (rich_text), Type (select: MCQ|Numerical),
             // Question (rich_text), Option A/B/C/D (rich_text), Correct Option (select A-D),
-            // Correct Integer (number), Image URLs (rich_text), Difficulty (number)
+            // Correct Integer (number), Question URLs/Image URLs (rich_text or url), Difficulty (number)
 
             const testTitleProp = getProp(props, "Test Title");
             const durationProp = getProp(props, "Duration Minutes");
@@ -297,10 +315,18 @@ async function main() {
             const optC = normalizeImportedText(asRichTextPlain(getProp(props, "Option C")));
             const optD = normalizeImportedText(asRichTextPlain(getProp(props, "Option D")));
 
-            const optAImg = normalizeImportedText(asRichTextPlain(getProp(props, "Option A Image URL")));
-            const optBImg = normalizeImportedText(asRichTextPlain(getProp(props, "Option B Image URL")));
-            const optCImg = normalizeImportedText(asRichTextPlain(getProp(props, "Option C Image URL")));
-            const optDImg = normalizeImportedText(asRichTextPlain(getProp(props, "Option D Image URL")));
+            const optAImg = nullLikeToEmpty(
+                normalizeImportedText(asAnyTextOrUrl(getProp(props, "Option A Image URL"))),
+            );
+            const optBImg = nullLikeToEmpty(
+                normalizeImportedText(asAnyTextOrUrl(getProp(props, "Option B Image URL"))),
+            );
+            const optCImg = nullLikeToEmpty(
+                normalizeImportedText(asAnyTextOrUrl(getProp(props, "Option C Image URL"))),
+            );
+            const optDImg = nullLikeToEmpty(
+                normalizeImportedText(asAnyTextOrUrl(getProp(props, "Option D Image URL"))),
+            );
 
             const correctOpt = (
                 asSelectOrMultiSelectFirstName(getProp(props, "Correct Option")) ||
@@ -312,7 +338,16 @@ async function main() {
                 asNumber(getProp(props, "Correct Integer")) ??
                 asIntFromText(getProp(props, "Correct Integer"));
 
-            const imageUrlsRaw = normalizeImportedText(asRichTextPlain(getProp(props, "Image URLs")));
+            const imageUrlsRaw = nullLikeToEmpty(
+                normalizeImportedText(
+                    asAnyTextOrUrl(getProp(props, "Question URLs")) ||
+                    asAnyTextOrUrl(getProp(props, "Question URL")) ||
+                    asAnyTextOrUrl(getProp(props, "Question Image URLs")) ||
+                    asAnyTextOrUrl(getProp(props, "Question Image URL")) ||
+                    asAnyTextOrUrl(getProp(props, "Image URLs")) ||
+                    asAnyTextOrUrl(getProp(props, "Image URL")),
+                ),
+            );
             const difficultyRank =
                 asNumber(getProp(props, "Difficulty")) ??
                 asNumberFromText(getProp(props, "Difficulty"));
@@ -417,7 +452,7 @@ async function main() {
             const subjectId = subjectIdFromName(subjectName);
 
             let scheme: Row["scheme"];
-            let options: Record<string, string | { text: string; imageUrl?: string }> = {};
+            let options: Record<string, string | { text: string; imageUrl: string | null }> = {};
             let correctAnswer: string | number;
 
             if (type === "mcq") {
@@ -435,10 +470,10 @@ async function main() {
                     throw new Error(`Notion row ${page.id} MCQ requires Correct Option select A/B/C/D`);
                 }
                 options = {
-                    A: { text: optA, ...(optAImg ? { imageUrl: optAImg } : {}) },
-                    B: { text: optB, ...(optBImg ? { imageUrl: optBImg } : {}) },
-                    C: { text: optC, ...(optCImg ? { imageUrl: optCImg } : {}) },
-                    D: { text: optD, ...(optDImg ? { imageUrl: optDImg } : {}) },
+                    A: { text: optA, imageUrl: optAImg || null },
+                    B: { text: optB, imageUrl: optBImg || null },
+                    C: { text: optC, imageUrl: optCImg || null },
+                    D: { text: optD, imageUrl: optDImg || null },
                 };
                 correctAnswer = correctOpt;
             } else if (type === "numerical" || type === "numeric") {
@@ -483,12 +518,36 @@ async function main() {
     for (const [title, testRows] of tests.entries()) {
         testRows.sort((a, b) => a.orderIndex - b.orderIndex);
 
-        const existing = await prisma.testSeries.findFirst({ where: { title }, select: { id: true } });
+        const existing = await prisma.testSeries.findFirst({
+            where: { title },
+            select: {
+                id: true,
+                questions: { select: { questionId: true } },
+            },
+        });
         if (existing) {
             if (mode === "replace") {
+                const oldQuestionIds = existing.questions.map((q) => q.questionId);
+
+                // Replace mode is intentionally destructive:
+                // - Deletes attempts for this test (and cascades responses/activities/issue reports)
+                // - Deletes the test
+                // - Deletes now-orphaned questions that were only attached to this test
+                await prisma.studentAttempt.deleteMany({ where: { testId: existing.id } });
                 await prisma.testSeries.delete({ where: { id: existing.id } });
+
+                if (oldQuestionIds.length) {
+                    await prisma.question.deleteMany({
+                        where: {
+                            id: { in: oldQuestionIds },
+                            tests: { none: {} },
+                        },
+                    });
+                }
             } else {
-                throw new Error(`Test already exists with title "${title}". Set NOTION_IMPORT_MODE=replace to overwrite.`);
+                throw new Error(
+                    `Test already exists with title "${title}". Set NOTION_IMPORT_MODE=replace to overwrite.`,
+                );
             }
         }
 

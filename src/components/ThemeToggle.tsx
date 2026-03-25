@@ -65,8 +65,8 @@ export function ThemeToggle() {
     }
 
     return (
-        <label className="text-sm flex items-center gap-2">
-            <span className="opacity-70">Theme</span>
+        <label className="text-xs sm:text-sm flex items-center gap-2 whitespace-nowrap">
+            <span className="opacity-70 hidden sm:inline">Theme</span>
             <div className="relative z-50" ref={popoverRef}>
                 <button
                     type="button"
