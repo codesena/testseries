@@ -3,31 +3,10 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/server/db";
 import { getAuthUser } from "@/server/auth";
 import { isAdminUsername } from "@/server/admin";
+import { IssueReportsClient } from "@/components/admin/IssueReportsClient";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-
-function fmtDate(d: Date | null) {
-    if (!d) return "—";
-    try {
-        return new Intl.DateTimeFormat(undefined, {
-            year: "numeric",
-            month: "short",
-            day: "2-digit",
-            hour: "2-digit",
-            minute: "2-digit",
-        }).format(d);
-    } catch {
-        return d.toISOString();
-    }
-}
-
-function snippet(s: string | null | undefined, max = 220) {
-    const v = (s ?? "").trim();
-    if (!v) return "—";
-    if (v.length <= max) return v;
-    return v.slice(0, max - 1) + "…";
-}
 
 export default async function AdminIssueReportsPage() {
     const auth = await getAuthUser();
@@ -84,11 +63,75 @@ export default async function AdminIssueReportsPage() {
                     id: true,
                     topicName: true,
                     questionText: true,
+                    imageUrls: true,
+                    options: true,
                     subject: { select: { name: true } },
                 },
             },
         },
     });
+
+    const groupByQuestionId = new Map<
+        string,
+        {
+            questionId: string;
+            subjectName: string | null;
+            topicName: string | null;
+            questionText: string | null;
+            imageUrls: string[] | null;
+            options: unknown;
+            reports: Array<{
+                id: string;
+                createdAt: string;
+                issue: string;
+                details: string | null;
+                attemptId: string;
+                studentName: string | null;
+                studentUsername: string | null;
+                testTitle: string | null;
+            }>;
+            latestCreatedAt: string;
+        }
+    >();
+
+    for (const r of reports) {
+        const qid = String(r.questionId);
+        const existing = groupByQuestionId.get(qid);
+        const createdAtIso = r.createdAt.toISOString();
+
+        const reportItem = {
+            id: String(r.id),
+            createdAt: createdAtIso,
+            issue: r.issue,
+            details: r.details,
+            attemptId: r.attemptId,
+            studentName: r.user?.name ?? null,
+            studentUsername: r.user?.username ?? null,
+            testTitle: r.attempt?.test?.title ?? null,
+        };
+
+        if (!existing) {
+            groupByQuestionId.set(qid, {
+                questionId: qid,
+                subjectName: r.question?.subject?.name ?? null,
+                topicName: r.question?.topicName ?? null,
+                questionText: r.question?.questionText ?? null,
+                imageUrls: (r.question as any)?.imageUrls ?? null,
+                options: (r.question as any)?.options ?? null,
+                reports: [reportItem],
+                latestCreatedAt: createdAtIso,
+            });
+        } else {
+            existing.reports.push(reportItem);
+            if (createdAtIso > existing.latestCreatedAt) {
+                existing.latestCreatedAt = createdAtIso;
+            }
+        }
+    }
+
+    const groups = Array.from(groupByQuestionId.values()).sort((a, b) =>
+        b.latestCreatedAt.localeCompare(a.latestCreatedAt),
+    );
 
     return (
         <div className="min-h-screen flex flex-col">
@@ -123,72 +166,8 @@ export default async function AdminIssueReportsPage() {
                     Shows the latest question issue reports submitted by students.
                 </div>
 
-                <div className="mt-6 grid gap-3">
-                    {reports.map((r) => {
-                        const studentLabel = r.user
-                            ? `${r.user.name} (${r.user.username})`
-                            : "—";
-                        const title = r.attempt?.test?.title ?? "—";
-                        const meta = [
-                            fmtDate(r.createdAt),
-                            title,
-                            r.question?.subject?.name ?? "—",
-                            r.question?.topicName ?? "—",
-                        ]
-                            .filter(Boolean)
-                            .join(" · ");
-
-                        return (
-                            <div
-                                key={String(r.id)}
-                                className="rounded-lg border p-4"
-                                style={{ borderColor: "var(--border)", background: "var(--card)" }}
-                            >
-                                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                                    <div className="min-w-0">
-                                        <div className="font-medium truncate">{r.issue}</div>
-                                        <div className="mt-1 text-xs opacity-60 truncate">{meta}</div>
-                                        <div className="mt-2 text-sm opacity-80 truncate">
-                                            By: {studentLabel}
-                                        </div>
-                                    </div>
-
-                                    <div className="flex items-center gap-2 shrink-0">
-                                        <Link
-                                            href={`/attempt/${r.attemptId}/report`}
-                                            className="text-xs rounded-full border px-3 py-1 ui-click"
-                                            style={{ borderColor: "var(--border)", background: "var(--muted)" }}
-                                        >
-                                            Attempt report →
-                                        </Link>
-                                    </div>
-                                </div>
-
-                                <div className="mt-3 text-xs opacity-70">Question</div>
-                                <div className="mt-1 text-sm whitespace-pre-wrap">
-                                    {snippet(r.question?.questionText ?? null)}
-                                </div>
-
-                                <div className="mt-3 flex flex-wrap gap-2 text-xs opacity-70">
-                                    <span>QuestionId: {r.questionId}</span>
-                                    <span>AttemptId: {r.attemptId}</span>
-                                </div>
-
-                                {r.details ? (
-                                    <>
-                                        <div className="mt-3 text-xs opacity-70">Comment</div>
-                                        <div className="mt-1 text-sm whitespace-pre-wrap">{r.details}</div>
-                                    </>
-                                ) : (
-                                    <div className="mt-3 text-sm opacity-60">No comment provided.</div>
-                                )}
-                            </div>
-                        );
-                    })}
-
-                    {reports.length === 0 ? (
-                        <div className="text-sm opacity-70">No issue reports yet.</div>
-                    ) : null}
+                <div className="mt-6">
+                    <IssueReportsClient groups={groups} />
                 </div>
             </main>
         </div>
