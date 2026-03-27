@@ -1,8 +1,19 @@
 "use client";
 
 import Link from "next/link";
+import { MathJax, MathJaxContext } from "better-react-mathjax";
 import { useEffect, useState } from "react";
 import { apiGet } from "@/lib/api";
+import type { QuestionOption } from "@/lib/types";
+
+const mathjaxConfig = {
+    loader: { load: ["[tex]/mhchem"] },
+    tex: {
+        packages: { "[+]": ["mhchem"] },
+        inlineMath: [["$", "$"] , ["\\(", "\\)"]],
+        displayMath: [["$$", "$$"], ["\\[", "\\]"]],
+    },
+} as const;
 
 type ReportPayload = {
     attempt: {
@@ -28,6 +39,12 @@ type ReportPayload = {
             questionId: string;
             subject: string;
             topicName: string;
+            questionText: string;
+            imageUrls: string[] | null;
+            options: QuestionOption[];
+            markingSchemeType: string;
+            selectedAnswer: unknown;
+            correctAnswer: unknown;
             timeSpentSeconds: number;
             attempted: boolean;
             correct: boolean;
@@ -47,6 +64,20 @@ function fmtCompact(s: number) {
     const mm = Math.floor(s / 60);
     const ss = s % 60;
     return mm > 0 ? `${mm}m ${ss}s` : `${ss}s`;
+}
+
+function formatAnswer(value: unknown): string {
+    if (value == null) return "—";
+    if (Array.isArray(value)) return value.map(String).join(", ");
+    if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
+        const s = String(value);
+        return s.trim() ? s : "—";
+    }
+    try {
+        return JSON.stringify(value);
+    } catch {
+        return String(value);
+    }
 }
 
 export function AttemptReportClient({ attemptId }: { attemptId: string }) {
@@ -94,7 +125,8 @@ export function AttemptReportClient({ attemptId }: { attemptId: string }) {
     const subjects = Object.entries(data.analytics.subjectSummary);
 
     return (
-        <div className="min-h-screen flex flex-col">
+        <MathJaxContext config={mathjaxConfig}>
+            <div className="min-h-screen flex flex-col">
             <header className="border-b" style={{ borderColor: "var(--border)" }}>
                 <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
                     <Link
@@ -167,41 +199,97 @@ export function AttemptReportClient({ attemptId }: { attemptId: string }) {
                 </div>
 
                 <div className="mt-8">
-                    <h2 className="text-lg font-semibold">Per-Question Time</h2>
-                    <div className="mt-3 rounded-lg border overflow-hidden" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
-                        <table className="w-full text-sm">
-                            <thead className="text-xs opacity-70" style={{ background: "var(--muted)" }}>
-                                <tr>
-                                    <th className="text-left px-3 py-2 w-12">#</th>
-                                    <th className="text-left px-3 py-2">Subject</th>
-                                    <th className="text-left px-3 py-2">Topic</th>
-                                    <th className="text-left px-3 py-2 w-28">Time</th>
-                                    <th className="text-left px-3 py-2 w-24">Result</th>
-                                    <th className="text-left px-3 py-2 w-20">Marks</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {data.analytics.perQuestion
-                                    .slice()
-                                    .sort((a, b) => b.timeSpentSeconds - a.timeSpentSeconds)
-                                    .map((q, idx) => (
-                                        <tr key={q.questionId} className="border-t" style={{ borderColor: "var(--border)" }}>
-                                            <td className="px-3 py-2 opacity-70">{idx + 1}</td>
-                                            <td className="px-3 py-2">{q.subject}</td>
-                                            <td className="px-3 py-2">{q.topicName}</td>
-                                            <td className="px-3 py-2 font-mono">{fmtCompact(q.timeSpentSeconds)}</td>
-                                            <td className="px-3 py-2">
-                                                {!q.attempted ? "—" : q.correct ? "Correct" : "Incorrect"}
-                                            </td>
-                                            <td className="px-3 py-2">{q.marks.toFixed(2)}</td>
-                                        </tr>
-                                    ))}
-                            </tbody>
-                        </table>
+                    <h2 className="text-lg font-semibold">Question-wise Report</h2>
+                    <div className="mt-3 grid gap-4">
+                        {data.analytics.perQuestion.map((q, idx) => {
+                            const resultLabel = !q.attempted ? "Unattempted" : q.correct ? "Correct" : "Incorrect";
+                            const resultClass = !q.attempted
+                                ? "opacity-70"
+                                : q.correct
+                                  ? "text-green-600"
+                                  : "text-red-600";
+
+                            return (
+                                <div
+                                    key={q.questionId}
+                                    className="rounded-lg border p-4"
+                                    style={{ borderColor: "var(--border)", background: "var(--card)" }}
+                                >
+                                    <div className="flex flex-wrap items-center justify-between gap-3">
+                                        <div className="text-xs opacity-70">
+                                            Q{idx + 1} · {q.subject} · {q.topicName}
+                                        </div>
+                                        <div className="flex items-center gap-4 text-xs">
+                                            <div className={`font-medium ${resultClass}`}>{resultLabel}</div>
+                                            <div className="opacity-70">Time: {fmtCompact(q.timeSpentSeconds)}</div>
+                                            <div className="opacity-70">Marks: {q.marks.toFixed(2)}</div>
+                                        </div>
+                                    </div>
+
+                                    <div className="mt-3 text-base leading-relaxed">
+                                        {q.imageUrls?.length ? (
+                                            <div
+                                                className={`mb-3 grid gap-2 mx-auto ${q.imageUrls.length > 1 ? "sm:grid-cols-2 max-w-3xl" : "max-w-4xl"}`}
+                                            >
+                                                {q.imageUrls.map((url) => (
+                                                    <div
+                                                        key={url}
+                                                        className={`rounded border p-2 flex items-center justify-center w-full relative ${q.imageUrls && q.imageUrls.length > 1
+                                                            ? "h-44 sm:h-56"
+                                                            : "h-64 sm:h-80"}`}
+                                                        style={{ borderColor: "var(--border)", background: "var(--card)" }}
+                                                    >
+                                                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                        <img
+                                                            src={url}
+                                                            alt="Question"
+                                                            className="max-w-full max-h-full object-contain"
+                                                        />
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ) : null}
+
+                                        <MathJax dynamic>{q.questionText}</MathJax>
+                                    </div>
+
+                                    {q.options?.length ? (
+                                        <div className="mt-4 grid gap-2">
+                                            {q.options.map((o) => (
+                                                <div
+                                                    key={o.key}
+                                                    className="rounded border p-3"
+                                                    style={{ borderColor: "var(--border)", background: "var(--card)" }}
+                                                >
+                                                    <div className="flex items-start gap-3">
+                                                        <div className="mt-0.5 text-xs font-mono opacity-70">{o.key}.</div>
+                                                        <div className="text-sm leading-relaxed">
+                                                            <MathJax dynamic>{o.text}</MathJax>
+                                                            {o.imageUrl ? (
+                                                                <div className="mt-2 text-xs opacity-70 break-all">{o.imageUrl}</div>
+                                                            ) : null}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : null}
+
+                                    <div className="mt-4 grid gap-1 text-sm">
+                                        <div>
+                                            <span className="opacity-70">Marked answer:</span> {formatAnswer(q.selectedAnswer)}
+                                        </div>
+                                        <div>
+                                            <span className="opacity-70">Correct answer:</span> {formatAnswer(q.correctAnswer)}
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })}
                     </div>
-                    <div className="mt-2 text-xs opacity-60">Sorted by time spent (desc).</div>
                 </div>
             </main>
-        </div>
+            </div>
+        </MathJaxContext>
     );
 }

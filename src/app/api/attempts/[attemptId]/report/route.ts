@@ -11,6 +11,39 @@ export const dynamic = "force-dynamic";
 
 const ParamsSchema = z.object({ attemptId: z.string().uuid() });
 
+function normalizeDisplayText(value: string) {
+    let s = value.trim();
+
+    // Common CSV/Notion artifacts
+    if ((s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'"))) {
+        s = s.slice(1, -1).trim();
+    }
+
+    // Convert control characters (often introduced by bad JSON-escape parsing like \t or \f)
+    // back into literal backslash sequences so MathJax sees \tan / \frac instead of tabs/formfeeds.
+    s = s.replace(/\u000c/g, "\\f"); // form feed
+    s = s.replace(/\t/g, "\\t");
+
+    // Minimal unescape for leftover artifacts (avoid \n -> newline, which can break LaTeX like \nu)
+    s = s.replace(/\\\"/g, '"');
+    s = s.replace(/\\'/g, "'");
+
+    // If LaTeX delimiters are unbalanced, escape $ to avoid MathJax "Math input error".
+    const dollarCount = (s.match(/\$/g) ?? []).length;
+    if (dollarCount % 2 === 1) {
+        s = s.replace(/\$/g, "\\$");
+    }
+
+    return s.trim();
+}
+
+function isAttemptedAnswer(value: unknown): boolean {
+    if (value == null) return false;
+    if (typeof value === "string" && value.trim() === "") return false;
+    if (Array.isArray(value) && value.length === 0) return false;
+    return true;
+}
+
 export async function GET(
     _req: Request,
     ctx: { params: Promise<{ attemptId: string }> },
@@ -38,7 +71,9 @@ export async function GET(
             overallScore: true,
             startTimestamp: true,
             endTimestamp: true,
-            test: { select: { title: true, totalDurationMinutes: true } },
+            test: { select: { id: true, title: true, totalDurationMinutes: true } },
+            questionOrder: true,
+            optionOrders: true,
             responses: {
                 select: {
                     questionId: true,
@@ -77,18 +112,47 @@ export async function GET(
         select: { name: true },
     });
 
-    const questionIds = attempt.responses.map((r) => r.questionId);
+    const storedQuestionOrder = Array.isArray(attempt.questionOrder)
+        ? (attempt.questionOrder as unknown[]).map(String)
+        : [];
+
+    const optionOrders =
+        attempt.optionOrders && typeof attempt.optionOrders === "object"
+            ? (attempt.optionOrders as Record<string, string[]>)
+            : {};
+
+    // Prefer the test's defined order so questions are sequential by section,
+    // even if older attempts stored a randomized order.
+    let questionOrder = storedQuestionOrder;
+    const testOrder = await prisma.testQuestion.findMany({
+        where: { testId: attempt.test.id },
+        orderBy: { orderIndex: "asc" },
+        select: { questionId: true },
+    });
+    const testQuestionOrder = testOrder.map((x) => x.questionId);
+    if (testQuestionOrder.length) {
+        const storedSet = new Set(storedQuestionOrder);
+        const allPresent = testQuestionOrder.every((qid) => storedSet.has(qid));
+        if (allPresent) questionOrder = testQuestionOrder;
+    }
+
+    const questionIds = questionOrder.length ? questionOrder : attempt.responses.map((r) => r.questionId);
     const questions = await prisma.question.findMany({
         where: { id: { in: questionIds } },
         select: {
             id: true,
             topicName: true,
+            questionText: true,
+            imageUrls: true,
+            options: true,
             correctAnswer: true,
             markingSchemeType: true,
             subject: { select: { name: true } },
         },
     });
     const byId = new Map(questions.map((q) => [q.id, q] as const));
+
+    const responsesByQid = new Map(attempt.responses.map((r) => [r.questionId, r] as const));
 
     const subjectAgg: Record<
         string,
@@ -105,17 +169,22 @@ export async function GET(
         0,
     );
 
-    const perQuestion = attempt.responses.map((r) => {
-        const q = byId.get(r.questionId);
+    const perQuestionOrdered = questionIds.map((qid) => {
+        const q = byId.get(qid);
         if (!q) return null;
 
+        const r = responsesByQid.get(qid);
+        const selectedAnswer = r?.selectedAnswer ?? null;
+        const timeSpentSeconds = r?.timeSpentSeconds ?? 0;
+        const paletteStatus = r?.paletteStatus ?? "NOT_VISITED";
+
         const marks = evaluateResponse({
-            userAnswer: r.selectedAnswer,
+            userAnswer: selectedAnswer,
             correctAnswer: q.correctAnswer,
             schemeType: q.markingSchemeType,
         });
 
-        const attempted = r.selectedAnswer != null;
+        const attempted = isAttemptedAnswer(selectedAnswer);
         const correct = attempted && marks > 0;
 
         const subject = q.subject.name;
@@ -125,7 +194,7 @@ export async function GET(
             incorrect: 0,
             unattempted: 0,
         };
-        subjectAgg[subject].totalTimeSeconds += r.timeSpentSeconds;
+        subjectAgg[subject].totalTimeSeconds += timeSpentSeconds;
         if (!attempted) subjectAgg[subject].unattempted += 1;
         else if (correct) subjectAgg[subject].correct += 1;
         else subjectAgg[subject].incorrect += 1;
@@ -134,17 +203,44 @@ export async function GET(
         topicAgg[q.topicName].total += 1;
         if (correct) topicAgg[q.topicName].correct += 1;
 
-        if (correct) timeCorrect += r.timeSpentSeconds;
-        else if (attempted) timeIncorrect += r.timeSpentSeconds;
+        if (correct) timeCorrect += timeSpentSeconds;
+        else if (attempted) timeIncorrect += timeSpentSeconds;
+
+        const options = (q.options ?? {}) as Record<string, unknown>;
+        const order = optionOrders[qid] ?? Object.keys(options);
+        const orderedOptions = order
+            .filter((k) => k in options)
+            .map((k) => {
+                const raw = options[k];
+                if (typeof raw === "string") {
+                    return { key: k, text: normalizeDisplayText(raw), imageUrl: null as string | null };
+                }
+                if (raw && typeof raw === "object") {
+                    const maybeText = (raw as { text?: unknown }).text;
+                    const maybeImageUrl = (raw as { imageUrl?: unknown }).imageUrl;
+                    return {
+                        key: k,
+                        text: typeof maybeText === "string" ? normalizeDisplayText(maybeText) : "",
+                        imageUrl: typeof maybeImageUrl === "string" ? maybeImageUrl.trim() : null,
+                    };
+                }
+                return { key: k, text: "", imageUrl: null as string | null };
+            });
 
         return {
-            questionId: r.questionId,
+            questionId: qid,
             subject,
-            topicName: q.topicName,
-            timeSpentSeconds: r.timeSpentSeconds,
+            topicName: normalizeDisplayText(q.topicName),
+            questionText: normalizeDisplayText(q.questionText),
+            imageUrls: Array.isArray(q.imageUrls) ? (q.imageUrls as unknown[]).map(String) : null,
+            options: orderedOptions,
+            markingSchemeType: q.markingSchemeType,
+            selectedAnswer,
+            correctAnswer: q.correctAnswer,
+            timeSpentSeconds,
             attempted,
             correct,
-            paletteStatus: r.paletteStatus,
+            paletteStatus,
             marks,
         };
     });
@@ -184,7 +280,7 @@ export async function GET(
             timeOnIncorrectSeconds: timeIncorrect,
             attemptPath,
             topicAccuracy,
-            perQuestion: perQuestion.filter(Boolean),
+            perQuestion: perQuestionOrdered.filter(Boolean),
         },
     });
 }
