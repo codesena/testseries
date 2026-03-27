@@ -23,7 +23,7 @@
   "dependencies": {
     "@notionhq/client": "^4.0.2",
     "@prisma/adapter-pg": "^7.5.0",
-    "@prisma/client": "^7.5.0",
+    "@prisma/client": "^7.6.0",
     "bcryptjs": "^3.0.3",
     "better-react-mathjax": "^3.0.0",
     "idb": "^8.0.3",
@@ -42,7 +42,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.2.1",
-    "prisma": "^7.5.0",
+    "prisma": "^7.6.0",
     "tailwindcss": "^4",
     "tsx": "^4.20.5",
     "typescript": "^5"

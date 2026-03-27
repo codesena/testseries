@@ -127,20 +127,23 @@ export function AttemptReportClient({ attemptId }: { attemptId: string }) {
     return (
         <MathJaxContext config={mathjaxConfig}>
             <div className="min-h-screen flex flex-col">
-            <header className="border-b" style={{ borderColor: "var(--border)" }}>
-                <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
-                    <Link
-                        href="/"
-                        className="text-xs rounded-full border px-3 py-1 ui-click"
-                        style={{ borderColor: "var(--border)", background: "var(--muted)" }}
-                    >
-                        ← Home
-                    </Link>
-                    <div className="text-sm opacity-70">Attempt Report</div>
-                </div>
-            </header>
+                <header
+                    className="sticky top-0 z-50 border-b"
+                    style={{ borderColor: "var(--border)", background: "var(--background)" }}
+                >
+                    <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
+                        <Link
+                            href="/"
+                            className="text-xs rounded-full border px-3 py-1 ui-click"
+                            style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                        >
+                            ← Home
+                        </Link>
+                        <div className="text-sm opacity-70">Attempt Report</div>
+                    </div>
+                </header>
 
-            <main className="max-w-4xl mx-auto w-full px-4 py-8">
+                <main className="max-w-4xl mx-auto w-full px-4 py-8">
                 <h1 className="text-2xl font-semibold">{data.attempt.test.title}</h1>
                 <div className="mt-2 text-sm opacity-70">
                     Attempt {data.attempt.id.slice(0, 8)} · Status {data.attempt.status}

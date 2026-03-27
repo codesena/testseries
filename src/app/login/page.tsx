@@ -14,7 +14,10 @@ export default function LoginPage() {
 
     return (
         <div className="min-h-screen flex flex-col">
-            <header className="border-b" style={{ borderColor: "var(--border)" }}>
+            <header
+                className="sticky top-0 z-50 border-b"
+                style={{ borderColor: "var(--border)", background: "var(--background)" }}
+            >
                 <div className="max-w-md mx-auto px-4 py-4 flex items-center justify-between">
                     <Link
                         href="/"
