@@ -2,6 +2,7 @@ import { prisma } from "@/server/db";
 import { ActivityType } from "@prisma/client";
 import { getAuthUserId } from "@/server/auth";
 import { json } from "@/server/json";
+import { autoSubmitAttemptIfOverdue } from "@/server/attempt-finalize";
 import { z } from "zod";
 
 export const runtime = "nodejs";
@@ -37,12 +38,23 @@ export async function POST(
         );
     }
 
-    const ownsAttempt = await prisma.studentAttempt.findFirst({
+    const attempt = await prisma.studentAttempt.findFirst({
         where: { id: params.data.attemptId, studentId: userId },
-        select: { id: true },
+        select: {
+            id: true,
+            status: true,
+            startTimestamp: true,
+            test: { select: { totalDurationMinutes: true } },
+            responses: { select: { questionId: true, selectedAnswer: true } },
+        },
     });
-    if (!ownsAttempt) {
+    if (!attempt) {
         return json({ error: "Attempt not found" }, { status: 404 });
+    }
+
+    const auto = await autoSubmitAttemptIfOverdue(prisma, attempt, new Date());
+    if (auto.didAutoSubmit || attempt.status !== "IN_PROGRESS") {
+        return json({ error: "Attempt submitted" }, { status: 409 });
     }
 
     const created = await prisma.activityLog.create({

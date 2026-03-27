@@ -44,7 +44,12 @@ async function safePost<T>(
 ): Promise<T | null> {
     try {
         return await apiPost<T>(path, body);
-    } catch {
+    } catch (err) {
+        const msg = err instanceof Error ? err.message : "";
+        // Non-retryable / stateful errors: don't enqueue, it will just grow the outbox forever.
+        if (/^(401|403|404|409)\b/.test(msg)) {
+            return null;
+        }
         await enqueueOutbox({
             attemptId: fallback.attemptId,
             kind: fallback.kind,
@@ -83,6 +88,11 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
 
     const [timeLeftSeconds, setTimeLeftSeconds] = useState<number>(durationSeconds);
 
+    const activeQuestionIdRef = useRef<string | null>(null);
+    const paletteByQidRef = useRef<PaletteByQid>({});
+    const timeByQidRef = useRef<TimeByQid>({});
+    const timeLeftSecondsRef = useRef<number>(durationSeconds);
+
     const [attemptStartMs, setAttemptStartMs] = useState<number | null>(null);
 
     const autoSubmittedRef = useRef(false);
@@ -107,6 +117,22 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
         () => questions.find((q) => q.id === activeQuestionId) ?? null,
         [questions, activeQuestionId],
     );
+
+    useEffect(() => {
+        activeQuestionIdRef.current = activeQuestionId;
+    }, [activeQuestionId]);
+
+    useEffect(() => {
+        paletteByQidRef.current = paletteByQid;
+    }, [paletteByQid]);
+
+    useEffect(() => {
+        timeByQidRef.current = timeByQid;
+    }, [timeByQid]);
+
+    useEffect(() => {
+        timeLeftSecondsRef.current = timeLeftSeconds;
+    }, [timeLeftSeconds]);
 
     const subjects = useMemo(() => {
         const map = new Map<number, string>();
@@ -136,7 +162,13 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
                     await apiPost(`/api/attempts/${attemptId}/submit`, item.payload);
                 }
                 await deleteOutboxItem(item.id);
-            } catch {
+            } catch (err) {
+                const msg = err instanceof Error ? err.message : "";
+                // If the server says attempt is already submitted / not found, drop the stale item.
+                if (/^(404|409)\b/.test(msg)) {
+                    await deleteOutboxItem(item.id);
+                    continue;
+                }
                 break;
             }
         }
@@ -221,6 +253,11 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
                 const data = await apiGet<AttemptPayload>(`/api/attempts/${attemptId}`);
                 if (cancelled) return;
 
+                if (data.attempt.status !== "IN_PROGRESS") {
+                    router.push(`/attempt/${attemptId}/report`);
+                    return;
+                }
+
                 setQuestions(data.attempt.questions);
                 setTestTitle(data.attempt.test.title);
                 setDurationSeconds(data.attempt.test.totalDurationMinutes * 60);
@@ -297,7 +334,7 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
             if (left <= 0) {
                 window.clearInterval(timer);
             }
-        }, 250);
+        }, 1000);
 
         return () => window.clearInterval(timer);
     }, [attemptStartMs, durationSeconds]);
@@ -438,17 +475,18 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
     // Heartbeat + flush outbox
     useEffect(() => {
         const t = window.setInterval(() => {
-            if (activeQuestionId) {
-                const local = timeByQid[activeQuestionId] ?? 0;
-                const synced = syncedTimeByQidRef.current[activeQuestionId] ?? 0;
+            const qid = activeQuestionIdRef.current;
+            if (qid) {
+                const local = timeByQidRef.current[qid] ?? 0;
+                const synced = syncedTimeByQidRef.current[qid] ?? 0;
                 const delta = Math.max(0, local - synced);
                 if (delta > 0) {
-                    syncedTimeByQidRef.current[activeQuestionId] = local;
+                    syncedTimeByQidRef.current[qid] = local;
                     void safePost(
                         `/api/attempts/${attemptId}/responses`,
                         {
-                            questionId: activeQuestionId,
-                            paletteStatus: paletteByQid[activeQuestionId] ?? "VISITED_NOT_ANSWERED",
+                            questionId: qid,
+                            paletteStatus: paletteByQidRef.current[qid] ?? "VISITED_NOT_ANSWERED",
                             timeDeltaSeconds: delta,
                             action: "NAVIGATE",
                         },
@@ -456,8 +494,8 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
                             attemptId,
                             kind: "response",
                             payload: {
-                                questionId: activeQuestionId,
-                                paletteStatus: paletteByQid[activeQuestionId] ?? "VISITED_NOT_ANSWERED",
+                                questionId: qid,
+                                paletteStatus: paletteByQidRef.current[qid] ?? "VISITED_NOT_ANSWERED",
                                 timeDeltaSeconds: delta,
                                 action: "NAVIGATE",
                             },
@@ -466,14 +504,15 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
                 }
             }
 
-            logEvent("HEARTBEAT", activeQuestionId ?? undefined, {
-                timeLeftSeconds,
+            logEvent("HEARTBEAT", qid ?? undefined, {
+                timeLeftSeconds: timeLeftSecondsRef.current,
             });
             void flushOutbox();
         }, heartbeatIntervalMs);
 
         return () => window.clearInterval(t);
-    }, [activeQuestionId, heartbeatIntervalMs, paletteByQid, timeByQid, timeLeftSeconds]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [attemptId, heartbeatIntervalMs]);
 
     // Snapshot debounce
     const snapshotTimer = useRef<number | null>(null);

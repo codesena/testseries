@@ -1,6 +1,7 @@
 import { prisma } from "@/server/db";
 import { getAuthUser } from "@/server/auth";
 import { isAdminUsername } from "@/server/admin";
+import { autoSubmitAttemptIfOverdue } from "@/server/attempt-finalize";
 import { evaluateResponse } from "@/server/evaluate";
 import { json } from "@/server/json";
 import { z } from "zod";
@@ -59,6 +60,17 @@ export async function GET(
     if (!attempt) {
         return json({ error: "Attempt not found" }, { status: 404 });
     }
+
+    await autoSubmitAttemptIfOverdue(prisma, {
+        id: attempt.id,
+        status: attempt.status,
+        startTimestamp: attempt.startTimestamp,
+        test: { totalDurationMinutes: attempt.test.totalDurationMinutes },
+        responses: attempt.responses.map((r) => ({
+            questionId: r.questionId,
+            selectedAnswer: r.selectedAnswer,
+        })),
+    });
 
     const student = await prisma.user.findUnique({
         where: { id: attempt.studentId },

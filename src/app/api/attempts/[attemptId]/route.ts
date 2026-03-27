@@ -1,6 +1,7 @@
 import { prisma } from "@/server/db";
 import { getAuthUserId } from "@/server/auth";
 import { json } from "@/server/json";
+import { autoSubmitAttemptIfOverdue } from "@/server/attempt-finalize";
 import { z } from "zod";
 
 export const runtime = "nodejs";
@@ -80,6 +81,21 @@ export async function GET(
         return json({ error: "Attempt not found" }, { status: 404 });
     }
 
+    let effectiveStatus = attempt.status;
+    const auto = await autoSubmitAttemptIfOverdue(prisma, {
+        id: attempt.id,
+        status: attempt.status,
+        startTimestamp: attempt.startTimestamp,
+        test: { totalDurationMinutes: attempt.test.totalDurationMinutes },
+        responses: attempt.responses.map((r) => ({
+            questionId: r.questionId,
+            selectedAnswer: r.selectedAnswer,
+        })),
+    });
+    if (auto.didAutoSubmit) {
+        effectiveStatus = "AUTO_SUBMITTED";
+    }
+
     const storedQuestionOrder = attempt.questionOrder as string[];
     const optionOrders = attempt.optionOrders as Record<string, string[]>;
 
@@ -156,7 +172,7 @@ export async function GET(
     return json({
         attempt: {
             id: attempt.id,
-            status: attempt.status,
+            status: effectiveStatus,
             startTimestamp: attempt.startTimestamp,
             test: attempt.test,
             questions: orderedQuestions,

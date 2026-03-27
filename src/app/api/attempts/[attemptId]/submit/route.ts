@@ -1,7 +1,7 @@
 import { prisma } from "@/server/db";
 import { getAuthUserId } from "@/server/auth";
-import { evaluateResponse } from "@/server/evaluate";
 import { json } from "@/server/json";
+import { autoSubmitAttemptIfOverdue, finalizeAttempt } from "@/server/attempt-finalize";
 import { z } from "zod";
 
 export const runtime = "nodejs";
@@ -28,9 +28,10 @@ export async function POST(
         select: {
             id: true,
             status: true,
+            startTimestamp: true,
             test: { select: { totalDurationMinutes: true } },
             responses: {
-                select: { questionId: true, selectedAnswer: true, paletteStatus: true },
+                select: { questionId: true, selectedAnswer: true },
             },
         },
     });
@@ -43,41 +44,12 @@ export async function POST(
         return json({ error: "Attempt already submitted" }, { status: 409 });
     }
 
-    const questionIds = attempt.responses.map((r) => r.questionId);
-    const questions = await prisma.question.findMany({
-        where: { id: { in: questionIds } },
-        select: { id: true, correctAnswer: true, markingSchemeType: true },
-    });
-    const byId = new Map(questions.map((q) => [q.id, q] as const));
-
-    let score = 0;
-    for (const r of attempt.responses) {
-        const q = byId.get(r.questionId);
-        if (!q) continue;
-
-        score += evaluateResponse({
-            userAnswer: r.selectedAnswer,
-            correctAnswer: q.correctAnswer,
-            schemeType: q.markingSchemeType,
-        });
+    const now = new Date();
+    const auto = await autoSubmitAttemptIfOverdue(prisma, attempt, now);
+    if (auto.didAutoSubmit) {
+        return json({ ok: true, score: auto.score ?? 0, status: "AUTO_SUBMITTED" });
     }
 
-    await prisma.studentAttempt.update({
-        where: { id: attempt.id },
-        data: {
-            status: "SUBMITTED",
-            endTimestamp: new Date(),
-            overallScore: score,
-        },
-    });
-
-    await prisma.activityLog.create({
-        data: {
-            attemptId: attempt.id,
-            type: "SUBMIT",
-            payload: { score },
-        },
-    });
-
-    return json({ ok: true, score });
+    const result = await finalizeAttempt(prisma, attempt, "SUBMITTED", now);
+    return json({ ok: true, score: result.score, status: "SUBMITTED" });
 }
