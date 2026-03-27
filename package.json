@@ -6,7 +6,7 @@
     "postinstall": "prisma generate && node scripts/fix-prisma-client.mjs",
     "dev": "next dev",
     "build": "next build",
-    "vercel-build": "prisma migrate deploy && next build",
+    "vercel-build": "node scripts/vercel-build.mjs",
     "start": "next start",
     "lint": "eslint",
     "db:up": "docker compose up -d",
