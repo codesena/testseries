@@ -792,7 +792,7 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
                     className="sticky top-0 z-50 border-b"
                     style={{ borderColor: "var(--border)", background: "var(--card)" }}
                 >
-                    <div className="px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <div className="px-4 py-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                         <div className="min-w-0 w-full">
                             <div className="font-semibold truncate">{testTitle}</div>
                             <div className="text-xs opacity-70">

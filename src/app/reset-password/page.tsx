@@ -19,7 +19,7 @@ export default function ResetPasswordPage() {
                 className="sticky top-0 z-50 border-b"
                 style={{ borderColor: "var(--border)", background: "var(--background)" }}
             >
-                <div className="max-w-md mx-auto px-4 py-4 flex items-center justify-between">
+                <div className="max-w-md mx-auto px-4 py-3 flex items-center justify-between">
                     <Link href="/login" className="text-sm underline">
                         ← Back
                     </Link>

@@ -102,10 +102,10 @@ export default async function Home() {
                 className="sticky top-0 z-50 border-b"
                 style={{ borderColor: "var(--border)", background: "var(--background)" }}
             >
-                <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
+                <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
                     <div>
-                        <div className="text-lg font-semibold">JEE Test Series</div>
-                        <div className="text-sm opacity-70">CBT-style mock platform</div>
+                        <div className="text-base font-semibold">JEE Test Series</div>
+                        <div className="text-xs opacity-70">CBT-style mock platform</div>
                         <div className="text-xs opacity-60">Student: {user?.name ?? "—"}</div>
                     </div>
                     <div className="flex items-center gap-3">
