@@ -89,7 +89,16 @@ export default async function AdminPage() {
                     >
                         Home
                     </Link>
-                    <div className="text-sm opacity-70">Admin</div>
+                    <div className="flex items-center gap-2">
+                        <Link
+                            href="/admin/issues"
+                            className="text-xs rounded-full border px-3 py-1 ui-click"
+                            style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                        >
+                            Issue reports
+                        </Link>
+                        <div className="text-sm opacity-70">Admin</div>
+                    </div>
                 </div>
             </header>
 
