@@ -37,6 +37,61 @@ function normalizeDisplayText(value: string) {
     return s.trim();
 }
 
+function normalizeMaybeText(value: unknown): string {
+    return typeof value === "string" ? normalizeDisplayText(value) : "";
+}
+
+function coerceQuestionOptions(value: unknown): Array<{ key: string; text: string; imageUrl: string | null }> {
+    let parsed = value;
+
+    if (typeof parsed === "string") {
+        try {
+            parsed = JSON.parse(parsed);
+        } catch {
+            return [];
+        }
+    }
+
+    if (Array.isArray(parsed)) {
+        const out: Array<{ key: string; text: string; imageUrl: string | null }> = [];
+        for (const item of parsed) {
+            if (!item || typeof item !== "object") continue;
+            const maybeKey = (item as { key?: unknown }).key;
+            if (typeof maybeKey !== "string") continue;
+            const maybeText = (item as { text?: unknown }).text;
+            const maybeImageUrl = (item as { imageUrl?: unknown }).imageUrl;
+            out.push({
+                key: maybeKey,
+                text: normalizeMaybeText(maybeText),
+                imageUrl: typeof maybeImageUrl === "string" ? maybeImageUrl.trim() : null,
+            });
+        }
+        return out;
+    }
+
+    if (parsed && typeof parsed === "object") {
+        return Object.entries(parsed as Record<string, unknown>).map(([key, raw]) => {
+            if (typeof raw === "string") {
+                return { key, text: normalizeDisplayText(raw), imageUrl: null as string | null };
+            }
+
+            if (raw && typeof raw === "object") {
+                const maybeText = (raw as { text?: unknown }).text;
+                const maybeImageUrl = (raw as { imageUrl?: unknown }).imageUrl;
+                return {
+                    key,
+                    text: normalizeMaybeText(maybeText),
+                    imageUrl: typeof maybeImageUrl === "string" ? maybeImageUrl.trim() : null,
+                };
+            }
+
+            return { key, text: "", imageUrl: null as string | null };
+        });
+    }
+
+    return [];
+}
+
 function isAttemptedAnswer(value: unknown): boolean {
     if (value == null) return false;
     if (typeof value === "string" && value.trim() === "") return false;
@@ -199,39 +254,27 @@ export async function GET(
         else if (correct) subjectAgg[subject].correct += 1;
         else subjectAgg[subject].incorrect += 1;
 
-        topicAgg[q.topicName] ??= { correct: 0, total: 0 };
-        topicAgg[q.topicName].total += 1;
-        if (correct) topicAgg[q.topicName].correct += 1;
+        const topicName = normalizeMaybeText(q.topicName) || "Unknown";
+        topicAgg[topicName] ??= { correct: 0, total: 0 };
+        topicAgg[topicName].total += 1;
+        if (correct) topicAgg[topicName].correct += 1;
 
         if (correct) timeCorrect += timeSpentSeconds;
         else if (attempted) timeIncorrect += timeSpentSeconds;
 
-        const options = (q.options ?? {}) as Record<string, unknown>;
-        const order = optionOrders[qid] ?? Object.keys(options);
+        const parsedOptions = coerceQuestionOptions(q.options);
+        const parsedByKey = new Map(parsedOptions.map((o) => [o.key, o] as const));
+        const fallbackOrder = parsedOptions.map((o) => o.key);
+        const order = Array.isArray(optionOrders[qid]) ? optionOrders[qid] : fallbackOrder;
         const orderedOptions = order
-            .filter((k) => k in options)
-            .map((k) => {
-                const raw = options[k];
-                if (typeof raw === "string") {
-                    return { key: k, text: normalizeDisplayText(raw), imageUrl: null as string | null };
-                }
-                if (raw && typeof raw === "object") {
-                    const maybeText = (raw as { text?: unknown }).text;
-                    const maybeImageUrl = (raw as { imageUrl?: unknown }).imageUrl;
-                    return {
-                        key: k,
-                        text: typeof maybeText === "string" ? normalizeDisplayText(maybeText) : "",
-                        imageUrl: typeof maybeImageUrl === "string" ? maybeImageUrl.trim() : null,
-                    };
-                }
-                return { key: k, text: "", imageUrl: null as string | null };
-            });
+            .map((k) => parsedByKey.get(k))
+            .filter((o): o is { key: string; text: string; imageUrl: string | null } => Boolean(o));
 
         return {
             questionId: qid,
             subject,
-            topicName: normalizeDisplayText(q.topicName),
-            questionText: normalizeDisplayText(q.questionText),
+            topicName,
+            questionText: normalizeMaybeText(q.questionText),
             imageUrls: Array.isArray(q.imageUrls) ? (q.imageUrls as unknown[]).map(String) : null,
             options: orderedOptions,
             markingSchemeType: q.markingSchemeType,
