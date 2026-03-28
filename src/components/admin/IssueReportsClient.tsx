@@ -7,7 +7,7 @@ const mathjaxConfig = {
     loader: { load: ["[tex]/mhchem"] },
     tex: {
         packages: { "[+]": ["mhchem"] },
-        inlineMath: [["$", "$"] , ["\\(", "\\)"]],
+        inlineMath: [["$", "$"], ["\\(", "\\)"]],
         displayMath: [["$$", "$$"], ["\\[", "\\]"]],
     },
 } as const;
@@ -46,22 +46,53 @@ function splitUrlList(raw: string): string[] {
         .filter((s) => !isNullLikeToken(s));
 }
 
-function coerceOptions(value: unknown): QuestionOption[] {
-    if (!Array.isArray(value)) return [];
-    const out: QuestionOption[] = [];
-    for (const item of value) {
-        if (!item || typeof item !== "object") continue;
-        const maybeKey = (item as any).key;
-        const maybeText = (item as any).text;
-        const maybeImageUrl = (item as any).imageUrl;
-        if (typeof maybeKey !== "string") continue;
-        out.push({
-            key: maybeKey,
+function toOptionFromValue(key: string, raw: unknown): QuestionOption {
+    if (typeof raw === "string") {
+        return { key, text: raw, imageUrl: null };
+    }
+
+    if (raw && typeof raw === "object") {
+        const maybeText = (raw as any).text;
+        const maybeImageUrl = (raw as any).imageUrl;
+        return {
+            key,
             text: typeof maybeText === "string" ? maybeText : "",
             imageUrl: typeof maybeImageUrl === "string" ? maybeImageUrl : null,
-        });
+        };
     }
-    return out;
+
+    return { key, text: "", imageUrl: null };
+}
+
+function coerceOptions(value: unknown): QuestionOption[] {
+    let parsed = value;
+
+    if (typeof parsed === "string") {
+        try {
+            parsed = JSON.parse(parsed);
+        } catch {
+            return [];
+        }
+    }
+
+    if (Array.isArray(parsed)) {
+        const out: QuestionOption[] = [];
+        for (const item of parsed) {
+            if (!item || typeof item !== "object") continue;
+            const maybeKey = (item as any).key;
+            if (typeof maybeKey !== "string") continue;
+            out.push(toOptionFromValue(maybeKey, item));
+        }
+        return out;
+    }
+
+    if (parsed && typeof parsed === "object") {
+        return Object.entries(parsed as Record<string, unknown>).map(([key, raw]) =>
+            toOptionFromValue(key, raw),
+        );
+    }
+
+    return [];
 }
 
 function fmtDate(iso: string) {
