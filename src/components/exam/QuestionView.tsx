@@ -5,6 +5,7 @@ import { useState } from "react";
 import type { AttemptQuestion } from "@/lib/types";
 import { apiPost } from "@/lib/api";
 import type { PaletteStatus } from "@/components/exam/palette";
+import { optimizeImageDelivery } from "@/lib/image-delivery";
 
 function isNullLikeToken(s: string): boolean {
     const v = s.trim().toLowerCase();
@@ -165,9 +166,12 @@ export function QuestionView({
                             >
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img
-                                    src={url}
+                                    src={optimizeImageDelivery(url)}
                                     alt="Question"
                                     className="max-w-full max-h-full object-contain"
+                                    loading="lazy"
+                                    decoding="async"
+                                    referrerPolicy="no-referrer"
                                 />
                             </div>
                         ))}
@@ -256,9 +260,12 @@ export function QuestionView({
                                                     >
                                                         {/* eslint-disable-next-line @next/next/no-img-element */}
                                                         <img
-                                                            src={url}
+                                                            src={optimizeImageDelivery(url)}
                                                             alt={`Option ${o.key}`}
                                                             className="max-w-full max-h-full object-contain"
+                                                            loading="lazy"
+                                                            decoding="async"
+                                                            referrerPolicy="no-referrer"
                                                         />
                                                     </div>
                                                 ))}

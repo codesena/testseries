@@ -2,6 +2,7 @@
 
 import { MathJax, MathJaxContext } from "better-react-mathjax";
 import type { QuestionOption } from "@/lib/types";
+import { optimizeImageDelivery } from "@/lib/image-delivery";
 
 const mathjaxConfig = {
     loader: { load: ["[tex]/mhchem"] },
@@ -144,9 +145,12 @@ export function IssueReportsClient({ groups }: { groups: IssueQuestionGroup[] })
                                             >
                                                 {/* eslint-disable-next-line @next/next/no-img-element */}
                                                 <img
-                                                    src={url}
+                                                    src={optimizeImageDelivery(url)}
                                                     alt="Question"
                                                     className="max-w-full max-h-full object-contain"
+                                                    loading="lazy"
+                                                    decoding="async"
+                                                    referrerPolicy="no-referrer"
                                                 />
                                             </div>
                                         ))}
@@ -198,9 +202,12 @@ export function IssueReportsClient({ groups }: { groups: IssueQuestionGroup[] })
                                                                     >
                                                                         {/* eslint-disable-next-line @next/next/no-img-element */}
                                                                         <img
-                                                                            src={url}
+                                                                            src={optimizeImageDelivery(url)}
                                                                             alt={`Option ${o.key}`}
                                                                             className="max-w-full max-h-full object-contain"
+                                                                            loading="lazy"
+                                                                            decoding="async"
+                                                                            referrerPolicy="no-referrer"
                                                                         />
                                                                     </div>
                                                                 ))}
