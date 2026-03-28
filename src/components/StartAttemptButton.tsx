@@ -1,11 +1,9 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { apiPost } from "@/lib/api";
 
 export function StartAttemptButton({ testId }: { testId: string }) {
-    const router = useRouter();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const loadingRef = useRef(false);
@@ -30,11 +28,11 @@ export function StartAttemptButton({ testId }: { testId: string }) {
                         const res = await apiPost<{ attemptId: string }>("/api/attempts", {
                             testId,
                         });
-                        router.push(`/attempt/${res.attemptId}`);
+                        window.location.assign(`/attempt/${res.attemptId}`);
                     } catch (e) {
                         const msg = e instanceof Error ? e.message : "Failed to start";
                         if (msg.startsWith("401")) {
-                            router.push("/login");
+                            window.location.assign("/login");
                             return;
                         }
                         setError(msg);

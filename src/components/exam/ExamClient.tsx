@@ -826,14 +826,14 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
 
             // Wait briefly so report generation/evaluation settles before redirecting.
             await waitForReportReady(attemptId);
-            router.push(`/attempt/${attemptId}/report`);
+            window.location.assign(`/attempt/${attemptId}/report`);
         } catch (err) {
             const msg = err instanceof Error ? err.message : "";
 
             // Already submitted: move to report once endpoint is reachable.
             if (/^409\b/.test(msg)) {
                 await waitForReportReady(attemptId);
-                router.push(`/attempt/${attemptId}/report`);
+                window.location.assign(`/attempt/${attemptId}/report`);
                 return;
             }
 
@@ -841,7 +841,7 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
 
             const ready = await waitForReportReady(attemptId);
             if (ready) {
-                router.push(`/attempt/${attemptId}/report`);
+                window.location.assign(`/attempt/${attemptId}/report`);
                 return;
             }
 
