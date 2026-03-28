@@ -10,7 +10,7 @@ const mathjaxConfig = {
     loader: { load: ["[tex]/mhchem"] },
     tex: {
         packages: { "[+]": ["mhchem"] },
-        inlineMath: [["$", "$"] , ["\\(", "\\)"]],
+        inlineMath: [["$", "$"], ["\\(", "\\)"]],
         displayMath: [["$$", "$$"], ["\\[", "\\]"]],
     },
 } as const;
@@ -54,6 +54,17 @@ type ReportPayload = {
     };
 };
 
+function sleep(ms: number) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function isRetryableApiError(msg: string): boolean {
+    return (
+        /^404\b|^408\b|^425\b|^429\b|^500\b|^502\b|^503\b|^504\b/.test(msg) ||
+        /failed to fetch|networkerror|load failed|network request failed/i.test(msg)
+    );
+}
+
 function fmt(s: number) {
     const mm = Math.floor(s / 60);
     const ss = s % 60;
@@ -84,21 +95,44 @@ export function AttemptReportClient({ attemptId }: { attemptId: string }) {
     const [data, setData] = useState<ReportPayload | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [redirecting, setRedirecting] = useState(false);
+    const [attemptNo, setAttemptNo] = useState(0);
 
     useEffect(() => {
         let cancelled = false;
         (async () => {
-            try {
-                const res = await apiGet<ReportPayload>(`/api/attempts/${attemptId}/report`);
-                if (!cancelled) setData(res);
-            } catch (e) {
-                const msg = e instanceof Error ? e.message : "Failed to load report";
-                if (msg.startsWith("401")) {
-                    setRedirecting(true);
-                    window.location.href = "/login";
+            const maxAttempts = 12;
+
+            for (let i = 0; i < maxAttempts; i += 1) {
+                if (cancelled) return;
+                setAttemptNo(i + 1);
+
+                try {
+                    const res = await apiGet<ReportPayload>(`/api/attempts/${attemptId}/report`);
+                    if (!cancelled) {
+                        setData(res);
+                        setError(null);
+                    }
                     return;
+                } catch (e) {
+                    const msg = e instanceof Error ? e.message : "Failed to load report";
+                    if (msg.startsWith("401")) {
+                        setRedirecting(true);
+                        window.location.href = "/login";
+                        return;
+                    }
+
+                    if (!isRetryableApiError(msg)) {
+                        setError(msg);
+                        return;
+                    }
+
+                    if (i === maxAttempts - 1) {
+                        setError("Report is still being generated. Please reload in a few seconds.");
+                        return;
+                    }
+
+                    await sleep(500 + i * 300);
                 }
-                setError(msg);
             }
         })();
         return () => {
@@ -117,7 +151,9 @@ export function AttemptReportClient({ attemptId }: { attemptId: string }) {
     if (!data) {
         return (
             <div className="min-h-screen flex items-center justify-center">
-                <div className="text-sm opacity-70">{redirecting ? "Redirecting…" : "Loading report…"}</div>
+                <div className="text-sm opacity-70">
+                    {redirecting ? "Redirecting…" : `Generating report… (${attemptNo}/12)`}
+                </div>
             </div>
         );
     }
@@ -144,154 +180,154 @@ export function AttemptReportClient({ attemptId }: { attemptId: string }) {
                 </header>
 
                 <main className="max-w-4xl mx-auto w-full px-4 py-8">
-                <h1 className="text-2xl font-semibold">{data.attempt.test.title}</h1>
-                <div className="mt-2 text-sm opacity-70">
-                    Attempt {data.attempt.id.slice(0, 8)} · Status {data.attempt.status}
-                </div>
+                    <h1 className="text-2xl font-semibold">{data.attempt.test.title}</h1>
+                    <div className="mt-2 text-sm opacity-70">
+                        Attempt {data.attempt.id.slice(0, 8)} · Status {data.attempt.status}
+                    </div>
 
-                <div className="mt-1 text-xs opacity-60">Student: {data.attempt.studentName ?? "—"}</div>
+                    <div className="mt-1 text-xs opacity-60">Student: {data.attempt.studentName ?? "—"}</div>
 
-                <div className="mt-6 grid gap-3 md:grid-cols-4">
-                    <div className="rounded-lg border p-4" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
-                        <div className="text-xs opacity-70">Score</div>
-                        <div className="text-2xl font-semibold">{data.attempt.score ?? "—"}</div>
+                    <div className="mt-6 grid gap-3 md:grid-cols-4">
+                        <div className="rounded-lg border p-4" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
+                            <div className="text-xs opacity-70">Score</div>
+                            <div className="text-2xl font-semibold">{data.attempt.score ?? "—"}</div>
+                        </div>
+                        <div className="rounded-lg border p-4" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
+                            <div className="text-xs opacity-70">Total Time Spent</div>
+                            <div className="text-lg font-semibold">{fmt(data.analytics.totalTimeSeconds)}</div>
+                        </div>
+                        <div className="rounded-lg border p-4" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
+                            <div className="text-xs opacity-70">Time on Correct</div>
+                            <div className="text-lg font-semibold">{fmt(data.analytics.timeOnCorrectSeconds)}</div>
+                        </div>
+                        <div className="rounded-lg border p-4" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
+                            <div className="text-xs opacity-70">Time on Incorrect</div>
+                            <div className="text-lg font-semibold">{fmt(data.analytics.timeOnIncorrectSeconds)}</div>
+                        </div>
                     </div>
-                    <div className="rounded-lg border p-4" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
-                        <div className="text-xs opacity-70">Total Time Spent</div>
-                        <div className="text-lg font-semibold">{fmt(data.analytics.totalTimeSeconds)}</div>
-                    </div>
-                    <div className="rounded-lg border p-4" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
-                        <div className="text-xs opacity-70">Time on Correct</div>
-                        <div className="text-lg font-semibold">{fmt(data.analytics.timeOnCorrectSeconds)}</div>
-                    </div>
-                    <div className="rounded-lg border p-4" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
-                        <div className="text-xs opacity-70">Time on Incorrect</div>
-                        <div className="text-lg font-semibold">{fmt(data.analytics.timeOnIncorrectSeconds)}</div>
-                    </div>
-                </div>
 
-                <div className="mt-8">
-                    <h2 className="text-lg font-semibold">Section Summary</h2>
-                    <div className="mt-3 grid gap-3 md:grid-cols-3">
-                        {subjects.map(([name, s]) => (
-                            <div key={name} className="rounded-lg border p-4" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
-                                <div className="font-medium">{name}</div>
-                                <div className="mt-2 text-sm opacity-80">Time: {fmt(s.totalTimeSeconds)}</div>
-                                <div className="text-sm opacity-80">Correct: {s.correct}</div>
-                                <div className="text-sm opacity-80">Incorrect: {s.incorrect}</div>
-                                <div className="text-sm opacity-80">Unattempted: {s.unattempted}</div>
-                            </div>
-                        ))}
+                    <div className="mt-8">
+                        <h2 className="text-lg font-semibold">Section Summary</h2>
+                        <div className="mt-3 grid gap-3 md:grid-cols-3">
+                            {subjects.map(([name, s]) => (
+                                <div key={name} className="rounded-lg border p-4" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
+                                    <div className="font-medium">{name}</div>
+                                    <div className="mt-2 text-sm opacity-80">Time: {fmt(s.totalTimeSeconds)}</div>
+                                    <div className="text-sm opacity-80">Correct: {s.correct}</div>
+                                    <div className="text-sm opacity-80">Incorrect: {s.incorrect}</div>
+                                    <div className="text-sm opacity-80">Unattempted: {s.unattempted}</div>
+                                </div>
+                            ))}
+                        </div>
                     </div>
-                </div>
 
-                <div className="mt-8">
-                    <h2 className="text-lg font-semibold">Weak Topics</h2>
-                    <div className="mt-3 grid gap-2">
-                        {data.analytics.topicAccuracy.slice(0, 8).map((t) => (
-                            <div key={t.topic} className="rounded border p-3" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
-                                <div className="flex items-center justify-between gap-4">
-                                    <div className="font-medium">{t.topic}</div>
-                                    <div className="text-sm opacity-70">
-                                        {(t.accuracy * 100).toFixed(0)}% ({t.correct}/{t.total})
+                    <div className="mt-8">
+                        <h2 className="text-lg font-semibold">Weak Topics</h2>
+                        <div className="mt-3 grid gap-2">
+                            {data.analytics.topicAccuracy.slice(0, 8).map((t) => (
+                                <div key={t.topic} className="rounded border p-3" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
+                                    <div className="flex items-center justify-between gap-4">
+                                        <div className="font-medium">{t.topic}</div>
+                                        <div className="text-sm opacity-70">
+                                            {(t.accuracy * 100).toFixed(0)}% ({t.correct}/{t.total})
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        ))}
+                            ))}
+                        </div>
                     </div>
-                </div>
 
-                <div className="mt-8">
-                    <h2 className="text-lg font-semibold">Question-wise Report</h2>
-                    <div className="mt-3 grid gap-4">
-                        {data.analytics.perQuestion.map((q, idx) => {
-                            const resultLabel = !q.attempted ? "Unattempted" : q.correct ? "Correct" : "Incorrect";
-                            const resultClass = !q.attempted
-                                ? "opacity-70"
-                                : q.correct
-                                  ? "text-green-600"
-                                  : "text-red-600";
+                    <div className="mt-8">
+                        <h2 className="text-lg font-semibold">Question-wise Report</h2>
+                        <div className="mt-3 grid gap-4">
+                            {data.analytics.perQuestion.map((q, idx) => {
+                                const resultLabel = !q.attempted ? "Unattempted" : q.correct ? "Correct" : "Incorrect";
+                                const resultClass = !q.attempted
+                                    ? "opacity-70"
+                                    : q.correct
+                                        ? "text-green-600"
+                                        : "text-red-600";
 
-                            return (
-                                <div
-                                    key={q.questionId}
-                                    className="rounded-lg border p-4"
-                                    style={{ borderColor: "var(--border)", background: "var(--card)" }}
-                                >
-                                    <div className="flex flex-wrap items-center justify-between gap-3">
-                                        <div className="text-xs opacity-70">
-                                            Q{idx + 1} · {q.subject} · {q.topicName}
+                                return (
+                                    <div
+                                        key={q.questionId}
+                                        className="rounded-lg border p-4"
+                                        style={{ borderColor: "var(--border)", background: "var(--card)" }}
+                                    >
+                                        <div className="flex flex-wrap items-center justify-between gap-3">
+                                            <div className="text-xs opacity-70">
+                                                Q{idx + 1} · {q.subject} · {q.topicName}
+                                            </div>
+                                            <div className="flex items-center gap-4 text-xs">
+                                                <div className={`font-medium ${resultClass}`}>{resultLabel}</div>
+                                                <div className="opacity-70">Time: {fmtCompact(q.timeSpentSeconds)}</div>
+                                                <div className="opacity-70">Marks: {q.marks.toFixed(2)}</div>
+                                            </div>
                                         </div>
-                                        <div className="flex items-center gap-4 text-xs">
-                                            <div className={`font-medium ${resultClass}`}>{resultLabel}</div>
-                                            <div className="opacity-70">Time: {fmtCompact(q.timeSpentSeconds)}</div>
-                                            <div className="opacity-70">Marks: {q.marks.toFixed(2)}</div>
-                                        </div>
-                                    </div>
 
-                                    <div className="mt-3 text-base leading-relaxed">
-                                        {q.imageUrls?.length ? (
-                                            <div
-                                                className={`mb-3 grid gap-2 mx-auto ${q.imageUrls.length > 1 ? "sm:grid-cols-2 max-w-3xl" : "max-w-4xl"}`}
-                                            >
-                                                {q.imageUrls.map((url) => (
+                                        <div className="mt-3 text-base leading-relaxed">
+                                            {q.imageUrls?.length ? (
+                                                <div
+                                                    className={`mb-3 grid gap-2 mx-auto ${q.imageUrls.length > 1 ? "sm:grid-cols-2 max-w-3xl" : "max-w-4xl"}`}
+                                                >
+                                                    {q.imageUrls.map((url) => (
+                                                        <div
+                                                            key={url}
+                                                            className={`rounded border p-2 flex items-center justify-center w-full relative ${q.imageUrls && q.imageUrls.length > 1
+                                                                ? "h-44 sm:h-56"
+                                                                : "h-64 sm:h-80"}`}
+                                                            style={{ borderColor: "var(--border)", background: "var(--card)" }}
+                                                        >
+                                                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                            <img
+                                                                src={url}
+                                                                alt="Question"
+                                                                className="max-w-full max-h-full object-contain"
+                                                            />
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            ) : null}
+
+                                            <MathJax dynamic>{q.questionText}</MathJax>
+                                        </div>
+
+                                        {q.options?.length ? (
+                                            <div className="mt-4 grid gap-2">
+                                                {q.options.map((o) => (
                                                     <div
-                                                        key={url}
-                                                        className={`rounded border p-2 flex items-center justify-center w-full relative ${q.imageUrls && q.imageUrls.length > 1
-                                                            ? "h-44 sm:h-56"
-                                                            : "h-64 sm:h-80"}`}
+                                                        key={o.key}
+                                                        className="rounded border p-3"
                                                         style={{ borderColor: "var(--border)", background: "var(--card)" }}
                                                     >
-                                                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                                                        <img
-                                                            src={url}
-                                                            alt="Question"
-                                                            className="max-w-full max-h-full object-contain"
-                                                        />
+                                                        <div className="flex items-start gap-3">
+                                                            <div className="mt-0.5 text-xs font-mono opacity-70">{o.key}.</div>
+                                                            <div className="text-sm leading-relaxed">
+                                                                <MathJax dynamic>{o.text}</MathJax>
+                                                                {o.imageUrl ? (
+                                                                    <div className="mt-2 text-xs opacity-70 break-all">{o.imageUrl}</div>
+                                                                ) : null}
+                                                            </div>
+                                                        </div>
                                                     </div>
                                                 ))}
                                             </div>
                                         ) : null}
 
-                                        <MathJax dynamic>{q.questionText}</MathJax>
-                                    </div>
-
-                                    {q.options?.length ? (
-                                        <div className="mt-4 grid gap-2">
-                                            {q.options.map((o) => (
-                                                <div
-                                                    key={o.key}
-                                                    className="rounded border p-3"
-                                                    style={{ borderColor: "var(--border)", background: "var(--card)" }}
-                                                >
-                                                    <div className="flex items-start gap-3">
-                                                        <div className="mt-0.5 text-xs font-mono opacity-70">{o.key}.</div>
-                                                        <div className="text-sm leading-relaxed">
-                                                            <MathJax dynamic>{o.text}</MathJax>
-                                                            {o.imageUrl ? (
-                                                                <div className="mt-2 text-xs opacity-70 break-all">{o.imageUrl}</div>
-                                                            ) : null}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    ) : null}
-
-                                    <div className="mt-4 grid gap-1 text-sm">
-                                        <div>
-                                            <span className="opacity-70">Marked answer:</span> {formatAnswer(q.selectedAnswer)}
-                                        </div>
-                                        <div>
-                                            <span className="opacity-70">Correct answer:</span> {formatAnswer(q.correctAnswer)}
+                                        <div className="mt-4 grid gap-1 text-sm">
+                                            <div>
+                                                <span className="opacity-70">Marked answer:</span> {formatAnswer(q.selectedAnswer)}
+                                            </div>
+                                            <div>
+                                                <span className="opacity-70">Correct answer:</span> {formatAnswer(q.correctAnswer)}
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            );
-                        })}
+                                );
+                            })}
+                        </div>
                     </div>
-                </div>
-            </main>
+                </main>
             </div>
         </MathJaxContext>
     );

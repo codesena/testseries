@@ -37,6 +37,56 @@ type TimeByQid = Record<string, number>;
 
 type OutboxKind = "response" | "event" | "submit";
 
+function sleep(ms: number) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function isRetryableApiError(msg: string): boolean {
+    return (
+        /^408\b|^425\b|^429\b|^500\b|^502\b|^503\b|^504\b/.test(msg) ||
+        /failed to fetch|networkerror|load failed|network request failed/i.test(msg)
+    );
+}
+
+async function getAttemptWithRetry(attemptId: string): Promise<AttemptPayload> {
+    const maxAttempts = 6;
+
+    for (let i = 0; i < maxAttempts; i += 1) {
+        try {
+            return await apiGet<AttemptPayload>(`/api/attempts/${attemptId}`);
+        } catch (err) {
+            const msg = err instanceof Error ? err.message : "Failed to load attempt";
+            if (!isRetryableApiError(msg) || i === maxAttempts - 1) throw err;
+            await sleep(400 * (i + 1));
+        }
+    }
+
+    throw new Error("Failed to load attempt");
+}
+
+async function waitForReportReady(attemptId: string): Promise<boolean> {
+    const maxAttempts = 12;
+
+    for (let i = 0; i < maxAttempts; i += 1) {
+        try {
+            await apiGet(`/api/attempts/${attemptId}/report`);
+            return true;
+        } catch (err) {
+            const msg = err instanceof Error ? err.message : "";
+
+            if (/^401\b/.test(msg)) throw err;
+
+            const canRetry =
+                /^404\b|^409\b/.test(msg) || isRetryableApiError(msg);
+            if (!canRetry) return false;
+
+            await sleep(500 + i * 300);
+        }
+    }
+
+    return false;
+}
+
 async function safePost<T>(
     path: string,
     body: unknown,
@@ -250,7 +300,7 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
                     setTimeByQid(snapshot.timeByQuestionId);
                 }
 
-                const data = await apiGet<AttemptPayload>(`/api/attempts/${attemptId}`);
+                const data = await getAttemptWithRetry(attemptId);
                 if (cancelled) return;
 
                 if (data.attempt.status !== "IN_PROGRESS") {
@@ -756,10 +806,29 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
                 }
             }
             await apiPost(`/api/attempts/${attemptId}/submit`, {});
+
+            // Wait briefly so report generation/evaluation settles before redirecting.
+            await waitForReportReady(attemptId);
             router.push(`/attempt/${attemptId}/report`);
-        } catch {
+        } catch (err) {
+            const msg = err instanceof Error ? err.message : "";
+
+            // Already submitted: move to report once endpoint is reachable.
+            if (/^409\b/.test(msg)) {
+                await waitForReportReady(attemptId);
+                router.push(`/attempt/${attemptId}/report`);
+                return;
+            }
+
             await enqueueOutbox({ attemptId, kind: "submit", payload: {} });
-            router.push(`/attempt/${attemptId}/report`);
+
+            const ready = await waitForReportReady(attemptId);
+            if (ready) {
+                router.push(`/attempt/${attemptId}/report`);
+                return;
+            }
+
+            setLoadError("Submit is taking longer than expected. Please wait a few seconds and try again.");
         } finally {
             submittingRef.current = false;
             setSubmitting(false);
