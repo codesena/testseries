@@ -65,6 +65,18 @@ function isRetryableApiError(msg: string): boolean {
     );
 }
 
+function isNullLikeToken(s: string): boolean {
+    const v = s.trim().toLowerCase();
+    return v === "" || v === "null" || v === "none" || v === "na" || v === "n/a" || v === "-";
+}
+
+function splitUrlList(raw: string): string[] {
+    return raw
+        .split(/\r?\n|,|;/g)
+        .map((s) => s.trim())
+        .filter((s) => !isNullLikeToken(s));
+}
+
 function fmt(s: number) {
     const mm = Math.floor(s / 60);
     const ss = s % 60;
@@ -294,23 +306,51 @@ export function AttemptReportClient({ attemptId }: { attemptId: string }) {
 
                                         {q.options?.length ? (
                                             <div className="mt-4 grid gap-2">
-                                                {q.options.map((o) => (
-                                                    <div
-                                                        key={o.key}
-                                                        className="rounded border p-3"
-                                                        style={{ borderColor: "var(--border)", background: "var(--card)" }}
-                                                    >
-                                                        <div className="flex items-start gap-3">
-                                                            <div className="mt-0.5 text-xs font-mono opacity-70">{o.key}.</div>
-                                                            <div className="text-sm leading-relaxed">
-                                                                <MathJax dynamic>{o.text}</MathJax>
-                                                                {o.imageUrl ? (
-                                                                    <div className="mt-2 text-xs opacity-70 break-all">{o.imageUrl}</div>
-                                                                ) : null}
+                                                {q.options.map((o) => {
+                                                    const optionImageUrls = o.imageUrl ? splitUrlList(o.imageUrl) : [];
+                                                    const optionHasMultipleImages = optionImageUrls.length > 1;
+
+                                                    return (
+                                                        <div
+                                                            key={o.key}
+                                                            className="rounded border p-3"
+                                                            style={{ borderColor: "var(--border)", background: "var(--card)" }}
+                                                        >
+                                                            <div className="flex items-start gap-3">
+                                                                <div className="mt-0.5 text-xs font-mono opacity-70">{o.key}.</div>
+                                                                <div className="text-sm leading-relaxed min-w-0">
+                                                                    <MathJax dynamic>{o.text}</MathJax>
+
+                                                                    {optionImageUrls.length ? (
+                                                                        <div
+                                                                            className={`mt-2 grid gap-2 ${optionHasMultipleImages ? "sm:grid-cols-2" : ""}`}
+                                                                        >
+                                                                            {optionImageUrls.map((url) => (
+                                                                                <div
+                                                                                    key={url}
+                                                                                    className={`rounded border p-2 flex items-center justify-center w-full relative ${optionHasMultipleImages
+                                                                                        ? "h-32 sm:h-40"
+                                                                                        : "h-40 sm:h-48"}`}
+                                                                                    style={{
+                                                                                        borderColor: "var(--border)",
+                                                                                        background: "var(--card)",
+                                                                                    }}
+                                                                                >
+                                                                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                                                    <img
+                                                                                        src={url}
+                                                                                        alt={`Option ${o.key}`}
+                                                                                        className="max-w-full max-h-full object-contain"
+                                                                                    />
+                                                                                </div>
+                                                                            ))}
+                                                                        </div>
+                                                                    ) : null}
+                                                                </div>
                                                             </div>
                                                         </div>
-                                                    </div>
-                                                ))}
+                                                    );
+                                                })}
                                             </div>
                                         ) : null}
 
