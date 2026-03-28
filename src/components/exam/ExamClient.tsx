@@ -293,6 +293,7 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
 
             try {
                 const snapshot = await loadAttemptSnapshot(attemptId);
+                const snapshotActiveQuestionId = snapshot?.activeQuestionId ?? null;
                 if (!cancelled && snapshot) {
                     setActiveQuestionId(snapshot.activeQuestionId);
                     setPaletteByQid(snapshot.paletteByQuestionId as PaletteByQid);
@@ -346,11 +347,27 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
                 setAnswersByQid((prev) => ({ ...initAnswers, ...prev }));
                 setTimeByQid((prev) => ({ ...initTimes, ...prev }));
 
-                if (!activeQuestionId) {
-                    setActiveQuestionId(data.attempt.questions[0]?.id ?? null);
-                }
+                const hasQuestion = (qid: string | null) =>
+                    Boolean(qid && data.attempt.questions.some((q) => q.id === qid));
 
-                setActiveSubjectId((prev) => prev ?? data.attempt.questions[0]?.subject.id ?? null);
+                const fallbackQuestionId = data.attempt.questions[0]?.id ?? null;
+                const restoredQuestionId = hasQuestion(snapshotActiveQuestionId)
+                    ? snapshotActiveQuestionId
+                    : fallbackQuestionId;
+
+                setActiveQuestionId((prev) => (hasQuestion(prev) ? prev : restoredQuestionId));
+
+                setActiveSubjectId((prev) => {
+                    if (prev && data.attempt.questions.some((q) => q.subject.id === prev)) {
+                        return prev;
+                    }
+
+                    const subjectFromRestoredQuestion = data.attempt.questions.find(
+                        (q) => q.id === restoredQuestionId,
+                    )?.subject.id;
+
+                    return subjectFromRestoredQuestion ?? data.attempt.questions[0]?.subject.id ?? null;
+                });
 
                 void flushOutbox();
             } catch (e) {
