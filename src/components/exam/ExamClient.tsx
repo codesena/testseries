@@ -162,6 +162,7 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
     const [submitConfirmOpen, setSubmitConfirmOpen] = useState(false);
     const [submitting, setSubmitting] = useState(false);
     const submittingRef = useRef(false);
+    const [saveNextNotice, setSaveNextNotice] = useState<string | null>(null);
 
     const activeQuestion = useMemo(
         () => questions.find((q) => q.id === activeQuestionId) ?? null,
@@ -188,6 +189,17 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
         const map = new Map<number, string>();
         for (const q of questions) map.set(q.subject.id, q.subject.name);
         return Array.from(map.entries()).map(([id, name]) => ({ id, name }));
+    }, [questions]);
+
+    const orderedSubjectIds = useMemo(() => {
+        const seen = new Set<number>();
+        const ids: number[] = [];
+        for (const q of questions) {
+            if (seen.has(q.subject.id)) continue;
+            seen.add(q.subject.id);
+            ids.push(q.subject.id);
+        }
+        return ids;
     }, [questions]);
 
     const [activeSubjectId, setActiveSubjectId] = useState<number | null>(null);
@@ -604,6 +616,7 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
     function setAnswer(value: unknown) {
         if (!activeQuestionId) return;
         setAnswersByQid((prev) => ({ ...prev, [activeQuestionId]: value }));
+        setSaveNextNotice(null);
     }
 
     function toggleMulti(optionKey: string) {
@@ -685,6 +698,7 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
             ...prev,
             [questionId]: prev[questionId] === "NOT_VISITED" ? "VISITED_NOT_ANSWERED" : (prev[questionId] ?? "VISITED_NOT_ANSWERED"),
         }));
+        setSaveNextNotice(null);
 
         logEvent("QUESTION_LOAD", questionId);
     }
@@ -700,9 +714,28 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
     }
 
     function goNext() {
-        const idx = activeSubjectId ? currentQuestionIndexInActiveSubject() : currentQuestionIndexInAll();
-        const list = activeSubjectId ? questionsInActiveSubject : questions;
-        const next = list[idx + 1];
+        if (activeSubjectId) {
+            const idx = currentQuestionIndexInActiveSubject();
+            const nextInSubject = questionsInActiveSubject[idx + 1];
+            if (nextInSubject) {
+                goToQuestion(nextInSubject.id);
+                return;
+            }
+
+            const subjectIdx = orderedSubjectIds.findIndex((id) => id === activeSubjectId);
+            const nextSubjectId = subjectIdx >= 0 ? orderedSubjectIds[subjectIdx + 1] : undefined;
+            if (nextSubjectId) {
+                const firstInNextSubject = questions.find((q) => q.subject.id === nextSubjectId);
+                if (firstInNextSubject) {
+                    setActiveSubjectId(nextSubjectId);
+                    goToQuestion(firstInNextSubject.id);
+                }
+            }
+            return;
+        }
+
+        const idx = currentQuestionIndexInAll();
+        const next = questions[idx + 1];
         if (next) goToQuestion(next.id);
     }
 
@@ -717,15 +750,22 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
         if (!activeQuestionId) return;
         const answer = answersByQid[activeQuestionId] ?? null;
 
-        const local = timeByQid[activeQuestionId] ?? 0;
-        const synced = syncedTimeByQidRef.current[activeQuestionId] ?? 0;
-        const delta = Math.max(0, local - synced);
-        syncedTimeByQidRef.current[activeQuestionId] = local;
-
         const hasAnswer =
             Array.isArray(answer)
                 ? answer.length > 0
                 : answer != null && !(typeof answer === "string" && answer.trim() === "");
+
+        if (!hasAnswer) {
+            setSaveNextNotice("Please select an option before Save & Next. If you want to skip, use Mark for Review & Next.");
+            return;
+        }
+
+        setSaveNextNotice(null);
+
+        const local = timeByQid[activeQuestionId] ?? 0;
+        const synced = syncedTimeByQidRef.current[activeQuestionId] ?? 0;
+        const delta = Math.max(0, local - synced);
+        syncedTimeByQidRef.current[activeQuestionId] = local;
 
         const paletteStatus: PaletteStatus = hasAnswer
             ? "ANSWERED_SAVED"
@@ -957,6 +997,10 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
                         <div className="mt-3 text-xs opacity-70">
                             Shortcuts: Alt+N Next · Alt+V Mark · 1-4 Select option
                         </div>
+
+                        {saveNextNotice ? (
+                            <div className="mt-2 text-xs text-amber-500">{saveNextNotice}</div>
+                        ) : null}
                     </main>
 
                     <aside
@@ -969,26 +1013,34 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
 
                         <div className="mt-3 flex flex-wrap gap-2">
                             {subjects.map((s) => (
-                                <button
-                                    key={s.id}
-                                    className={`text-sm px-2 py-1 rounded border ui-click ${activeSubjectId === s.id
-                                        ? "font-medium ring-2 ring-black/30 dark:ring-white/30"
-                                        : "opacity-80"
-                                        }`}
-                                    style={{
-                                        borderColor: "var(--border)",
-                                        background: activeSubjectId === s.id ? "var(--card)" : "var(--muted)",
-                                    }}
-                                    onClick={() => {
-                                        setActiveSubjectId(s.id);
-                                        const firstInSubject = questions.find((q) => q.subject.id === s.id);
-                                        if (firstInSubject && firstInSubject.id !== activeQuestionId) {
-                                            goToQuestion(firstInSubject.id);
-                                        }
-                                    }}
-                                >
-                                    {s.name}
-                                </button>
+                                (() => {
+                                    const active = activeSubjectId === s.id;
+                                    const activeTone =
+                                        s.id === 1
+                                            ? "bg-sky-600/80 text-sky-50"
+                                            : s.id === 2
+                                                ? "bg-emerald-600/80 text-emerald-50"
+                                                : "bg-amber-500/85 text-amber-950";
+                                    return (
+                                        <button
+                                            key={s.id}
+                                            className={`text-sm px-2 py-1 rounded border ui-click transition-colors ${active
+                                                ? `font-semibold ring-2 ring-white/35 ${activeTone}`
+                                                : "opacity-85 bg-[var(--muted)] text-[var(--foreground)] hover:opacity-100"
+                                                }`}
+                                            style={{ borderColor: "var(--border)" }}
+                                            onClick={() => {
+                                                setActiveSubjectId(s.id);
+                                                const firstInSubject = questions.find((q) => q.subject.id === s.id);
+                                                if (firstInSubject && firstInSubject.id !== activeQuestionId) {
+                                                    goToQuestion(firstInSubject.id);
+                                                }
+                                            }}
+                                        >
+                                            {s.name}
+                                        </button>
+                                    );
+                                })()
                             ))}
                         </div>
 
