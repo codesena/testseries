@@ -97,6 +97,13 @@ export default async function AdminPage() {
                     </Link>
                     <div className="flex items-center gap-2">
                         <Link
+                            href="/admin/consolidated"
+                            className="text-xs rounded-full border px-3 py-1 ui-click"
+                            style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                        >
+                            Consolidated report
+                        </Link>
+                        <Link
                             href="/admin/issues"
                             className="text-xs rounded-full border px-3 py-1 ui-click"
                             style={{ borderColor: "var(--border)", background: "var(--muted)" }}
