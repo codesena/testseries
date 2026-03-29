@@ -3,9 +3,17 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/server/db";
 import { getAuthUser } from "@/server/auth";
 import { isAdminUsername } from "@/server/admin";
+import { CandidateAttemptsClient } from "@/components/admin/CandidateAttemptsClient";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+function hasAnswer(value: unknown): boolean {
+    if (value == null) return false;
+    if (typeof value === "string") return value.trim() !== "";
+    if (Array.isArray(value)) return value.length > 0;
+    return true;
+}
 
 function fmtDate(d: Date | null) {
     if (!d) return "—";
@@ -77,7 +85,34 @@ export default async function AdminCandidateTestPage(
             overallScore: true,
             startTimestamp: true,
             endTimestamp: true,
+            responses: { select: { selectedAnswer: true, timeSpentSeconds: true } },
+            _count: { select: { activities: true, issueReports: true } },
         },
+    });
+
+    const attemptRows = attempts.map((a) => {
+        const responseCount = a.responses.length;
+        const answeredCount = a.responses.reduce(
+            (acc, r) => acc + (hasAnswer(r.selectedAnswer) ? 1 : 0),
+            0,
+        );
+        const totalTimeSeconds = a.responses.reduce(
+            (acc, r) => acc + (r.timeSpentSeconds ?? 0),
+            0,
+        );
+
+        return {
+            id: a.id,
+            status: a.status,
+            overallScore: a.overallScore,
+            startTimestamp: a.startTimestamp.toISOString(),
+            endTimestamp: a.endTimestamp ? a.endTimestamp.toISOString() : null,
+            responseCount,
+            answeredCount,
+            totalTimeSeconds,
+            activityCount: a._count.activities,
+            issueCount: a._count.issueReports,
+        };
     });
 
     const candidateLabel = candidate ? `${candidate.name} (${candidate.username})` : userId;
@@ -115,38 +150,11 @@ export default async function AdminCandidateTestPage(
                 <div className="mt-2 text-sm opacity-70">{candidateLabel}</div>
                 <div className="mt-1 text-sm opacity-70">{testTitle}</div>
 
-                <div className="mt-6 grid gap-3">
-                    {attempts.map((a) => (
-                        <div
-                            key={a.id}
-                            className="rounded-lg border p-4"
-                            style={{ borderColor: "var(--border)", background: "var(--card)" }}
-                        >
-                            <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                                <div className="min-w-0">
-                                    <div className="text-sm font-medium">Attempt {a.id.slice(0, 8)}</div>
-                                    <div className="mt-1 text-xs opacity-60">
-                                        {a.status} · Score {a.overallScore ?? "—"} · Start {fmtDate(a.startTimestamp)} · End {fmtDate(a.endTimestamp)}
-                                    </div>
-                                </div>
-
-                                <div className="shrink-0">
-                                    <Link
-                                        href={`/attempt/${a.id}/report`}
-                                        className="text-xs rounded-full border px-3 py-1 ui-click"
-                                        style={{ borderColor: "var(--border)", background: "var(--muted)" }}
-                                    >
-                                        View report →
-                                    </Link>
-                                </div>
-                            </div>
-                        </div>
-                    ))}
-
-                    {attempts.length === 0 ? (
-                        <div className="text-sm opacity-70">No attempts found for this paper.</div>
-                    ) : null}
-                </div>
+                <CandidateAttemptsClient
+                    initialAttempts={attemptRows}
+                    candidateLabel={candidateLabel}
+                    testTitle={testTitle}
+                />
             </main>
         </div>
     );

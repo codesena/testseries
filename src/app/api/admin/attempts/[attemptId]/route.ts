@@ -1,0 +1,52 @@
+import { getAuthUser } from "@/server/auth";
+import { isAdminUsername } from "@/server/admin";
+import { prisma } from "@/server/db";
+import { json } from "@/server/json";
+import { z } from "zod";
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+const ParamsSchema = z.object({ attemptId: z.string().uuid() });
+
+export async function DELETE(
+    _req: Request,
+    ctx: { params: Promise<{ attemptId: string }> },
+) {
+    const auth = await getAuthUser();
+    if (!auth) {
+        return json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (!isAdminUsername(auth.username)) {
+        return json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    const params = ParamsSchema.safeParse(await ctx.params);
+    if (!params.success) {
+        return json({ error: "Invalid attempt id" }, { status: 400 });
+    }
+
+    const existing = await prisma.studentAttempt.findUnique({
+        where: { id: params.data.attemptId },
+        select: { id: true, studentId: true, testId: true, status: true, overallScore: true },
+    });
+
+    if (!existing) {
+        return json({ error: "Attempt not found" }, { status: 404 });
+    }
+
+    await prisma.studentAttempt.delete({
+        where: { id: params.data.attemptId },
+    });
+
+    return json({
+        ok: true,
+        deleted: {
+            id: existing.id,
+            studentId: existing.studentId,
+            testId: existing.testId,
+            status: existing.status,
+            overallScore: existing.overallScore,
+        },
+    });
+}
