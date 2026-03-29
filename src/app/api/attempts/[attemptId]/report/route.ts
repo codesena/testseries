@@ -99,6 +99,31 @@ function isAttemptedAnswer(value: unknown): boolean {
     return true;
 }
 
+type ReflectionPayload = {
+    kind: "REPORT_REFLECTION";
+    wrongReason?: unknown;
+    leftReason?: unknown;
+    slowReason?: unknown;
+};
+
+function asTrimmedStringOrNull(value: unknown): string | null {
+    if (typeof value !== "string") return null;
+    const s = value.trim();
+    return s ? s : null;
+}
+
+function readReflectionPayload(value: unknown): ReflectionPayload | null {
+    if (!value || typeof value !== "object") return null;
+    const obj = value as Record<string, unknown>;
+    if (obj.kind !== "REPORT_REFLECTION") return null;
+    return {
+        kind: "REPORT_REFLECTION",
+        wrongReason: obj.wrongReason,
+        leftReason: obj.leftReason,
+        slowReason: obj.slowReason,
+    };
+}
+
 export async function GET(
     _req: Request,
     ctx: { params: Promise<{ attemptId: string }> },
@@ -208,6 +233,40 @@ export async function GET(
     const byId = new Map(questions.map((q) => [q.id, q] as const));
 
     const responsesByQid = new Map(attempt.responses.map((r) => [r.questionId, r] as const));
+    const reflectionActivities = await prisma.activityLog.findMany({
+        where: {
+            attemptId: attempt.id,
+            type: "SUBMIT",
+            questionId: { not: null },
+        },
+        orderBy: { createdAt: "desc" },
+        select: { questionId: true, payload: true, createdAt: true },
+    });
+    const reflectionsByQid = new Map<
+        string,
+        {
+            wrongReason: string | null;
+            leftReason: string | null;
+            slowReason: string | null;
+            savedAt: Date;
+        }
+    >();
+
+    for (const item of reflectionActivities) {
+        const qid = item.questionId;
+        if (!qid) continue;
+        if (reflectionsByQid.has(qid)) continue;
+
+        const payload = readReflectionPayload(item.payload);
+        if (!payload) continue;
+
+        reflectionsByQid.set(qid, {
+            wrongReason: asTrimmedStringOrNull(payload.wrongReason),
+            leftReason: asTrimmedStringOrNull(payload.leftReason),
+            slowReason: asTrimmedStringOrNull(payload.slowReason),
+            savedAt: item.createdAt,
+        });
+    }
 
     const subjectAgg: Record<
         string,
@@ -241,6 +300,7 @@ export async function GET(
 
         const attempted = isAttemptedAnswer(selectedAnswer);
         const correct = attempted && marks > 0;
+        const reflection = reflectionsByQid.get(qid) ?? null;
 
         const subject = q.subject.name;
         subjectAgg[subject] ??= {
@@ -285,6 +345,14 @@ export async function GET(
             correct,
             paletteStatus,
             marks,
+            reflection: reflection
+                ? {
+                    wrongReason: reflection.wrongReason,
+                    leftReason: reflection.leftReason,
+                    slowReason: reflection.slowReason,
+                    savedAt: reflection.savedAt,
+                }
+                : null,
         };
     });
 

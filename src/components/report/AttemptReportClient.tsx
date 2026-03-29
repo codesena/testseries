@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { apiGet } from "@/lib/api";
 import type { QuestionOption } from "@/lib/types";
 import { optimizeImageDelivery } from "@/lib/image-delivery";
+import { apiPost } from "@/lib/api";
 
 const mathjaxConfig = {
     loader: { load: ["[tex]/mhchem"] },
@@ -51,8 +52,20 @@ type ReportPayload = {
             correct: boolean;
             paletteStatus: string;
             marks: number;
+            reflection: {
+                wrongReason: string | null;
+                leftReason: string | null;
+                slowReason: string | null;
+                savedAt: string;
+            } | null;
         }>;
     };
+};
+
+type ReflectionDraft = {
+    wrongReason: string;
+    leftReason: string;
+    slowReason: string;
 };
 
 function sleep(ms: number) {
@@ -109,6 +122,9 @@ export function AttemptReportClient({ attemptId }: { attemptId: string }) {
     const [error, setError] = useState<string | null>(null);
     const [redirecting, setRedirecting] = useState(false);
     const [attemptNo, setAttemptNo] = useState(0);
+    const [reflectionByQid, setReflectionByQid] = useState<Record<string, ReflectionDraft>>({});
+    const [savingByQid, setSavingByQid] = useState<Record<string, boolean>>({});
+    const [saveMsgByQid, setSaveMsgByQid] = useState<Record<string, string | null>>({});
 
     useEffect(() => {
         let cancelled = false;
@@ -124,6 +140,15 @@ export function AttemptReportClient({ attemptId }: { attemptId: string }) {
                     if (!cancelled) {
                         setData(res);
                         setError(null);
+                        const init: Record<string, ReflectionDraft> = {};
+                        for (const q of res.analytics.perQuestion) {
+                            init[q.questionId] = {
+                                wrongReason: q.reflection?.wrongReason ?? "",
+                                leftReason: q.reflection?.leftReason ?? "",
+                                slowReason: q.reflection?.slowReason ?? "",
+                            };
+                        }
+                        setReflectionByQid(init);
                     }
                     return;
                 } catch (e) {
@@ -172,6 +197,43 @@ export function AttemptReportClient({ attemptId }: { attemptId: string }) {
     }
 
     const subjects = Object.entries(data.analytics.subjectSummary);
+
+    async function saveReflection(questionId: string) {
+        const draft = reflectionByQid[questionId] ?? {
+            wrongReason: "",
+            leftReason: "",
+            slowReason: "",
+        };
+
+        const wrongReason = draft.wrongReason.trim();
+        const leftReason = draft.leftReason.trim();
+        const slowReason = draft.slowReason.trim();
+
+        if (!wrongReason && !leftReason && !slowReason) {
+            setSaveMsgByQid((prev) => ({
+                ...prev,
+                [questionId]: "Please write at least one reason before saving.",
+            }));
+            return;
+        }
+
+        setSavingByQid((prev) => ({ ...prev, [questionId]: true }));
+        setSaveMsgByQid((prev) => ({ ...prev, [questionId]: null }));
+        try {
+            await apiPost(`/api/attempts/${attemptId}/report-reflections`, {
+                questionId,
+                wrongReason,
+                leftReason,
+                slowReason,
+            });
+            setSaveMsgByQid((prev) => ({ ...prev, [questionId]: "Saved" }));
+        } catch (e) {
+            const msg = e instanceof Error ? e.message : "Failed to save";
+            setSaveMsgByQid((prev) => ({ ...prev, [questionId]: msg }));
+        } finally {
+            setSavingByQid((prev) => ({ ...prev, [questionId]: false }));
+        }
+    }
 
     return (
         <MathJaxContext config={mathjaxConfig}>
@@ -260,6 +322,12 @@ export function AttemptReportClient({ attemptId }: { attemptId: string }) {
                                     : q.correct
                                         ? "text-green-600"
                                         : "text-red-600";
+                                const tookLong = q.timeSpentSeconds > 240;
+                                const draft = reflectionByQid[q.questionId] ?? {
+                                    wrongReason: "",
+                                    leftReason: "",
+                                    slowReason: "",
+                                };
 
                                 return (
                                     <div
@@ -369,6 +437,90 @@ export function AttemptReportClient({ attemptId }: { attemptId: string }) {
                                                 <span className="opacity-70">Correct answer:</span> {formatAnswer(q.correctAnswer)}
                                             </div>
                                         </div>
+
+                                        {(!q.correct || !q.attempted || tookLong) ? (
+                                            <div
+                                                className="mt-4 rounded border p-3"
+                                                style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                                            >
+                                                <div className="text-sm font-medium">Reflection</div>
+                                                <div className="mt-1 text-xs opacity-70">
+                                                    Add your analysis to improve future attempts.
+                                                </div>
+
+                                                {!q.correct && q.attempted ? (
+                                                    <label className="mt-3 block text-sm">
+                                                        <div className="text-xs opacity-70">Why was this answer wrong?</div>
+                                                        <textarea
+                                                            className="mt-2 w-full min-h-20 rounded border px-3 py-2 bg-transparent ui-field"
+                                                            style={{ borderColor: "var(--border)" }}
+                                                            value={draft.wrongReason}
+                                                            onChange={(e) => {
+                                                                const value = e.target.value;
+                                                                setReflectionByQid((prev) => ({
+                                                                    ...prev,
+                                                                    [q.questionId]: { ...draft, wrongReason: value },
+                                                                }));
+                                                            }}
+                                                            placeholder="Example: I misread the condition in line 2 and chose option B too quickly."
+                                                        />
+                                                    </label>
+                                                ) : null}
+
+                                                {!q.attempted ? (
+                                                    <label className="mt-3 block text-sm">
+                                                        <div className="text-xs opacity-70">Why did you leave this question?</div>
+                                                        <textarea
+                                                            className="mt-2 w-full min-h-20 rounded border px-3 py-2 bg-transparent ui-field"
+                                                            style={{ borderColor: "var(--border)" }}
+                                                            value={draft.leftReason}
+                                                            onChange={(e) => {
+                                                                const value = e.target.value;
+                                                                setReflectionByQid((prev) => ({
+                                                                    ...prev,
+                                                                    [q.questionId]: { ...draft, leftReason: value },
+                                                                }));
+                                                            }}
+                                                            placeholder="Example: I wasn't confident with the concept and prioritized other questions."
+                                                        />
+                                                    </label>
+                                                ) : null}
+
+                                                {tookLong ? (
+                                                    <label className="mt-3 block text-sm">
+                                                        <div className="text-xs opacity-70">Why did this take more than 4 minutes?</div>
+                                                        <textarea
+                                                            className="mt-2 w-full min-h-20 rounded border px-3 py-2 bg-transparent ui-field"
+                                                            style={{ borderColor: "var(--border)" }}
+                                                            value={draft.slowReason}
+                                                            onChange={(e) => {
+                                                                const value = e.target.value;
+                                                                setReflectionByQid((prev) => ({
+                                                                    ...prev,
+                                                                    [q.questionId]: { ...draft, slowReason: value },
+                                                                }));
+                                                            }}
+                                                            placeholder="Example: I tried two long methods before finding the shorter approach."
+                                                        />
+                                                    </label>
+                                                ) : null}
+
+                                                <div className="mt-3 flex items-center gap-3">
+                                                    <button
+                                                        type="button"
+                                                        className="text-xs rounded-full border px-3 py-1 ui-click"
+                                                        style={{ borderColor: "var(--border)", background: "var(--card)" }}
+                                                        onClick={() => void saveReflection(q.questionId)}
+                                                        disabled={Boolean(savingByQid[q.questionId])}
+                                                    >
+                                                        {savingByQid[q.questionId] ? "Saving..." : "Save reflection"}
+                                                    </button>
+                                                    {saveMsgByQid[q.questionId] ? (
+                                                        <div className="text-xs opacity-70">{saveMsgByQid[q.questionId]}</div>
+                                                    ) : null}
+                                                </div>
+                                            </div>
+                                        ) : null}
                                     </div>
                                 );
                             })}
