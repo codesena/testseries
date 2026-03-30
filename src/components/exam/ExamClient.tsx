@@ -2,7 +2,7 @@
 
 import { MathJaxContext } from "better-react-mathjax";
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { apiGet, apiPost } from "@/lib/api";
 import type { AttemptPayload, AttemptQuestion } from "@/lib/types";
@@ -613,11 +613,11 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
         return () => window.removeEventListener("online", onOnline);
     }, []);
 
-    function setAnswer(value: unknown) {
+    const setAnswer = useCallback((value: unknown) => {
         if (!activeQuestionId) return;
         setAnswersByQid((prev) => ({ ...prev, [activeQuestionId]: value }));
         setSaveNextNotice(null);
-    }
+    }, [activeQuestionId]);
 
     function toggleMulti(optionKey: string) {
         if (!activeQuestionId) return;
@@ -629,7 +629,7 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
         setAnswer(Array.from(next).sort());
     }
 
-    function clearResponse() {
+    const clearResponse = useCallback(() => {
         if (!activeQuestionId) return;
 
         setAnswersByQid((prev) => ({ ...prev, [activeQuestionId]: null }));
@@ -659,7 +659,7 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
                 },
             },
         );
-    }
+    }, [activeQuestionId, attemptId]);
 
     function goToQuestion(questionId: string) {
         const prevQid = activeQuestionId;
@@ -956,7 +956,7 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
                                 question={activeQuestion}
                                 answer={answersByQid[activeQuestion.id] ?? null}
                                 paletteStatus={paletteByQid[activeQuestion.id] ?? "NOT_VISITED"}
-                                onSetAnswer={(value) => setAnswer(value)}
+                                onSetAnswer={setAnswer}
                                 onClear={clearResponse}
                             />
                         ) : (

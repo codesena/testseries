@@ -1,7 +1,7 @@
 "use client";
 
 import { MathJax } from "better-react-mathjax";
-import { useState } from "react";
+import { memo, useState } from "react";
 import type { AttemptQuestion } from "@/lib/types";
 import { apiPost } from "@/lib/api";
 import type { PaletteStatus } from "@/components/exam/palette";
@@ -49,7 +49,7 @@ function statusBadgeClass(s: PaletteStatus) {
     }
 }
 
-export function QuestionView({
+export const QuestionView = memo(function QuestionView({
     attemptId,
     questionNumber,
     question,
@@ -355,4 +355,4 @@ export function QuestionView({
             ) : null}
         </div>
     );
-}
+});
