@@ -160,6 +160,16 @@ export default async function Home() {
                                         </Link>
                                     )}
 
+                                    {isAdmin ? (
+                                        <Link
+                                            href={`/admin/paper/${t.id}`}
+                                            className="text-xs rounded-full border px-3 py-1 ui-click"
+                                            style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                                        >
+                                            View paper
+                                        </Link>
+                                    ) : null}
+
                                     <Link
                                         href={`/test/${t.id}`}
                                         className="text-xs rounded-full border px-3 py-1 ui-click"
