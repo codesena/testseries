@@ -323,6 +323,11 @@ export function AttemptReportClient({ attemptId }: { attemptId: string }) {
                                     : q.correct
                                         ? "text-green-600"
                                         : "text-red-600";
+                                const timeClass = q.timeSpentSeconds > 240
+                                    ? "text-red-500 font-medium"
+                                    : q.timeSpentSeconds > 180
+                                        ? "text-amber-400 font-medium"
+                                        : "opacity-70";
                                 const tookLong = q.timeSpentSeconds > 240;
                                 const draft = reflectionByQid[q.questionId] ?? {
                                     wrongReason: "",
@@ -343,7 +348,7 @@ export function AttemptReportClient({ attemptId }: { attemptId: string }) {
                                             </div>
                                             <div className="flex items-center gap-3 text-xs">
                                                 <div className={`font-medium ${resultClass}`}>{resultLabel}</div>
-                                                <div className="opacity-70">Time: {fmtCompact(q.timeSpentSeconds)}</div>
+                                                <div className={timeClass}>Time: {fmtCompact(q.timeSpentSeconds)}</div>
                                                 <div className="opacity-70">Marks: {q.marks.toFixed(2)}</div>
                                                 <button
                                                     type="button"
