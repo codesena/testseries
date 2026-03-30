@@ -18,10 +18,15 @@ type IssueReportItem = {
     createdAt: string;
     issue: string;
     details: string | null;
-    attemptId: string;
-    studentName: string | null;
-    studentUsername: string | null;
+    attemptId: string | null;
+    reporterName: string | null;
+    reporterUsername: string | null;
+    reporterId: string | null;
+    attemptOwnerName: string | null;
+    attemptOwnerUsername: string | null;
+    attemptOwnerId: string | null;
     testTitle: string | null;
+    source: "student" | "admin";
 };
 
 export type IssueQuestionGroup = {
@@ -225,13 +230,18 @@ export function IssueReportsClient({ groups }: { groups: IssueQuestionGroup[] })
 
                             <div className="mt-4 grid gap-2">
                                 {g.reports.map((r) => {
-                                    const studentLabel = r.studentUsername
-                                        ? `${r.studentName ?? "—"} (${r.studentUsername})`
-                                        : r.studentName ?? "—";
+                                    const reporterLabel = r.reporterUsername
+                                        ? `${r.reporterName ?? "—"} (${r.reporterUsername})`
+                                        : (r.reporterName ?? r.reporterId ?? "—");
+                                    const ownerLabel = r.attemptOwnerUsername
+                                        ? `${r.attemptOwnerName ?? "—"} (${r.attemptOwnerUsername})`
+                                        : (r.attemptOwnerName ?? r.attemptOwnerId ?? "—");
                                     const meta = [
                                         fmtDate(r.createdAt),
                                         r.testTitle ?? "—",
-                                        `By: ${studentLabel}`,
+                                        `Source: ${r.source === "admin" ? "Admin report" : "Student report"}`,
+                                        `Reported by: ${reporterLabel}`,
+                                        `Attempt owner: ${ownerLabel}`,
                                     ]
                                         .filter(Boolean)
                                         .join(" · ");
@@ -247,7 +257,7 @@ export function IssueReportsClient({ groups }: { groups: IssueQuestionGroup[] })
                                                     <div className="text-sm font-medium truncate">{r.issue}</div>
                                                     <div className="mt-1 text-xs opacity-70 truncate">{meta}</div>
                                                 </div>
-                                                <div className="text-xs opacity-70">AttemptId: {r.attemptId}</div>
+                                                <div className="text-xs opacity-70">AttemptId: {r.attemptId ?? "-"}</div>
                                             </div>
 
                                             {r.details ? (

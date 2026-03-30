@@ -74,6 +74,7 @@ model Question {
   responses QuestionResponse[]
   activities ActivityLog[]
   issueReports QuestionIssueReport[]
+  adminIssueReports AdminQuestionIssueReport[]
 
   @@index([subjectId])
   @@map("Questions")
@@ -114,6 +115,7 @@ model User {
   updatedAt    DateTime        @updatedAt
 
   issueReports QuestionIssueReport[]
+  adminIssueReports AdminQuestionIssueReport[]
 
   @@map("Users")
 }
@@ -191,4 +193,20 @@ model QuestionIssueReport {
   @@index([questionId, createdAt])
   @@index([userId, createdAt])
   @@map("QuestionIssueReports")
+}
+
+model AdminQuestionIssueReport {
+  id         BigInt   @id @default(autoincrement())
+  questionId String   @db.Uuid
+  userId     String   @db.Uuid
+  issue      String
+  details    String?
+  createdAt  DateTime @default(now())
+
+  question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([questionId, createdAt])
+  @@index([userId, createdAt])
+  @@map("AdminQuestionIssueReports")
 }

@@ -57,7 +57,12 @@ export default async function AdminIssueReportsPage() {
             attemptId: true,
             questionId: true,
             user: { select: { id: true, name: true, username: true } },
-            attempt: { select: { test: { select: { id: true, title: true } } } },
+            attempt: {
+                select: {
+                    studentId: true,
+                    test: { select: { id: true, title: true } },
+                },
+            },
             question: {
                 select: {
                     id: true,
@@ -70,6 +75,44 @@ export default async function AdminIssueReportsPage() {
             },
         },
     });
+
+    const adminReports = await prisma.adminQuestionIssueReport.findMany({
+        orderBy: { createdAt: "desc" },
+        take: 200,
+        select: {
+            id: true,
+            createdAt: true,
+            issue: true,
+            details: true,
+            questionId: true,
+            user: { select: { id: true, name: true, username: true } },
+            question: {
+                select: {
+                    id: true,
+                    topicName: true,
+                    questionText: true,
+                    imageUrls: true,
+                    options: true,
+                    subject: { select: { name: true } },
+                },
+            },
+        },
+    });
+
+    const attemptOwnerIds = Array.from(
+        new Set(
+            reports
+                .map((r) => r.attempt?.studentId)
+                .filter((id): id is string => Boolean(id)),
+        ),
+    );
+    const attemptOwners = attemptOwnerIds.length
+        ? await prisma.user.findMany({
+            where: { id: { in: attemptOwnerIds } },
+            select: { id: true, name: true, username: true },
+        })
+        : [];
+    const attemptOwnerById = new Map(attemptOwners.map((u) => [u.id, u] as const));
 
     const groupByQuestionId = new Map<
         string,
@@ -85,10 +128,15 @@ export default async function AdminIssueReportsPage() {
                 createdAt: string;
                 issue: string;
                 details: string | null;
-                attemptId: string;
-                studentName: string | null;
-                studentUsername: string | null;
+                attemptId: string | null;
+                reporterName: string | null;
+                reporterUsername: string | null;
+                reporterId: string | null;
+                attemptOwnerName: string | null;
+                attemptOwnerUsername: string | null;
+                attemptOwnerId: string | null;
                 testTitle: string | null;
+                source: "student" | "admin";
             }>;
             latestCreatedAt: string;
         }
@@ -105,9 +153,58 @@ export default async function AdminIssueReportsPage() {
             issue: r.issue,
             details: r.details,
             attemptId: r.attemptId,
-            studentName: r.user?.name ?? null,
-            studentUsername: r.user?.username ?? null,
+            reporterName: r.user?.name ?? null,
+            reporterUsername: r.user?.username ?? null,
+            reporterId: r.user?.id ?? null,
+            attemptOwnerName: r.attempt?.studentId
+                ? (attemptOwnerById.get(r.attempt.studentId)?.name ?? null)
+                : null,
+            attemptOwnerUsername: r.attempt?.studentId
+                ? (attemptOwnerById.get(r.attempt.studentId)?.username ?? null)
+                : null,
+            attemptOwnerId: r.attempt?.studentId ?? null,
             testTitle: r.attempt?.test?.title ?? null,
+            source: "student" as const,
+        };
+
+        if (!existing) {
+            groupByQuestionId.set(qid, {
+                questionId: qid,
+                subjectName: r.question?.subject?.name ?? null,
+                topicName: r.question?.topicName ?? null,
+                questionText: r.question?.questionText ?? null,
+                imageUrls: (r.question as any)?.imageUrls ?? null,
+                options: (r.question as any)?.options ?? null,
+                reports: [reportItem],
+                latestCreatedAt: createdAtIso,
+            });
+        } else {
+            existing.reports.push(reportItem);
+            if (createdAtIso > existing.latestCreatedAt) {
+                existing.latestCreatedAt = createdAtIso;
+            }
+        }
+    }
+
+    for (const r of adminReports) {
+        const qid = String(r.questionId);
+        const existing = groupByQuestionId.get(qid);
+        const createdAtIso = r.createdAt.toISOString();
+
+        const reportItem = {
+            id: `admin-${String(r.id)}`,
+            createdAt: createdAtIso,
+            issue: r.issue,
+            details: r.details,
+            attemptId: null,
+            reporterName: r.user?.name ?? null,
+            reporterUsername: r.user?.username ?? null,
+            reporterId: r.user?.id ?? null,
+            attemptOwnerName: null,
+            attemptOwnerUsername: null,
+            attemptOwnerId: null,
+            testTitle: null,
+            source: "admin" as const,
         };
 
         if (!existing) {

@@ -1,7 +1,9 @@
 "use client";
 
 import { MathJax, MathJaxContext } from "better-react-mathjax";
+import { useState } from "react";
 import { optimizeImageDelivery } from "@/lib/image-delivery";
+import { apiPost } from "@/lib/api";
 import type { QuestionOption } from "@/lib/types";
 
 const mathjaxConfig = {
@@ -131,6 +133,58 @@ export function ConsolidatedReportView({ data }: { data: ConsolidatedReportData 
     }
 
     const attemptMetaById = new Map(data.attempts.map((a) => [a.id, a] as const));
+    const [issueQuestionId, setIssueQuestionId] = useState<string | null>(null);
+    const [issueQuestionNumber, setIssueQuestionNumber] = useState<number | null>(null);
+    const [issue, setIssue] = useState<string>("");
+    const [details, setDetails] = useState<string>("");
+    const [sendingIssue, setSendingIssue] = useState(false);
+    const [issueError, setIssueError] = useState<string | null>(null);
+    const [issueSuccess, setIssueSuccess] = useState<string | null>(null);
+
+    function openIssueModal(questionId: string, questionNumber: number) {
+        setIssueQuestionId(questionId);
+        setIssueQuestionNumber(questionNumber);
+        setIssueError(null);
+        setIssueSuccess(null);
+        setIssue((v) => (v ? v : "Wrong answer"));
+        setDetails("");
+    }
+
+    function closeIssueModal() {
+        if (sendingIssue) return;
+        setIssueQuestionId(null);
+        setIssueQuestionNumber(null);
+        setIssueError(null);
+        setIssueSuccess(null);
+    }
+
+    async function submitIssue() {
+        if (!issueQuestionId || sendingIssue) return;
+        const trimmedIssue = issue.trim();
+        const trimmedDetails = details.trim();
+
+        if (!trimmedIssue) {
+            setIssueError("Issue title is required.");
+            return;
+        }
+
+        setSendingIssue(true);
+        setIssueError(null);
+        setIssueSuccess(null);
+        try {
+            await apiPost(`/api/admin/questions/${issueQuestionId}/issue`, {
+                issue: trimmedIssue,
+                details: trimmedDetails ? trimmedDetails : undefined,
+            });
+            setIssueSuccess("Issue reported successfully.");
+            setDetails("");
+        } catch (e) {
+            const msg = e instanceof Error ? e.message : "Failed to submit issue";
+            setIssueError(msg);
+        } finally {
+            setSendingIssue(false);
+        }
+    }
 
     return (
         <MathJaxContext config={mathjaxConfig}>
@@ -158,7 +212,17 @@ export function ConsolidatedReportView({ data }: { data: ConsolidatedReportData 
                     >
                         <div className="flex flex-wrap items-center justify-between gap-2">
                             <div className="text-sm font-medium">Q{q.index}</div>
-                            <div className="text-xs opacity-70">{q.subjectName} · {q.topicName}</div>
+                            <div className="flex items-center gap-2">
+                                <div className="text-xs opacity-70">{q.subjectName} · {q.topicName}</div>
+                                <button
+                                    type="button"
+                                    className="text-xs rounded-full border px-3 py-1 ui-click"
+                                    style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                                    onClick={() => openIssueModal(q.questionId, q.index)}
+                                >
+                                    Report issue
+                                </button>
+                            </div>
                         </div>
 
                         <div className="mt-3 text-base leading-relaxed">
@@ -321,6 +385,78 @@ export function ConsolidatedReportView({ data }: { data: ConsolidatedReportData 
                         </div>
                     </div>
                 ))}
+
+                {issueQuestionId ? (
+                    <div
+                        className="fixed inset-0 z-50 flex items-center justify-center p-4"
+                        style={{ background: "rgba(0,0,0,0.45)" }}
+                        role="dialog"
+                        aria-modal="true"
+                        aria-label="Report issue"
+                    >
+                        <div
+                            className="w-full max-w-md rounded-lg border p-4"
+                            style={{ borderColor: "var(--border)", background: "var(--card)" }}
+                        >
+                            <div className="text-base font-semibold">Report issue for Q{issueQuestionNumber ?? "?"}</div>
+                            <div className="mt-1 text-sm opacity-70">This will be logged as an admin-reported question issue.</div>
+
+                            <label className="mt-4 block text-sm">
+                                <div className="text-xs opacity-70">What is the issue?</div>
+                                <select
+                                    className="mt-2 w-full rounded border px-3 py-2 bg-transparent ui-field"
+                                    style={{ borderColor: "var(--border)" }}
+                                    value={issue}
+                                    onChange={(e) => setIssue(e.target.value)}
+                                    disabled={sendingIssue}
+                                >
+                                    <option value="">Select…</option>
+                                    <option value="Wrong answer">Wrong answer</option>
+                                    <option value="Wrong question statement">Wrong question statement</option>
+                                    <option value="Typo / formatting">Typo / formatting</option>
+                                    <option value="Image missing">Image missing</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </label>
+
+                            <label className="mt-3 block text-sm">
+                                <div className="text-xs opacity-70">Details (optional)</div>
+                                <textarea
+                                    className="mt-2 w-full min-h-24 rounded border px-3 py-2 bg-transparent ui-field"
+                                    style={{ borderColor: "var(--border)" }}
+                                    value={details}
+                                    onChange={(e) => setDetails(e.target.value)}
+                                    placeholder="Add extra context"
+                                    disabled={sendingIssue}
+                                />
+                            </label>
+
+                            {issueError ? <div className="mt-3 text-xs text-red-400">{issueError}</div> : null}
+                            {issueSuccess ? <div className="mt-3 text-xs text-emerald-300">{issueSuccess}</div> : null}
+
+                            <div className="mt-4 flex items-center justify-end gap-2">
+                                <button
+                                    type="button"
+                                    className="text-xs rounded-full border px-3 py-1 ui-click"
+                                    style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                                    onClick={closeIssueModal}
+                                    disabled={sendingIssue}
+                                >
+                                    Close
+                                </button>
+                                <button
+                                    type="button"
+                                    className="text-xs rounded-full border px-3 py-1 ui-click"
+                                    style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                                    onClick={() => void submitIssue()}
+                                    disabled={sendingIssue}
+                                >
+                                    {sendingIssue ? "Submitting..." : "Submit issue"}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                ) : null}
             </div>
         </MathJaxContext>
     );
