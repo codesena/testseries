@@ -99,31 +99,6 @@ function isAttemptedAnswer(value: unknown): boolean {
     return true;
 }
 
-type ReflectionPayload = {
-    kind: "REPORT_REFLECTION";
-    wrongReason?: unknown;
-    leftReason?: unknown;
-    slowReason?: unknown;
-};
-
-function asTrimmedStringOrNull(value: unknown): string | null {
-    if (typeof value !== "string") return null;
-    const s = value.trim();
-    return s ? s : null;
-}
-
-function readReflectionPayload(value: unknown): ReflectionPayload | null {
-    if (!value || typeof value !== "object") return null;
-    const obj = value as Record<string, unknown>;
-    if (obj.kind !== "REPORT_REFLECTION") return null;
-    return {
-        kind: "REPORT_REFLECTION",
-        wrongReason: obj.wrongReason,
-        leftReason: obj.leftReason,
-        slowReason: obj.slowReason,
-    };
-}
-
 export async function GET(
     _req: Request,
     ctx: { params: Promise<{ attemptId: string }> },
@@ -233,14 +208,17 @@ export async function GET(
     const byId = new Map(questions.map((q) => [q.id, q] as const));
 
     const responsesByQid = new Map(attempt.responses.map((r) => [r.questionId, r] as const));
-    const reflectionActivities = await prisma.activityLog.findMany({
+    const reflectionRows = await prisma.attemptQuestionReflection.findMany({
         where: {
             attemptId: attempt.id,
-            type: "SUBMIT",
-            questionId: { not: null },
         },
-        orderBy: { createdAt: "desc" },
-        select: { questionId: true, payload: true, createdAt: true },
+        select: {
+            questionId: true,
+            wrongReason: true,
+            leftReason: true,
+            slowReason: true,
+            updatedAt: true,
+        },
     });
     const reflectionsByQid = new Map<
         string,
@@ -252,19 +230,12 @@ export async function GET(
         }
     >();
 
-    for (const item of reflectionActivities) {
-        const qid = item.questionId;
-        if (!qid) continue;
-        if (reflectionsByQid.has(qid)) continue;
-
-        const payload = readReflectionPayload(item.payload);
-        if (!payload) continue;
-
-        reflectionsByQid.set(qid, {
-            wrongReason: asTrimmedStringOrNull(payload.wrongReason),
-            leftReason: asTrimmedStringOrNull(payload.leftReason),
-            slowReason: asTrimmedStringOrNull(payload.slowReason),
-            savedAt: item.createdAt,
+    for (const row of reflectionRows) {
+        reflectionsByQid.set(row.questionId, {
+            wrongReason: row.wrongReason,
+            leftReason: row.leftReason,
+            slowReason: row.slowReason,
+            savedAt: row.updatedAt,
         });
     }
 

@@ -83,28 +83,6 @@ function coerceQuestionOptions(value: unknown): Array<{ key: string; text: strin
     return [];
 }
 
-function asTrimmedStringOrNull(value: unknown): string | null {
-    if (typeof value !== "string") return null;
-    const s = value.trim();
-    return s ? s : null;
-}
-
-function readReflectionPayload(value: unknown): {
-    wrongReason: string | null;
-    leftReason: string | null;
-    slowReason: string | null;
-} | null {
-    if (!value || typeof value !== "object") return null;
-    const obj = value as Record<string, unknown>;
-    if (obj.kind !== "REPORT_REFLECTION") return null;
-
-    return {
-        wrongReason: asTrimmedStringOrNull(obj.wrongReason),
-        leftReason: asTrimmedStringOrNull(obj.leftReason),
-        slowReason: asTrimmedStringOrNull(obj.slowReason),
-    };
-}
-
 function isAttemptedAnswer(value: unknown): boolean {
     if (value == null) return false;
     if (typeof value === "string" && value.trim() === "") return false;
@@ -293,18 +271,17 @@ export default async function AdminConsolidatedPage(
             : [];
         const questionById = new Map(questions.map((q) => [q.id, q] as const));
 
-        const reflectionRows = await prisma.activityLog.findMany({
+        const reflectionRows = await prisma.attemptQuestionReflection.findMany({
             where: {
                 attemptId: { in: selectedAttempts.map((a) => a.id) },
-                type: "SUBMIT",
-                questionId: { not: null },
             },
-            orderBy: { createdAt: "desc" },
             select: {
                 attemptId: true,
                 questionId: true,
-                payload: true,
-                createdAt: true,
+                wrongReason: true,
+                leftReason: true,
+                slowReason: true,
+                updatedAt: true,
             },
         });
 
@@ -319,17 +296,12 @@ export default async function AdminConsolidatedPage(
         >();
 
         for (const row of reflectionRows) {
-            if (!row.questionId) continue;
             const key = `${row.attemptId}::${row.questionId}`;
-            if (reflectionByAttemptQuestion.has(key)) continue;
-            const parsed = readReflectionPayload(row.payload);
-            if (!parsed) continue;
-
             reflectionByAttemptQuestion.set(key, {
-                wrongReason: parsed.wrongReason,
-                leftReason: parsed.leftReason,
-                slowReason: parsed.slowReason,
-                savedAt: row.createdAt.toISOString(),
+                wrongReason: row.wrongReason,
+                leftReason: row.leftReason,
+                slowReason: row.slowReason,
+                savedAt: row.updatedAt.toISOString(),
             });
         }
 

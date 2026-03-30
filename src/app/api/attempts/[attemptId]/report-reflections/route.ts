@@ -80,30 +80,37 @@ export async function POST(
         return json({ error: "At least one reason is required" }, { status: 400 });
     }
 
-    const created = await prisma.activityLog.create({
-        data: {
-            attemptId: params.data.attemptId,
-            questionId: body.data.questionId,
-            type: "SUBMIT",
-            payload: {
-                kind: "REPORT_REFLECTION",
-                wrongReason,
-                leftReason,
-                slowReason,
+    const saved = await prisma.attemptQuestionReflection.upsert({
+        where: {
+            attemptId_questionId: {
+                attemptId: params.data.attemptId,
+                questionId: body.data.questionId,
             },
         },
-        select: { id: true, createdAt: true },
+        create: {
+            attemptId: params.data.attemptId,
+            questionId: body.data.questionId,
+            wrongReason,
+            leftReason,
+            slowReason,
+        },
+        update: {
+            wrongReason,
+            leftReason,
+            slowReason,
+        },
+        select: { attemptId: true, questionId: true, createdAt: true, updatedAt: true },
     });
 
     return json({
         ok: true,
         reflection: {
-            id: String(created.id),
-            questionId: body.data.questionId,
+            id: `${saved.attemptId}::${saved.questionId}`,
+            questionId: saved.questionId,
             wrongReason,
             leftReason,
             slowReason,
-            savedAt: created.createdAt,
+            savedAt: saved.updatedAt,
         },
     });
 }

@@ -75,6 +75,7 @@ model Question {
   activities ActivityLog[]
   issueReports QuestionIssueReport[]
   adminIssueReports AdminQuestionIssueReport[]
+  attemptReflections AttemptQuestionReflection[]
 
   @@index([subjectId])
   @@map("Questions")
@@ -136,6 +137,7 @@ model StudentAttempt {
   responses  QuestionResponse[]
   activities ActivityLog[]
   issueReports QuestionIssueReport[]
+  reflections AttemptQuestionReflection[]
 
   @@index([studentId])
   @@index([testId])
@@ -209,4 +211,21 @@ model AdminQuestionIssueReport {
   @@index([questionId, createdAt])
   @@index([userId, createdAt])
   @@map("AdminQuestionIssueReports")
+}
+
+model AttemptQuestionReflection {
+  attemptId   String   @db.Uuid
+  questionId  String   @db.Uuid
+  wrongReason String?
+  leftReason  String?
+  slowReason  String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  attempt  StudentAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  question Question       @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@id([attemptId, questionId])
+  @@index([questionId, updatedAt])
+  @@map("AttemptQuestionReflections")
 }
