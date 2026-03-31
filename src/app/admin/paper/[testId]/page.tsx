@@ -101,6 +101,30 @@ export default async function AdminPaperViewPage(
 
     if (!test) notFound();
 
+    const questionIds = test.questions.map((item) => item.question.id);
+    const [studentIssueRows, adminIssueRows] = await Promise.all([
+        questionIds.length
+            ? prisma.questionIssueReport.findMany({
+                where: { questionId: { in: questionIds } },
+                select: { questionId: true },
+            })
+            : Promise.resolve([]),
+        questionIds.length
+            ? (prisma as any).adminQuestionIssueReport.findMany({
+                where: { questionId: { in: questionIds } },
+                select: { questionId: true },
+            })
+            : Promise.resolve([]),
+    ]);
+
+    const issueCountByQuestionId = new Map<string, number>();
+    for (const row of studentIssueRows) {
+        issueCountByQuestionId.set(row.questionId, (issueCountByQuestionId.get(row.questionId) ?? 0) + 1);
+    }
+    for (const row of adminIssueRows) {
+        issueCountByQuestionId.set(row.questionId, (issueCountByQuestionId.get(row.questionId) ?? 0) + 1);
+    }
+
     const questions = test.questions.map((item, idx) => ({
         id: item.question.id,
         index: idx + 1,
@@ -111,6 +135,7 @@ export default async function AdminPaperViewPage(
         options: coerceQuestionOptions(item.question.options),
         markingSchemeType: item.question.markingSchemeType,
         correctAnswer: item.question.correctAnswer,
+        issueCount: issueCountByQuestionId.get(item.question.id) ?? 0,
     }));
 
     return (
