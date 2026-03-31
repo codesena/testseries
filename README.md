@@ -41,6 +41,12 @@ Copy `.env.example` → `.env` and adjust if needed.
 - `REDIS_URL` (optional; Redis isn’t required for the current feature set)
 - `NEXT_PUBLIC_IDLE_TIMEOUT_MS` (default 300000)
 - `NEXT_PUBLIC_HEARTBEAT_INTERVAL_MS` (default 30000)
+- `CLOUDINARY_CLOUD_NAME` (required for admin image upload)
+- `CLOUDINARY_API_KEY` (required for admin image upload)
+- `CLOUDINARY_API_SECRET` (required for admin image upload)
+
+Admin raw editor supports drag-and-drop / file upload for question and option images.
+Uploaded images are stored in Cloudinary under `testseries/<folder-name-from-editor>`.
 
 ### Import from Notion (Seed Your Own Tests)
 

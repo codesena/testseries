@@ -1,7 +1,7 @@
 "use client";
 
 import { MathJax, MathJaxContext } from "better-react-mathjax";
-import { useEffect, useMemo, useState } from "react";
+import { type DragEvent, useEffect, useMemo, useState } from "react";
 import { optimizeImageDelivery } from "@/lib/image-delivery";
 
 type SubjectItem = { id: number; name: string };
@@ -118,6 +118,17 @@ function isCorrectOption(markingSchemeType: QuestionRaw["markingSchemeType"], co
     return false;
 }
 
+function slugifyFolderName(input: string): string {
+    return input
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9-_\s]/g, "")
+        .replace(/\s+/g, "-")
+        .replace(/-+/g, "-")
+        .replace(/^-|-$/g, "")
+        .slice(0, 80);
+}
+
 export function AdminQuestionEditorClient() {
     const [subjects, setSubjects] = useState<SubjectItem[]>([]);
     const [tests, setTests] = useState<TestItem[]>([]);
@@ -128,6 +139,10 @@ export function AdminQuestionEditorClient() {
     const [rawText, setRawText] = useState("");
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
+    const [uploadingQuestionImage, setUploadingQuestionImage] = useState(false);
+    const [uploadingOptionImage, setUploadingOptionImage] = useState(false);
+    const [optionUploadKey, setOptionUploadKey] = useState("A");
+    const [uploadFolderName, setUploadFolderName] = useState("uploads");
     const [preview, setPreview] = useState<QuestionRaw | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
@@ -156,6 +171,10 @@ export function AdminQuestionEditorClient() {
             setTests(data.tests);
             setSelectedTestId(data.selectedTestId);
             setQuestions(data.questions);
+            if (!uploadFolderName.trim()) {
+                const t = data.tests.find((x) => x.id === data.selectedTestId);
+                if (t) setUploadFolderName(slugifyFolderName(t.title) || "uploads");
+            }
 
             const nextSelectedId =
                 data.questions.some((qItem) => qItem.id === selectedId)
@@ -227,6 +246,150 @@ export function AdminQuestionEditorClient() {
         }
     }, [rawText]);
 
+    const optionKeysForUpload = useMemo(() => {
+        const options = parsedRaw?.options;
+        if (!options || typeof options !== "object") return ["A", "B", "C", "D"];
+
+        if (Array.isArray(options)) {
+            const keys = options
+                .map((item) => (item && typeof item === "object" ? (item as { key?: unknown }).key : null))
+                .filter((k): k is string => typeof k === "string" && k.trim().length > 0)
+                .map((k) => k.trim());
+            return keys.length ? Array.from(new Set(keys)) : ["A", "B", "C", "D"];
+        }
+
+        const keys = Object.keys(options as Record<string, unknown>).filter((k) => k.trim().length > 0);
+        return keys.length ? keys : ["A", "B", "C", "D"];
+    }, [parsedRaw]);
+
+    async function uploadImageFile(file: File): Promise<string> {
+        const fd = new FormData();
+        fd.append("file", file);
+        fd.append("folderName", slugifyFolderName(uploadFolderName) || "uploads");
+
+        const res = await fetch("/api/admin/uploads/image", {
+            method: "POST",
+            body: fd,
+        });
+
+        if (!res.ok) {
+            const text = await res.text().catch(() => "");
+            throw new Error(text || `${res.status} ${res.statusText}`);
+        }
+
+        const data = (await res.json()) as { url?: string; error?: string; details?: string };
+        if (!data.url) throw new Error(data.error || data.details || "Upload failed");
+        return data.url;
+    }
+
+    function updateRawQuestionImageUrl(newUrl: string) {
+        let parsed: Record<string, unknown>;
+        try {
+            parsed = JSON.parse(rawText) as Record<string, unknown>;
+        } catch {
+            throw new Error("Raw JSON is invalid. Fix JSON before uploading images.");
+        }
+
+        const current = parsed.imageUrls;
+        const urls = Array.isArray(current)
+            ? current.map(String).map((x) => x.trim()).filter(Boolean)
+            : [];
+        if (!urls.includes(newUrl)) urls.push(newUrl);
+
+        parsed.imageUrls = urls;
+        setRawText(JSON.stringify(parsed, null, 2));
+    }
+
+    function updateRawOptionImageUrl(optionKey: string, newUrl: string) {
+        let parsed: Record<string, unknown>;
+        try {
+            parsed = JSON.parse(rawText) as Record<string, unknown>;
+        } catch {
+            throw new Error("Raw JSON is invalid. Fix JSON before uploading images.");
+        }
+
+        const options = parsed.options;
+        if (!options || typeof options !== "object") {
+            throw new Error("options is missing in raw JSON.");
+        }
+
+        if (Array.isArray(options)) {
+            const next = options.map((item) => {
+                if (!item || typeof item !== "object") return item;
+                const key = (item as { key?: unknown }).key;
+                if (String(key) !== optionKey) return item;
+                return {
+                    ...(item as Record<string, unknown>),
+                    imageUrl: newUrl,
+                };
+            });
+            parsed.options = next;
+            setRawText(JSON.stringify(parsed, null, 2));
+            return;
+        }
+
+        const optionsObj = { ...(options as Record<string, unknown>) };
+        const existing = optionsObj[optionKey];
+        if (typeof existing === "string") {
+            optionsObj[optionKey] = { text: existing, imageUrl: newUrl };
+        } else if (existing && typeof existing === "object") {
+            optionsObj[optionKey] = {
+                ...(existing as Record<string, unknown>),
+                imageUrl: newUrl,
+            };
+        } else {
+            optionsObj[optionKey] = { text: "", imageUrl: newUrl };
+        }
+
+        parsed.options = optionsObj;
+        setRawText(JSON.stringify(parsed, null, 2));
+    }
+
+    async function uploadQuestionImages(files: File[]) {
+        if (!files.length) return;
+        setError(null);
+        setSuccess(null);
+        setUploadingQuestionImage(true);
+        try {
+            for (const file of files) {
+                const url = await uploadImageFile(file);
+                updateRawQuestionImageUrl(url);
+            }
+            setSuccess("Question image uploaded and inserted into imageUrls.");
+        } catch (e) {
+            setError(e instanceof Error ? e.message : "Failed to upload question image");
+        } finally {
+            setUploadingQuestionImage(false);
+        }
+    }
+
+    async function uploadOptionImage(file: File) {
+        setError(null);
+        setSuccess(null);
+        setUploadingOptionImage(true);
+        try {
+            const url = await uploadImageFile(file);
+            updateRawOptionImageUrl(optionUploadKey, url);
+            setSuccess(`Option ${optionUploadKey} image uploaded and inserted.`);
+        } catch (e) {
+            setError(e instanceof Error ? e.message : "Failed to upload option image");
+        } finally {
+            setUploadingOptionImage(false);
+        }
+    }
+
+    function onQuestionDrop(e: DragEvent<HTMLDivElement>) {
+        e.preventDefault();
+        const files = Array.from(e.dataTransfer.files || []).filter((f) => f.type.startsWith("image/"));
+        void uploadQuestionImages(files);
+    }
+
+    function onOptionDrop(e: DragEvent<HTMLDivElement>) {
+        e.preventDefault();
+        const file = Array.from(e.dataTransfer.files || []).find((f) => f.type.startsWith("image/"));
+        if (file) void uploadOptionImage(file);
+    }
+
     function handlePreview() {
         setError(null);
         setSuccess(null);
@@ -291,6 +454,8 @@ export function AdminQuestionEditorClient() {
                             onChange={(e) => {
                                 const next = e.target.value;
                                 setSelectedTestId(next);
+                                const title = tests.find((t) => t.id === next)?.title ?? "";
+                                if (title) setUploadFolderName(slugifyFolderName(title) || "uploads");
                                 void loadList(next);
                             }}
                         >
@@ -416,6 +581,85 @@ export function AdminQuestionEditorClient() {
                             onChange={(e) => setRawText(e.target.value)}
                             placeholder="Select a question to load raw JSON"
                         />
+                        <div className="mt-3 grid gap-3 md:grid-cols-2">
+                            <div className="md:col-span-2 rounded border p-3" style={{ borderColor: "var(--border)", background: "var(--muted)" }}>
+                                <div className="text-xs font-medium">Upload folder (inside testseries)</div>
+                                <div className="mt-1 text-xs opacity-70">All uploads go to Cloudinary folder: <span className="font-mono">testseries/{slugifyFolderName(uploadFolderName) || "uploads"}</span></div>
+                                <input
+                                    className="mt-2 w-full rounded border px-3 py-2 bg-transparent ui-field text-xs"
+                                    style={{ borderColor: "var(--border)" }}
+                                    value={uploadFolderName}
+                                    onChange={(e) => setUploadFolderName(e.target.value)}
+                                    placeholder="e.g. paper5 or wave-optics"
+                                />
+                            </div>
+                            <div
+                                className="rounded border p-3"
+                                style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                                onDragOver={(e) => e.preventDefault()}
+                                onDrop={onQuestionDrop}
+                            >
+                                <div className="text-xs font-medium">Question images</div>
+                                <div className="mt-1 text-xs opacity-70">Drag & drop image(s) here or pick files.</div>
+                                <label
+                                    className="mt-2 inline-flex text-xs rounded-full border px-3 py-1 ui-click cursor-pointer"
+                                    style={{ borderColor: "var(--border)", background: "var(--card)" }}
+                                >
+                                    {uploadingQuestionImage ? "Uploading..." : "Upload question image"}
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        multiple
+                                        className="hidden"
+                                        disabled={uploadingQuestionImage}
+                                        onChange={(e) => {
+                                            const files = Array.from(e.target.files ?? []);
+                                            void uploadQuestionImages(files);
+                                            e.currentTarget.value = "";
+                                        }}
+                                    />
+                                </label>
+                            </div>
+
+                            <div
+                                className="rounded border p-3"
+                                style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                                onDragOver={(e) => e.preventDefault()}
+                                onDrop={onOptionDrop}
+                            >
+                                <div className="text-xs font-medium">Option image</div>
+                                <div className="mt-1 text-xs opacity-70">Drag & drop one image here for selected option.</div>
+                                <div className="mt-2 flex items-center gap-2">
+                                    <select
+                                        className="rounded border px-2 py-1 bg-transparent ui-field text-xs"
+                                        style={{ borderColor: "var(--border)" }}
+                                        value={optionUploadKey}
+                                        onChange={(e) => setOptionUploadKey(e.target.value)}
+                                    >
+                                        {optionKeysForUpload.map((k) => (
+                                            <option key={k} value={k}>{k}</option>
+                                        ))}
+                                    </select>
+                                    <label
+                                        className="inline-flex text-xs rounded-full border px-3 py-1 ui-click cursor-pointer"
+                                        style={{ borderColor: "var(--border)", background: "var(--card)" }}
+                                    >
+                                        {uploadingOptionImage ? "Uploading..." : `Upload Option ${optionUploadKey}`}
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            className="hidden"
+                                            disabled={uploadingOptionImage}
+                                            onChange={(e) => {
+                                                const file = e.target.files?.[0];
+                                                if (file) void uploadOptionImage(file);
+                                                e.currentTarget.value = "";
+                                            }}
+                                        />
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
                         <div className="mt-3 flex items-center gap-2">
                             <button
                                 type="button"
