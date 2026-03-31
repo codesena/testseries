@@ -31,7 +31,14 @@ type ReportPayload = {
     analytics: {
         subjectSummary: Record<
             string,
-            { totalTimeSeconds: number; correct: number; incorrect: number; unattempted: number }
+            {
+                totalTimeSeconds: number;
+                correct: number;
+                incorrect: number;
+                unattempted: number;
+                netScore: number;
+                netNegative: number;
+            }
         >;
         totalTimeSeconds: number;
         timeOnCorrectSeconds: number;
@@ -323,6 +330,8 @@ export function AttemptReportClient({ attemptId }: { attemptId: string }) {
                                     <div className="text-sm opacity-80">Correct: {s.correct}</div>
                                     <div className="text-sm opacity-80">Incorrect: {s.incorrect}</div>
                                     <div className="text-sm opacity-80">Unattempted: {s.unattempted}</div>
+                                    <div className="text-sm opacity-80">Net Score: {s.netScore.toFixed(2)}</div>
+                                    <div className="text-sm text-red-400">Net Negative: -{s.netNegative.toFixed(2)}</div>
                                 </div>
                             ))}
                         </div>

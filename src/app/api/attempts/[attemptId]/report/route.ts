@@ -241,7 +241,14 @@ export async function GET(
 
     const subjectAgg: Record<
         string,
-        { totalTimeSeconds: number; correct: number; incorrect: number; unattempted: number }
+        {
+            totalTimeSeconds: number;
+            correct: number;
+            incorrect: number;
+            unattempted: number;
+            netScore: number;
+            netNegative: number;
+        }
     > = {};
 
     const topicAgg: Record<string, { correct: number; total: number }> = {};
@@ -279,8 +286,14 @@ export async function GET(
             correct: 0,
             incorrect: 0,
             unattempted: 0,
+            netScore: 0,
+            netNegative: 0,
         };
         subjectAgg[subject].totalTimeSeconds += timeSpentSeconds;
+        subjectAgg[subject].netScore += marks;
+        if (marks < 0) {
+            subjectAgg[subject].netNegative += Math.abs(marks);
+        }
         if (!attempted) subjectAgg[subject].unattempted += 1;
         else if (correct) subjectAgg[subject].correct += 1;
         else subjectAgg[subject].incorrect += 1;
