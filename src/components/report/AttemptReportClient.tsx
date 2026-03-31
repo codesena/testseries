@@ -129,6 +129,35 @@ export function AttemptReportClient({ attemptId }: { attemptId: string }) {
 
     useEffect(() => {
         let cancelled = false;
+        let intervalId: ReturnType<typeof setInterval> | null = null;
+
+        const applyReportData = (res: ReportPayload) => {
+            setData(res);
+            setError(null);
+            setReflectionByQid((prev) => {
+                const next: Record<string, ReflectionDraft> = { ...prev };
+                for (const q of res.analytics.perQuestion) {
+                    const existing = next[q.questionId];
+                    next[q.questionId] = {
+                        wrongReason: existing?.wrongReason ?? q.reflection?.wrongReason ?? "",
+                        leftReason: existing?.leftReason ?? q.reflection?.leftReason ?? "",
+                        slowReason: existing?.slowReason ?? q.reflection?.slowReason ?? "",
+                    };
+                }
+                return next;
+            });
+        };
+
+        const fetchLatest = async () => {
+            const res = await apiGet<ReportPayload>(`/api/attempts/${attemptId}/report`);
+            if (cancelled) return;
+            applyReportData(res);
+            if (res.attempt.status !== "IN_PROGRESS" && intervalId) {
+                clearInterval(intervalId);
+                intervalId = null;
+            }
+        };
+
         (async () => {
             const maxAttempts = 12;
 
@@ -139,17 +168,18 @@ export function AttemptReportClient({ attemptId }: { attemptId: string }) {
                 try {
                     const res = await apiGet<ReportPayload>(`/api/attempts/${attemptId}/report`);
                     if (!cancelled) {
-                        setData(res);
-                        setError(null);
-                        const init: Record<string, ReflectionDraft> = {};
-                        for (const q of res.analytics.perQuestion) {
-                            init[q.questionId] = {
-                                wrongReason: q.reflection?.wrongReason ?? "",
-                                leftReason: q.reflection?.leftReason ?? "",
-                                slowReason: q.reflection?.slowReason ?? "",
-                            };
+                        applyReportData(res);
+                        if (res.attempt.status === "IN_PROGRESS") {
+                            intervalId = setInterval(() => {
+                                void fetchLatest().catch((e) => {
+                                    const msg = e instanceof Error ? e.message : "Failed to refresh report";
+                                    if (msg.startsWith("401")) {
+                                        setRedirecting(true);
+                                        window.location.href = "/login";
+                                    }
+                                });
+                            }, 5000);
                         }
-                        setReflectionByQid(init);
                     }
                     return;
                 } catch (e) {
@@ -176,6 +206,7 @@ export function AttemptReportClient({ attemptId }: { attemptId: string }) {
         })();
         return () => {
             cancelled = true;
+            if (intervalId) clearInterval(intervalId);
         };
     }, [attemptId]);
 

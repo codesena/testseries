@@ -151,7 +151,7 @@ export async function GET(
         return json({ error: "Attempt not found" }, { status: 404 });
     }
 
-    await autoSubmitAttemptIfOverdue(prisma, {
+    const autoSubmitResult = await autoSubmitAttemptIfOverdue(prisma, {
         id: attempt.id,
         status: attempt.status,
         startTimestamp: attempt.startTimestamp,
@@ -344,13 +344,25 @@ export async function GET(
         }))
         .sort((a, b) => a.accuracy - b.accuracy);
 
+    const liveScore = perQuestionOrdered
+        .filter((x): x is NonNullable<typeof x> => Boolean(x))
+        .reduce((sum, q) => sum + q.marks, 0);
+
+    const effectiveStatus = autoSubmitResult.didAutoSubmit ? "AUTO_SUBMITTED" : attempt.status;
+    const effectiveScore =
+        autoSubmitResult.didAutoSubmit
+            ? (autoSubmitResult.score ?? attempt.overallScore)
+            : attempt.status === "IN_PROGRESS"
+                ? liveScore
+                : attempt.overallScore;
+
     return json({
         attempt: {
             id: attempt.id,
             studentId: attempt.studentId,
             studentName: student?.name ?? null,
-            status: attempt.status,
-            score: attempt.overallScore,
+            status: effectiveStatus,
+            score: effectiveScore,
             startTimestamp: attempt.startTimestamp,
             endTimestamp: attempt.endTimestamp,
             test: attempt.test,
