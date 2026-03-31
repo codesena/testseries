@@ -76,7 +76,7 @@ export default async function AdminCandidatePage(
                             className="text-xs rounded-full border px-3 py-1 ui-click"
                             style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                         >
-                            ← Admin
+                            Admin
                         </Link>
                         <div className="text-sm opacity-70">Candidate</div>
                     </div>
@@ -116,7 +116,7 @@ export default async function AdminCandidatePage(
                         className="text-xs rounded-full border px-3 py-1 ui-click"
                         style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                     >
-                        ← Admin
+                        Admin
                     </Link>
                     <div className="text-sm opacity-70">Admin</div>
                 </div>
@@ -153,7 +153,7 @@ export default async function AdminCandidatePage(
                                             className="text-xs rounded-full border px-3 py-1 ui-click"
                                             style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                                         >
-                                            View attempts →
+                                            View attempts
                                         </Link>
                                     </div>
                                 </div>

@@ -131,7 +131,7 @@ export default async function AdminCandidateTestPage(
                             className="text-xs rounded-full border px-3 py-1 ui-click"
                             style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                         >
-                            ← Papers
+                            Papers
                         </Link>
                         <Link
                             href="/admin"

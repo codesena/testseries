@@ -174,7 +174,7 @@ export default async function Home() {
                                         className="text-xs rounded-full border px-3 py-1 ui-click"
                                         style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                                     >
-                                        Start →
+                                        Start
                                     </Link>
                                 </div>
                             </div>
@@ -214,24 +214,29 @@ export default async function Home() {
                                 <Link
                                     key={a.id}
                                     href={`/attempt/${a.id}/report`}
-                                    className="rounded-lg border p-4 ui-click"
+                                    className="rounded-lg border p-3 sm:p-4 ui-click"
                                     style={{ borderColor: "var(--border)", background: "var(--card)" }}
                                 >
-                                    <div className="flex items-start justify-between gap-4">
+                                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
                                         <div className="min-w-0">
-                                            <div className="font-medium truncate">{a.test.title}</div>
-                                            <div className="mt-1 text-sm opacity-70">
+                                            <div className="font-medium leading-snug break-words">{a.test.title}</div>
+                                            <div className="mt-1 text-sm opacity-70 leading-snug">
                                                 Attempt {attemptNo}/{attemptCountForTest} · Status {a.status}
                                             </div>
-                                            <div className="text-xs opacity-60">
+                                            <div className="text-xs opacity-60 leading-snug">
                                                 Started {fmtDate(a.startTimestamp)}
-                                                {a.endTimestamp ? ` · Ended ${fmtDate(a.endTimestamp)}` : ""}
+                                                {a.endTimestamp ? <span className="hidden sm:inline">{` · Ended ${fmtDate(a.endTimestamp)}`}</span> : null}
                                             </div>
-                                            <div className="mt-2 text-sm opacity-80">
+                                            <div className="mt-2 text-sm opacity-80 leading-snug">
                                                 Score: {a.overallScore ?? "—"} · Attempted: {attempted}/{totalQuestions || "—"} · Time: {fmtTime(totalTimeSeconds)}
                                             </div>
                                         </div>
-                                        <div className="text-sm underline whitespace-nowrap">View report →</div>
+                                        <span
+                                            className="text-xs font-medium rounded-full border px-3 py-1 whitespace-nowrap self-start sm:self-auto ui-click"
+                                            style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                                        >
+                                            View report
+                                        </span>
                                     </div>
                                 </Link>
                             );

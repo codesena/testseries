@@ -84,8 +84,12 @@ export default async function TestAttemptHistoryPage({
                 style={{ borderColor: "var(--border)", background: "var(--background)" }}
             >
                 <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
-                    <Link href="/" className="text-sm underline ui-click">
-                        ← Back
+                    <Link
+                        href="/"
+                        className="text-xs rounded-full border px-3 py-1 ui-click"
+                        style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                    >
+                        Back
                     </Link>
                     <div className="text-sm opacity-70">Attempt History</div>
                 </div>
@@ -111,7 +115,7 @@ export default async function TestAttemptHistoryPage({
                         className="text-xs rounded-full border px-3 py-1 ui-click"
                         style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                     >
-                        Start test →
+                        Start test
                     </Link>
                 </div>
 
@@ -158,9 +162,12 @@ export default async function TestAttemptHistoryPage({
                                             {totalQuestions || "—"} · Time: {fmtTime(totalTimeSeconds)}
                                         </div>
                                     </div>
-                                    <div className="text-sm underline whitespace-nowrap">
-                                        View report →
-                                    </div>
+                                    <span
+                                        className="text-xs font-medium rounded-full border px-3 py-1 whitespace-nowrap self-start sm:self-auto"
+                                        style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                                    >
+                                        View report
+                                    </span>
                                 </div>
                             </Link>
                         );

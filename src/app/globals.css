@@ -51,15 +51,45 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
-@layer components {
-  .ui-click {
+@layer base {
+
+  button,
+  [role="button"] {
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
-    @apply transition-transform transition-opacity duration-150 ease-out;
-    @apply hover:opacity-95;
-    @apply active:opacity-90 active:scale-[0.99] active:translate-y-px;
-    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/40 dark:focus-visible:ring-white/40;
+  }
+
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]) {
+    cursor: pointer;
+  }
+}
+
+@layer components {
+  .ui-click {
+    position: relative;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    @apply transition-all duration-150 ease-out;
+    @apply hover:opacity-100 hover:-translate-y-px;
+    @apply active:opacity-90 active:scale-[0.985] active:translate-y-0;
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/45 dark:focus-visible:ring-white/45;
+    @apply shadow-sm hover:shadow-md;
     @apply disabled:opacity-60 disabled:cursor-not-allowed;
+  }
+
+  @media (pointer: coarse) {
+    .ui-click {
+      min-height: 38px;
+      min-width: 38px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ui-click {
+      transform: none !important;
+      transition: opacity 120ms ease-out, box-shadow 120ms ease-out;
+    }
   }
 
   .ui-field {

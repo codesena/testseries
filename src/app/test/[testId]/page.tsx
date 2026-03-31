@@ -65,7 +65,8 @@ export default async function TestStartPage({
                     <StartAttemptButton testId={test.id} />
                     <Link
                         href="/"
-                        className="text-sm underline opacity-80 hover:opacity-100"
+                        className="text-sm rounded-full border px-4 py-2 ui-click"
+                        style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                     >
                         Cancel
                     </Link>

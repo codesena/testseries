@@ -20,9 +20,24 @@ export function StartAttemptButton({ testId }: { testId: string }) {
                     setError(null);
                     setLoading(true);
                     try {
-                        // Best-effort fullscreen
-                        if (document.documentElement.requestFullscreen) {
-                            await document.documentElement.requestFullscreen().catch(() => { });
+                        try {
+                            if (!document.fullscreenElement) {
+                                const root = document.documentElement as HTMLElement & {
+                                    webkitRequestFullscreen?: () => Promise<void> | void;
+                                    mozRequestFullScreen?: () => Promise<void> | void;
+                                    msRequestFullscreen?: () => Promise<void> | void;
+                                };
+                                const requestFn =
+                                    root.requestFullscreen ??
+                                    root.webkitRequestFullscreen ??
+                                    root.mozRequestFullScreen ??
+                                    root.msRequestFullscreen;
+                                if (requestFn) {
+                                    await Promise.resolve(requestFn.call(root));
+                                }
+                            }
+                        } catch {
+                            // Fullscreen may be blocked by browser policy; continue to exam.
                         }
 
                         const res = await apiPost<{ attemptId: string }>("/api/attempts", {

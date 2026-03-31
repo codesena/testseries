@@ -115,7 +115,7 @@ export function CandidateAttemptsClient({
                                     className="text-xs rounded-full border px-3 py-1 ui-click"
                                     style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                                 >
-                                    View report →
+                                    View report
                                 </Link>
                                 <button
                                     type="button"

@@ -287,7 +287,7 @@ export function AttemptReportClient({ attemptId }: { attemptId: string }) {
                             className="text-xs rounded-full border px-3 py-1 ui-click"
                             style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                         >
-                            ← Home
+                            Home
                         </Link>
                         <div className="text-sm opacity-70">Attempt Report</div>
                     </div>

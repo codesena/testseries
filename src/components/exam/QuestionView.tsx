@@ -56,7 +56,6 @@ export const QuestionView = memo(function QuestionView({
     answer,
     paletteStatus,
     onSetAnswer,
-    onClear,
 }: {
     attemptId: string;
     questionNumber?: number;
@@ -64,7 +63,6 @@ export const QuestionView = memo(function QuestionView({
     answer: unknown;
     paletteStatus: PaletteStatus;
     onSetAnswer: (value: unknown) => void;
-    onClear: () => void;
 }) {
     const scheme = question.markingSchemeType;
     const selectedSingle = typeof answer === "string" ? answer : null;
@@ -138,13 +136,6 @@ export const QuestionView = memo(function QuestionView({
                         type="button"
                     >
                         Report issue
-                    </button>
-                    <button
-                        className="text-sm underline opacity-80 hover:opacity-100 ui-click"
-                        onClick={onClear}
-                        type="button"
-                    >
-                        Clear
                     </button>
                 </div>
             </div>

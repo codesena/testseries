@@ -163,6 +163,8 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
     const [submitting, setSubmitting] = useState(false);
     const submittingRef = useRef(false);
     const [saveNextNotice, setSaveNextNotice] = useState<string | null>(null);
+    const [isFullscreen, setIsFullscreen] = useState(false);
+    const fullscreenRequestInFlightRef = useRef(false);
 
     const activeQuestion = useMemo(
         () => questions.find((q) => q.id === activeQuestionId) ?? null,
@@ -190,6 +192,12 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
         for (const q of questions) map.set(q.subject.id, q.subject.name);
         return Array.from(map.entries()).map(([id, name]) => ({ id, name }));
     }, [questions]);
+
+    const studentFirstName = useMemo(() => {
+        const raw = (studentName ?? "").trim();
+        if (!raw) return "Student";
+        return raw.split(/\s+/)[0];
+    }, [studentName]);
 
     const orderedSubjectIds = useMemo(() => {
         const seen = new Set<number>();
@@ -482,16 +490,22 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
             else logEvent("TAB_VISIBLE", activeQuestionId ?? undefined);
         };
         const onFs = () => {
-            if (!document.fullscreenElement) logEvent("FULLSCREEN_EXIT", activeQuestionId ?? undefined);
+            const active = Boolean(document.fullscreenElement);
+            setIsFullscreen(active);
+            if (!active) logEvent("FULLSCREEN_EXIT", activeQuestionId ?? undefined);
             else logEvent("FULLSCREEN_ENTER", activeQuestionId ?? undefined);
         };
 
+        setIsFullscreen(Boolean(document.fullscreenElement));
+
         document.addEventListener("visibilitychange", onVis);
         document.addEventListener("fullscreenchange", onFs);
+        document.addEventListener("webkitfullscreenchange", onFs as EventListener);
 
         return () => {
             document.removeEventListener("visibilitychange", onVis);
             document.removeEventListener("fullscreenchange", onFs);
+            document.removeEventListener("webkitfullscreenchange", onFs as EventListener);
         };
     }, [activeQuestionId]);
 
@@ -892,6 +906,47 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
         }
     }
 
+    function enterFullscreenMode() {
+        if (document.fullscreenElement || fullscreenRequestInFlightRef.current) return;
+
+        type FullscreenCandidate = HTMLElement & {
+            webkitRequestFullscreen?: () => Promise<void> | void;
+            mozRequestFullScreen?: () => Promise<void> | void;
+            msRequestFullscreen?: () => Promise<void> | void;
+        };
+
+        const candidates: FullscreenCandidate[] = [
+            document.documentElement as FullscreenCandidate,
+            document.body as FullscreenCandidate,
+        ].filter(Boolean);
+
+        for (const el of candidates) {
+            try {
+                const fn =
+                    el.requestFullscreen ??
+                    el.webkitRequestFullscreen ??
+                    el.mozRequestFullScreen ??
+                    el.msRequestFullscreen;
+                if (!fn) continue;
+
+                const result = fn.call(el);
+                if (result && typeof (result as Promise<void>).catch === "function") {
+                    fullscreenRequestInFlightRef.current = true;
+                    void (result as Promise<void>)
+                        .catch(() => {
+                            // Browser may block fullscreen without a trusted gesture.
+                        })
+                        .finally(() => {
+                            fullscreenRequestInFlightRef.current = false;
+                        });
+                }
+                return;
+            } catch {
+                // Try next candidate if available.
+            }
+        }
+    }
+
     if (loading) {
         return (
             <div className="min-h-screen flex items-center justify-center">
@@ -913,21 +968,28 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
 
     return (
         <MathJaxContext version={3} config={mathjaxConfig}>
-            <div className="min-h-screen flex flex-col">
+            <div
+                className="min-h-screen flex flex-col"
+                onPointerDownCapture={() => {
+                    if (!isFullscreen) enterFullscreenMode();
+                }}
+                onClickCapture={() => {
+                    if (!isFullscreen) enterFullscreenMode();
+                }}
+            >
                 <header
                     className="sticky top-0 z-50 border-b"
                     style={{ borderColor: "var(--border)", background: "var(--card)" }}
                 >
                     <div className="px-4 py-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                        <div className="min-w-0 w-full">
+                        <div className="min-w-0 sm:flex-1">
                             <div className="font-semibold truncate">{testTitle}</div>
                             <div className="text-xs opacity-70">
                                 Attempt: {attemptId.slice(0, 8)} · Idle: {idlePaused ? "paused" : "active"}
                             </div>
-                            <div className="text-xs opacity-60">Student: {studentName ?? "—"}</div>
                         </div>
 
-                        <div className="flex items-center flex-wrap justify-end gap-2 sm:gap-3 self-start sm:self-auto">
+                        <div className="flex items-center flex-wrap justify-end gap-2 sm:gap-3 self-start sm:self-auto shrink-0 max-w-full">
                             <div className="text-xs sm:text-sm font-mono shrink-0 whitespace-nowrap">{formatTime(timeLeftSeconds)}</div>
                             <ThemeToggle />
                             <button
@@ -938,6 +1000,12 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
                             >
                                 Submit
                             </button>
+                            <span
+                                className="text-xs rounded-full border px-3 py-1 whitespace-nowrap shrink-0"
+                                style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                            >
+                                {studentFirstName}
+                            </span>
                         </div>
                     </div>
                 </header>
@@ -957,7 +1025,6 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
                                 answer={answersByQid[activeQuestion.id] ?? null}
                                 paletteStatus={paletteByQid[activeQuestion.id] ?? "NOT_VISITED"}
                                 onSetAnswer={setAnswer}
-                                onClear={clearResponse}
                             />
                         ) : (
                             <div className="text-sm opacity-70">No question loaded.</div>

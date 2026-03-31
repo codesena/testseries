@@ -394,7 +394,7 @@ export default async function AdminConsolidatedPage(
                             className="text-xs rounded-full border px-3 py-1 ui-click"
                             style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                         >
-                            ← Admin
+                            Admin
                         </Link>
                         <Link
                             href="/"

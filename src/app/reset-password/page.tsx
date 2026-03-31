@@ -21,7 +21,7 @@ export default function ResetPasswordPage() {
             >
                 <div className="max-w-md mx-auto px-4 py-3 flex items-center justify-between">
                     <Link href="/login" className="text-sm underline">
-                        ← Back
+                        Back
                     </Link>
                     <div className="text-sm opacity-70">Reset Password</div>
                 </div>

@@ -149,7 +149,7 @@ export default async function AdminPage() {
                                             className="text-xs rounded-full border px-3 py-1 ui-click"
                                             style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                                         >
-                                            View papers →
+                                            View papers
                                         </Link>
                                     </div>
                                 </div>
