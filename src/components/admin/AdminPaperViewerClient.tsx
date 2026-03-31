@@ -621,7 +621,7 @@ export function AdminPaperViewerClient({
                 </div>
                 <div className="mt-2">
                     <span
-                        className="inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-medium"
+                        className="inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-medium break-all"
                         style={uploadFolderSaved
                             ? {
                                 borderColor: "rgba(34, 197, 94, 0.7)",
@@ -665,7 +665,7 @@ export function AdminPaperViewerClient({
                                 <div className="text-xs opacity-70">
                                     Q{q.index} · {q.subjectName} · {display.topicName}
                                 </div>
-                                <div className="flex items-center gap-2">
+                                <div className="flex flex-wrap items-center gap-2 justify-start sm:justify-end">
                                     <button
                                         type="button"
                                         className="text-xs rounded-full border px-3 py-1 ui-click"
@@ -916,7 +916,7 @@ export function AdminPaperViewerClient({
                                         <div className="mt-2 text-sm text-emerald-500">{editSuccess}</div>
                                     ) : null}
 
-                                    <div className="mt-4 flex items-center justify-end gap-2">
+                                    <div className="mt-4 flex flex-wrap items-center justify-start sm:justify-end gap-2">
                                         <button
                                             type="button"
                                             className="text-xs rounded-full border px-3 py-1 ui-click"
@@ -1022,7 +1022,7 @@ export function AdminPaperViewerClient({
                             <div className="mt-3 text-sm text-red-600">{issueError}</div>
                         ) : null}
 
-                        <div className="mt-4 flex items-center justify-end gap-2">
+                        <div className="mt-4 flex flex-wrap items-center justify-end gap-2">
                             <button
                                 type="button"
                                 className="text-xs rounded-full border px-3 py-1 ui-click"

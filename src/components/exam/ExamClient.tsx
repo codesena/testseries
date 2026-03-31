@@ -927,7 +927,7 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
                             <div className="text-xs opacity-60">Student: {studentName ?? "—"}</div>
                         </div>
 
-                        <div className="flex items-center flex-nowrap gap-2 sm:gap-3 self-start sm:self-auto">
+                        <div className="flex items-center flex-wrap justify-end gap-2 sm:gap-3 self-start sm:self-auto">
                             <div className="text-xs sm:text-sm font-mono shrink-0 whitespace-nowrap">{formatTime(timeLeftSeconds)}</div>
                             <ThemeToggle />
                             <button

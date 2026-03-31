@@ -105,7 +105,6 @@ export default async function Home() {
                 <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
                     <div>
                         <div className="text-base font-semibold">JEE Test Series</div>
-                        <div className="text-xs opacity-70">CBT-style mock platform</div>
                         <div className="text-xs opacity-60">Student: {user?.name ?? "—"}</div>
                     </div>
                     <div className="flex items-center gap-3">

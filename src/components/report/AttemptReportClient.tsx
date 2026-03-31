@@ -281,7 +281,7 @@ export function AttemptReportClient({ attemptId }: { attemptId: string }) {
                     className="sticky top-0 z-50 border-b"
                     style={{ borderColor: "var(--border)", background: "var(--background)" }}
                 >
-                    <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
+                    <div className="max-w-4xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-2">
                         <Link
                             href="/"
                             className="text-xs rounded-full border px-3 py-1 ui-click"
@@ -294,14 +294,14 @@ export function AttemptReportClient({ attemptId }: { attemptId: string }) {
                 </header>
 
                 <main className="max-w-4xl mx-auto w-full px-4 py-8">
-                    <h1 className="text-2xl font-semibold">{data.attempt.test.title}</h1>
+                    <h1 className="text-xl sm:text-2xl font-semibold break-words">{data.attempt.test.title}</h1>
                     <div className="mt-2 text-sm opacity-70">
                         Attempt {data.attempt.id.slice(0, 8)} · Status {data.attempt.status}
                     </div>
 
                     <div className="mt-1 text-xs opacity-60">Student: {data.attempt.studentName ?? "—"}</div>
 
-                    <div className="mt-6 grid gap-3 md:grid-cols-4">
+                    <div className="mt-6 grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
                         <div className="rounded-lg border p-4" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
                             <div className="text-xs opacity-70">Score</div>
                             <div className="text-2xl font-semibold">{data.attempt.score ?? "—"}</div>
@@ -322,7 +322,7 @@ export function AttemptReportClient({ attemptId }: { attemptId: string }) {
 
                     <div className="mt-8">
                         <h2 className="text-lg font-semibold">Section Summary</h2>
-                        <div className="mt-3 grid gap-3 md:grid-cols-3">
+                        <div className="mt-3 grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                             {subjects.map(([name, s]) => (
                                 <div key={name} className="rounded-lg border p-4" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
                                     <div className="font-medium">{name}</div>
@@ -343,8 +343,8 @@ export function AttemptReportClient({ attemptId }: { attemptId: string }) {
                             {data.analytics.topicAccuracy.slice(0, 8).map((t) => (
                                 <div key={t.topic} className="rounded border p-3" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
                                     <div className="flex items-center justify-between gap-4">
-                                        <div className="font-medium">{t.topic}</div>
-                                        <div className="text-sm opacity-70">
+                                        <div className="font-medium min-w-0 break-words">{t.topic}</div>
+                                        <div className="text-sm opacity-70 shrink-0">
                                             {(t.accuracy * 100).toFixed(0)}% ({t.correct}/{t.total})
                                         </div>
                                     </div>
@@ -383,10 +383,10 @@ export function AttemptReportClient({ attemptId }: { attemptId: string }) {
                                         style={{ borderColor: "var(--border)", background: "var(--card)" }}
                                     >
                                         <div className="flex flex-wrap items-center justify-between gap-3">
-                                            <div className="text-xs opacity-70">
+                                            <div className="text-xs opacity-70 break-words">
                                                 Q{idx + 1} · {q.subject} · {q.topicName}
                                             </div>
-                                            <div className="flex items-center gap-3 text-xs">
+                                            <div className="flex flex-wrap items-center justify-end gap-2 text-xs">
                                                 <div className={`font-medium ${resultClass}`}>{resultLabel}</div>
                                                 <div className={timeClass}>Time: {fmtCompact(q.timeSpentSeconds)}</div>
                                                 <div className="opacity-70">Marks: {q.marks.toFixed(2)}</div>
@@ -566,7 +566,7 @@ export function AttemptReportClient({ attemptId }: { attemptId: string }) {
                                                             </label>
                                                         ) : null}
 
-                                                        <div className="mt-3 flex items-center gap-3">
+                                                        <div className="mt-3 flex flex-wrap items-center gap-3">
                                                             <button
                                                                 type="button"
                                                                 className="text-xs rounded-full border px-3 py-1 ui-click"
