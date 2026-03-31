@@ -3,7 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/server/db";
 import { getAuthUser } from "@/server/auth";
 import { isAdminUsername } from "@/server/admin";
-import { AdminPaperViewerClient } from "@/components/admin/AdminPaperViewerClient";
+import { AdminPaperViewerClient } from "../../../../components/admin/AdminPaperViewerClient";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";

@@ -271,7 +271,7 @@ export default async function AdminConsolidatedPage(
             : [];
         const questionById = new Map(questions.map((q) => [q.id, q] as const));
 
-        const reflectionRows = await prisma.attemptQuestionReflection.findMany({
+        const reflectionRows = await (prisma as any).attemptQuestionReflection.findMany({
             where: {
                 attemptId: { in: selectedAttempts.map((a) => a.id) },
             },
