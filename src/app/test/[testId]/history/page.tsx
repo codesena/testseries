@@ -86,7 +86,7 @@ export default async function TestAttemptHistoryPage({
                 <div className="max-w-5xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-2">
                     <Link
                         href="/"
-                        className="inline-flex items-center justify-center h-10 rounded-full border px-4 text-xs ui-click"
+                        className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
                         style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                     >
                         Back
@@ -103,7 +103,7 @@ export default async function TestAttemptHistoryPage({
 
                 <div className="mt-6 flex flex-wrap items-center gap-2 text-sm">
                     <span
-                        className="inline-flex items-center justify-center h-10 rounded-full border px-4 text-xs whitespace-nowrap"
+                        className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap"
                         style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                     >
                         {attemptsAsc.length === 0
@@ -112,7 +112,7 @@ export default async function TestAttemptHistoryPage({
                     </span>
                     <Link
                         href={`/test/${test.id}`}
-                        className="inline-flex items-center justify-center h-10 rounded-full border px-4 text-xs whitespace-nowrap ui-click"
+                        className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
                         style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                     >
                         Start test
@@ -163,7 +163,7 @@ export default async function TestAttemptHistoryPage({
                                         </div>
                                     </div>
                                     <span
-                                        className="inline-flex items-center justify-center h-10 text-xs font-medium rounded-full border px-4 whitespace-nowrap self-start sm:self-auto"
+                                        className="inline-flex items-center justify-center h-9 text-xs font-medium rounded-full border px-3 whitespace-nowrap self-start sm:self-auto"
                                         style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                                     >
                                         View report

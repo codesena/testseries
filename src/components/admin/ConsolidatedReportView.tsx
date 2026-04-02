@@ -216,7 +216,7 @@ export function ConsolidatedReportView({ data }: { data: ConsolidatedReportData 
                                 <div className="text-xs opacity-70">{q.subjectName} · {q.topicName}</div>
                                 <button
                                     type="button"
-                                    className="text-xs rounded-full border px-3 py-1 ui-click"
+                                    className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
                                     style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                                     onClick={() => openIssueModal(q.questionId, q.index)}
                                 >
@@ -437,7 +437,7 @@ export function ConsolidatedReportView({ data }: { data: ConsolidatedReportData 
                             <div className="mt-4 flex items-center justify-end gap-2">
                                 <button
                                     type="button"
-                                    className="text-xs rounded-full border px-3 py-1 ui-click"
+                                    className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
                                     style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                                     onClick={closeIssueModal}
                                     disabled={sendingIssue}
@@ -446,7 +446,7 @@ export function ConsolidatedReportView({ data }: { data: ConsolidatedReportData 
                                 </button>
                                 <button
                                     type="button"
-                                    className="text-xs rounded-full border px-3 py-1 ui-click"
+                                    className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
                                     style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                                     onClick={() => void submitIssue()}
                                     disabled={sendingIssue}

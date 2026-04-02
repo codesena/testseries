@@ -126,7 +126,7 @@ export const QuestionView = memo(function QuestionView({
                 </div>
                 <div className="flex items-center gap-3">
                     <button
-                        className="text-xs rounded-full border px-3 py-1 ui-click"
+                        className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
                         style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                         onClick={() => {
                             setIssueOpen(true);
@@ -324,7 +324,7 @@ export const QuestionView = memo(function QuestionView({
                         <div className="mt-4 flex items-center justify-end gap-2">
                             <button
                                 type="button"
-                                className="text-xs rounded-full border px-3 py-1 ui-click"
+                                className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
                                 style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                                 onClick={() => setIssueOpen(false)}
                                 disabled={sendingIssue}
@@ -333,7 +333,7 @@ export const QuestionView = memo(function QuestionView({
                             </button>
                             <button
                                 type="button"
-                                className="text-xs font-medium rounded-full border px-3 py-1 ui-click"
+                                className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs font-medium whitespace-nowrap ui-click"
                                 style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                                 onClick={() => void submitIssue()}
                                 disabled={sendingIssue || issue.trim().length === 0}

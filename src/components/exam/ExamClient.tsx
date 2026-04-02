@@ -993,7 +993,7 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
                             <div className="text-xs sm:text-sm font-mono shrink-0 whitespace-nowrap">{formatTime(timeLeftSeconds)}</div>
                             <ThemeToggle />
                             <button
-                                className="text-xs rounded-full border px-3 py-1 ui-click shrink-0 whitespace-nowrap"
+                                className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs ui-click shrink-0 whitespace-nowrap"
                                 style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                                 onClick={() => setSubmitConfirmOpen(true)}
                                 disabled={submitting || submitConfirmOpen}
@@ -1001,7 +1001,7 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
                                 Submit
                             </button>
                             <span
-                                className="text-xs rounded-full border px-3 py-1 whitespace-nowrap shrink-0"
+                                className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap shrink-0"
                                 style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                             >
                                 {studentFirstName}
@@ -1032,28 +1032,28 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
 
                         <div className="mt-4 flex flex-wrap gap-2">
                             <button
-                                className="px-3 py-2 rounded border text-sm ui-click"
+                                className="inline-flex items-center justify-center h-10 rounded-full border px-4 text-sm whitespace-nowrap ui-click"
                                 style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                                 onClick={goPrev}
                             >
                                 Previous
                             </button>
                             <button
-                                className="px-3 py-2 rounded border text-sm ui-click"
+                                className="inline-flex items-center justify-center h-10 rounded-full border px-4 text-sm whitespace-nowrap ui-click"
                                 style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                                 onClick={saveAndNext}
                             >
                                 Save & Next
                             </button>
                             <button
-                                className="px-3 py-2 rounded border text-sm ui-click"
+                                className="inline-flex items-center justify-center h-10 rounded-full border px-4 text-sm whitespace-nowrap ui-click"
                                 style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                                 onClick={markForReviewAndNext}
                             >
                                 Mark for Review & Next
                             </button>
                             <button
-                                className="px-3 py-2 rounded border text-sm ui-click"
+                                className="inline-flex items-center justify-center h-10 rounded-full border px-4 text-sm whitespace-nowrap ui-click"
                                 style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                                 onClick={clearResponse}
                             >
@@ -1091,7 +1091,7 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
                                     return (
                                         <button
                                             key={s.id}
-                                            className={`text-sm px-2 py-1 rounded border ui-click transition-colors ${active
+                                            className={`inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click transition-colors ${active
                                                 ? `font-semibold ring-2 ring-white/35 ${activeTone}`
                                                 : "opacity-85 bg-[var(--muted)] text-[var(--foreground)] hover:opacity-100"
                                                 }`}
@@ -1147,7 +1147,7 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
                             <div className="mt-4 flex items-center justify-end gap-2">
                                 <button
                                     type="button"
-                                    className="text-xs rounded-full border px-3 py-1 ui-click"
+                                    className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
                                     style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                                     onClick={() => setSubmitConfirmOpen(false)}
                                     disabled={submitting}
@@ -1156,7 +1156,7 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
                                 </button>
                                 <button
                                     type="button"
-                                    className="text-xs font-medium rounded-full border px-3 py-1 ui-click"
+                                    className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs font-medium whitespace-nowrap ui-click"
                                     style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                                     onClick={() => {
                                         void submit();

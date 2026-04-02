@@ -36,7 +36,7 @@ export default async function AdminPage() {
                     <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
                         <Link
                             href="/"
-                            className="text-xs rounded-full border px-3 py-1 ui-click"
+                            className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
                             style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                         >
                             Home

@@ -611,7 +611,7 @@ export function AdminPaperViewerClient({
                     />
                     <button
                         type="button"
-                        className="text-xs rounded-full border px-3 py-1.5 ui-click"
+                        className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
                         style={{
                             borderColor: uploadFolderSaved ? "rgba(34, 197, 94, 0.75)" : "rgba(239, 68, 68, 0.75)",
                             background: uploadFolderSaved ? "rgba(20, 83, 45, 0.35)" : "rgba(127, 29, 29, 0.28)",
@@ -671,7 +671,7 @@ export function AdminPaperViewerClient({
                                 <div className="flex flex-wrap items-center gap-2 justify-start sm:justify-end">
                                     <button
                                         type="button"
-                                        className="text-xs rounded-full border px-3 py-1 ui-click"
+                                        className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
                                         style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                                         onClick={() => void openEdit(q.id)}
                                     >
@@ -687,7 +687,7 @@ export function AdminPaperViewerClient({
                                     ) : null}
                                     <button
                                         type="button"
-                                        className="text-xs rounded-full border px-3 py-1 ui-click"
+                                        className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
                                         style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                                         onClick={() => {
                                             setIssueError(null);
@@ -700,7 +700,7 @@ export function AdminPaperViewerClient({
                                     </button>
                                     <button
                                         type="button"
-                                        className="text-xs rounded-full border px-3 py-1 ui-click"
+                                        className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
                                         style={(issueCountByQuestionId[q.id] ?? 0) > 0 || issueSavedForQuestionId[q.id] || issuesOpenForQuestionId === q.id
                                             ? {
                                                 borderColor: "rgba(239, 68, 68, 0.75)",
@@ -862,7 +862,7 @@ export function AdminPaperViewerClient({
                                             <div className="text-xs font-medium">Question images</div>
                                             <div className="mt-1 text-xs opacity-70">Drag and drop image(s) here or pick files.</div>
                                             <label
-                                                className="mt-2 inline-flex text-xs rounded-full border px-3 py-1 ui-click cursor-pointer"
+                                                className="mt-2 inline-flex items-center justify-center h-9 text-xs rounded-full border px-3 whitespace-nowrap ui-click cursor-pointer"
                                                 style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                                             >
                                                 {uploadingQuestionImage ? "Uploading..." : "Upload question image"}
@@ -892,7 +892,7 @@ export function AdminPaperViewerClient({
                                                 <div className="text-xs font-medium">Option {key} image</div>
                                                 <div className="mt-1 text-xs opacity-70">Drag and drop one image here for option {key}.</div>
                                                 <label
-                                                    className="mt-2 inline-flex text-xs rounded-full border px-3 py-1 ui-click cursor-pointer"
+                                                    className="mt-2 inline-flex items-center justify-center h-9 text-xs rounded-full border px-3 whitespace-nowrap ui-click cursor-pointer"
                                                     style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                                                 >
                                                     {uploadingOptionImage ? "Uploading..." : `Upload Option ${key}`}
@@ -922,7 +922,7 @@ export function AdminPaperViewerClient({
                                     <div className="mt-4 flex flex-wrap items-center justify-start sm:justify-end gap-2">
                                         <button
                                             type="button"
-                                            className="text-xs rounded-full border px-3 py-1 ui-click"
+                                            className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
                                             style={{ borderColor: "var(--border)", background: "var(--card)" }}
                                             onClick={previewEdit}
                                             disabled={loadingEdit || savingEdit || uploadingQuestionImage || uploadingOptionImage || !editRaw.trim()}
@@ -931,7 +931,7 @@ export function AdminPaperViewerClient({
                                         </button>
                                         <button
                                             type="button"
-                                            className="text-xs rounded-full border px-3 py-1 ui-click"
+                                            className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
                                             style={{ borderColor: "var(--border)", background: "var(--card)" }}
                                             onClick={() => void copyEditJson()}
                                             disabled={loadingEdit || savingEdit || uploadingQuestionImage || uploadingOptionImage || copyingEdit || !editRaw.trim()}
@@ -940,7 +940,7 @@ export function AdminPaperViewerClient({
                                         </button>
                                         <button
                                             type="button"
-                                            className="text-xs rounded-full border px-3 py-1 ui-click"
+                                            className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
                                             style={{ borderColor: "var(--border)", background: "var(--card)" }}
                                             onClick={() => {
                                                 setEditOpenForQuestionId(null);
@@ -958,7 +958,7 @@ export function AdminPaperViewerClient({
                                         </button>
                                         <button
                                             type="button"
-                                            className="text-xs font-medium rounded-full border px-3 py-1 ui-click"
+                                            className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs font-medium whitespace-nowrap ui-click"
                                             style={{ borderColor: "var(--border)", background: "var(--card)" }}
                                             onClick={() => void saveEdit()}
                                             disabled={loadingEdit || savingEdit || uploadingQuestionImage || uploadingOptionImage || !editRaw.trim()}
@@ -1028,7 +1028,7 @@ export function AdminPaperViewerClient({
                         <div className="mt-4 flex flex-wrap items-center justify-end gap-2">
                             <button
                                 type="button"
-                                className="text-xs rounded-full border px-3 py-1 ui-click"
+                                className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
                                 style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                                 onClick={() => setIssueOpenForQuestionId(null)}
                                 disabled={sendingIssue}
@@ -1037,7 +1037,7 @@ export function AdminPaperViewerClient({
                             </button>
                             <button
                                 type="button"
-                                className="text-xs font-medium rounded-full border px-3 py-1 ui-click"
+                                className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs font-medium whitespace-nowrap ui-click"
                                 style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                                 onClick={() => void submitIssue()}
                                 disabled={sendingIssue || issue.trim().length === 0}

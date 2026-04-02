@@ -112,7 +112,7 @@ export function CandidateAttemptsClient({
                             <div className="flex items-center gap-2 shrink-0">
                                 <Link
                                     href={`/attempt/${a.id}/report`}
-                                    className="text-xs rounded-full border px-3 py-1 ui-click"
+                                    className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
                                     style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                                 >
                                     View report
@@ -123,7 +123,7 @@ export function CandidateAttemptsClient({
                                         setSelectedAttemptId(a.id);
                                         setError(null);
                                     }}
-                                    className="text-xs rounded-full border px-3 py-1 ui-click"
+                                    className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
                                     style={{ borderColor: "rgba(239,68,68,0.45)", background: "rgba(239,68,68,0.12)", color: "#fca5a5" }}
                                 >
                                     Delete attempt
@@ -177,7 +177,7 @@ export function CandidateAttemptsClient({
                         <div className="mt-4 flex items-center justify-end gap-2">
                             <button
                                 type="button"
-                                className="text-xs rounded-full border px-3 py-1 ui-click"
+                                className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
                                 style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                                 onClick={() => {
                                     if (deleting) return;
@@ -189,7 +189,7 @@ export function CandidateAttemptsClient({
                             </button>
                             <button
                                 type="button"
-                                className="text-xs rounded-full border px-3 py-1 ui-click"
+                                className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
                                 style={{ borderColor: "rgba(239,68,68,0.45)", background: "rgba(239,68,68,0.16)", color: "#fca5a5" }}
                                 onClick={() => void deleteSelected()}
                                 disabled={deleting}

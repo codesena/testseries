@@ -21,7 +21,7 @@ export default function LoginPage() {
                 <div className="max-w-md mx-auto px-4 py-3 flex items-center justify-between">
                     <Link
                         href="/"
-                        className="text-xs rounded-full border px-3 py-1 ui-click"
+                        className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
                         style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                     >
                         Home
@@ -83,7 +83,7 @@ export default function LoginPage() {
                     </label>
 
                     <button
-                        className="mt-2 px-4 py-2 rounded font-medium border ui-click"
+                        className="mt-2 inline-flex items-center justify-center h-10 rounded-full border px-4 text-sm font-medium whitespace-nowrap ui-click"
                         style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                         disabled={loading}
                         type="submit"

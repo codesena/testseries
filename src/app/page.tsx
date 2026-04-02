@@ -111,7 +111,7 @@ export default async function Home() {
                         {isAdmin ? (
                             <Link
                                 href="/admin"
-                                className="text-xs rounded-full border px-3 py-1 ui-click"
+                                className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
                                 style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                             >
                                 Admin
@@ -143,7 +143,7 @@ export default async function Home() {
                                 <div className="flex flex-wrap items-center gap-2 sm:justify-end">
                                     {(attemptCountByTestId.get(t.id) ?? 0) === 0 ? (
                                         <span
-                                            className="inline-flex items-center justify-center h-10 rounded-full border px-4 text-xs whitespace-nowrap"
+                                            className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap"
                                             style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                                         >
                                             Unattempted
@@ -151,7 +151,7 @@ export default async function Home() {
                                     ) : (
                                         <Link
                                             href={`/test/${t.id}/history`}
-                                            className="inline-flex items-center justify-center h-10 rounded-full border px-4 text-xs whitespace-nowrap ui-click"
+                                            className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
                                             style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                                         >
                                             Attempted {attemptCountByTestId.get(t.id) ?? 0}x
@@ -161,7 +161,7 @@ export default async function Home() {
                                     {isAdmin ? (
                                         <Link
                                             href={`/admin/paper/${t.id}`}
-                                            className="inline-flex items-center justify-center h-10 rounded-full border px-4 text-xs whitespace-nowrap ui-click"
+                                            className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
                                             style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                                         >
                                             View paper
@@ -170,7 +170,7 @@ export default async function Home() {
 
                                     <Link
                                         href={`/test/${t.id}`}
-                                        className="inline-flex items-center justify-center h-10 rounded-full border px-4 text-xs whitespace-nowrap ui-click"
+                                        className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
                                         style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                                     >
                                         Start
@@ -231,7 +231,7 @@ export default async function Home() {
                                             </div>
                                         </div>
                                         <span
-                                            className="text-xs font-medium rounded-full border px-3 py-1 whitespace-nowrap self-start sm:self-auto ui-click"
+                                            className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs font-medium whitespace-nowrap self-start sm:self-auto ui-click"
                                             style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                                         >
                                             View report

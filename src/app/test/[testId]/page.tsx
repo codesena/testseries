@@ -33,7 +33,7 @@ export default async function TestStartPage({
                 <div className="max-w-3xl mx-auto px-4 py-3 flex items-center">
                     <Link
                         href="/"
-                        className="text-xs rounded-full border px-3 py-1 ui-click"
+                        className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
                         style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                     >
                         Back
@@ -65,7 +65,7 @@ export default async function TestStartPage({
                     <StartAttemptButton testId={test.id} />
                     <Link
                         href="/"
-                        className="text-sm rounded-full border px-4 py-2 ui-click"
+                        className="inline-flex items-center justify-center h-10 rounded-full border px-4 text-sm whitespace-nowrap ui-click"
                         style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                     >
                         Cancel

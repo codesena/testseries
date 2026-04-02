@@ -283,7 +283,7 @@ export function AttemptReportClient({ attemptId }: { attemptId: string }) {
                     <div className="max-w-4xl xl:max-w-6xl 2xl:max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-2">
                         <Link
                             href="/"
-                            className="text-xs rounded-full border px-3 py-1 ui-click"
+                            className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
                             style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                         >
                             Home
@@ -554,7 +554,7 @@ export function AttemptReportClient({ attemptId }: { attemptId: string }) {
                                                     <div className="mt-3 flex flex-wrap items-center gap-3">
                                                         <button
                                                             type="button"
-                                                            className="text-xs rounded-full border px-3 py-1 ui-click"
+                                                            className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
                                                             style={{ borderColor: "var(--border)", background: "var(--card)" }}
                                                             onClick={() => void saveReflection(q.questionId)}
                                                             disabled={Boolean(savingByQid[q.questionId])}

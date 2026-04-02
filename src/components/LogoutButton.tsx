@@ -7,7 +7,7 @@ export function LogoutButton() {
 
     return (
         <button
-            className="text-xs rounded-full border px-3 py-1 ui-click"
+            className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
             style={{ borderColor: "var(--border)", background: "var(--muted)" }}
             disabled={loggingOut}
             onClick={async () => {
