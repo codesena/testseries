@@ -101,7 +101,7 @@ export default async function TestAttemptHistoryPage({
                     {test._count.questions} questions · {test.totalDurationMinutes} min
                 </div>
 
-                <div className="mt-6 flex items-center gap-3 text-sm">
+                <div className="mt-6 flex flex-wrap items-center gap-2 text-sm">
                     <span
                         className="text-xs rounded-full border px-3 py-1"
                         style={{ borderColor: "var(--border)", background: "var(--muted)" }}
@@ -140,10 +140,10 @@ export default async function TestAttemptHistoryPage({
                             <Link
                                 key={a.id}
                                 href={`/attempt/${a.id}/report`}
-                                className="rounded-lg border p-4 ui-click"
+                                className="rounded-lg border p-3 sm:p-4 ui-click"
                                 style={{ borderColor: "var(--border)", background: "var(--card)" }}
                             >
-                                <div className="flex items-start justify-between gap-4">
+                                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
                                     <div className="min-w-0">
                                         <div className="font-medium">
                                             Attempt {attemptNo}/{attemptCount}

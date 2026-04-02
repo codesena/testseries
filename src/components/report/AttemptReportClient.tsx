@@ -132,7 +132,6 @@ export function AttemptReportClient({ attemptId }: { attemptId: string }) {
     const [reflectionByQid, setReflectionByQid] = useState<Record<string, ReflectionDraft>>({});
     const [savingByQid, setSavingByQid] = useState<Record<string, boolean>>({});
     const [saveMsgByQid, setSaveMsgByQid] = useState<Record<string, string | null>>({});
-    const [expandedQuestionId, setExpandedQuestionId] = useState<string | null>(null);
 
     useEffect(() => {
         let cancelled = false;
@@ -281,7 +280,7 @@ export function AttemptReportClient({ attemptId }: { attemptId: string }) {
                     className="sticky top-0 z-50 border-b"
                     style={{ borderColor: "var(--border)", background: "var(--background)" }}
                 >
-                    <div className="max-w-4xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-2">
+                    <div className="max-w-4xl xl:max-w-6xl 2xl:max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-2">
                         <Link
                             href="/"
                             className="text-xs rounded-full border px-3 py-1 ui-click"
@@ -293,7 +292,7 @@ export function AttemptReportClient({ attemptId }: { attemptId: string }) {
                     </div>
                 </header>
 
-                <main className="max-w-4xl mx-auto w-full px-4 py-8">
+                <main className="max-w-4xl xl:max-w-6xl 2xl:max-w-7xl mx-auto w-full px-4 py-8">
                     <h1 className="text-xl sm:text-2xl font-semibold break-words">{data.attempt.test.title}</h1>
                     <div className="mt-2 text-sm opacity-70">
                         Attempt {data.attempt.id.slice(0, 8)} · Status {data.attempt.status}
@@ -374,7 +373,6 @@ export function AttemptReportClient({ attemptId }: { attemptId: string }) {
                                     leftReason: "",
                                     slowReason: "",
                                 };
-                                const isExpanded = expandedQuestionId === q.questionId;
 
                                 return (
                                     <div
@@ -390,200 +388,186 @@ export function AttemptReportClient({ attemptId }: { attemptId: string }) {
                                                 <div className={`font-medium ${resultClass}`}>{resultLabel}</div>
                                                 <div className={timeClass}>Time: {fmtCompact(q.timeSpentSeconds)}</div>
                                                 <div className="opacity-70">Marks: {q.marks.toFixed(2)}</div>
-                                                <button
-                                                    type="button"
-                                                    className="rounded-full border px-2 py-0.5 ui-click"
-                                                    style={{ borderColor: "var(--border)", background: "var(--muted)" }}
-                                                    onClick={() => {
-                                                        setExpandedQuestionId((prev) =>
-                                                            prev === q.questionId ? null : q.questionId,
-                                                        );
-                                                    }}
-                                                >
-                                                    {isExpanded ? "Hide" : "View"}
-                                                </button>
                                             </div>
                                         </div>
 
-                                        {isExpanded ? (
-                                            <>
-                                                <div className="mt-3 text-base leading-relaxed">
-                                                    {q.imageUrls?.length ? (
-                                                        <div
-                                                            className={`mb-3 grid gap-2 mx-auto ${q.imageUrls.length > 1 ? "sm:grid-cols-2 max-w-3xl" : "max-w-4xl"}`}
-                                                        >
-                                                            {q.imageUrls.map((url) => (
-                                                                <div
-                                                                    key={url}
-                                                                    className={`rounded border p-2 flex items-center justify-center w-full relative ${q.imageUrls && q.imageUrls.length > 1
-                                                                        ? "h-44 sm:h-56"
-                                                                        : "h-64 sm:h-80"}`}
-                                                                    style={{ borderColor: "var(--border)", background: "var(--card)" }}
-                                                                >
-                                                                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                                                                    <img
-                                                                        src={optimizeImageDelivery(url)}
-                                                                        alt="Question"
-                                                                        className="max-w-full max-h-full object-contain"
-                                                                        loading="lazy"
-                                                                        decoding="async"
-                                                                        referrerPolicy="no-referrer"
-                                                                    />
-                                                                </div>
-                                                            ))}
-                                                        </div>
-                                                    ) : null}
+                                        <>
+                                            <div className="mt-3 text-base leading-relaxed">
+                                                {q.imageUrls?.length ? (
+                                                    <div
+                                                        className={`mb-3 grid gap-2 mx-auto ${q.imageUrls.length > 1 ? "sm:grid-cols-2 max-w-3xl" : "max-w-4xl"}`}
+                                                    >
+                                                        {q.imageUrls.map((url) => (
+                                                            <div
+                                                                key={url}
+                                                                className={`rounded border p-2 flex items-center justify-center w-full relative ${q.imageUrls && q.imageUrls.length > 1
+                                                                    ? "h-44 sm:h-56"
+                                                                    : "h-64 sm:h-80"}`}
+                                                                style={{ borderColor: "var(--border)", background: "var(--card)" }}
+                                                            >
+                                                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                                <img
+                                                                    src={optimizeImageDelivery(url)}
+                                                                    alt="Question"
+                                                                    className="max-w-full max-h-full object-contain"
+                                                                    loading="lazy"
+                                                                    decoding="async"
+                                                                    referrerPolicy="no-referrer"
+                                                                />
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                ) : null}
 
-                                                    <MathJax dynamic>{q.questionText}</MathJax>
-                                                </div>
+                                                <MathJax dynamic>{q.questionText}</MathJax>
+                                            </div>
 
-                                                {q.options?.length ? (
-                                                    <div className="mt-4 grid gap-2">
-                                                        {q.options.map((o) => {
-                                                            const optionImageUrls = o.imageUrl ? splitUrlList(o.imageUrl) : [];
-                                                            const optionHasMultipleImages = optionImageUrls.length > 1;
+                                            {q.options?.length ? (
+                                                <div className="mt-4 grid gap-2">
+                                                    {q.options.map((o) => {
+                                                        const optionImageUrls = o.imageUrl ? splitUrlList(o.imageUrl) : [];
+                                                        const optionHasMultipleImages = optionImageUrls.length > 1;
 
-                                                            return (
-                                                                <div
-                                                                    key={o.key}
-                                                                    className="rounded border p-3"
-                                                                    style={{ borderColor: "var(--border)", background: "var(--card)" }}
-                                                                >
-                                                                    <div className="flex items-start gap-3">
-                                                                        <div className="mt-0.5 text-xs font-mono opacity-70">{o.key}.</div>
-                                                                        <div className="text-sm leading-relaxed min-w-0">
-                                                                            <MathJax dynamic>{o.text}</MathJax>
+                                                        return (
+                                                            <div
+                                                                key={o.key}
+                                                                className="rounded border p-3"
+                                                                style={{ borderColor: "var(--border)", background: "var(--card)" }}
+                                                            >
+                                                                <div className="flex items-start gap-3">
+                                                                    <div className="mt-0.5 text-xs font-mono opacity-70">{o.key}.</div>
+                                                                    <div className="text-sm leading-relaxed min-w-0">
+                                                                        <MathJax dynamic>{o.text}</MathJax>
 
-                                                                            {optionImageUrls.length ? (
-                                                                                <div
-                                                                                    className={`mt-2 grid gap-2 ${optionHasMultipleImages ? "sm:grid-cols-2" : ""}`}
-                                                                                >
-                                                                                    {optionImageUrls.map((url) => (
-                                                                                        <div
-                                                                                            key={url}
-                                                                                            className={`rounded border p-2 flex items-center justify-center w-full relative ${optionHasMultipleImages
-                                                                                                ? "h-32 sm:h-40"
-                                                                                                : "h-40 sm:h-48"}`}
-                                                                                            style={{
-                                                                                                borderColor: "var(--border)",
-                                                                                                background: "var(--card)",
-                                                                                            }}
-                                                                                        >
-                                                                                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                                                                                            <img
-                                                                                                src={optimizeImageDelivery(url)}
-                                                                                                alt={`Option ${o.key}`}
-                                                                                                className="max-w-full max-h-full object-contain"
-                                                                                                loading="lazy"
-                                                                                                decoding="async"
-                                                                                                referrerPolicy="no-referrer"
-                                                                                            />
-                                                                                        </div>
-                                                                                    ))}
-                                                                                </div>
-                                                                            ) : null}
-                                                                        </div>
+                                                                        {optionImageUrls.length ? (
+                                                                            <div
+                                                                                className={`mt-2 grid gap-2 ${optionHasMultipleImages ? "sm:grid-cols-2" : ""}`}
+                                                                            >
+                                                                                {optionImageUrls.map((url) => (
+                                                                                    <div
+                                                                                        key={url}
+                                                                                        className={`rounded border p-2 flex items-center justify-center w-full relative ${optionHasMultipleImages
+                                                                                            ? "h-32 sm:h-40"
+                                                                                            : "h-40 sm:h-48"}`}
+                                                                                        style={{
+                                                                                            borderColor: "var(--border)",
+                                                                                            background: "var(--card)",
+                                                                                        }}
+                                                                                    >
+                                                                                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                                                        <img
+                                                                                            src={optimizeImageDelivery(url)}
+                                                                                            alt={`Option ${o.key}`}
+                                                                                            className="max-w-full max-h-full object-contain"
+                                                                                            loading="lazy"
+                                                                                            decoding="async"
+                                                                                            referrerPolicy="no-referrer"
+                                                                                        />
+                                                                                    </div>
+                                                                                ))}
+                                                                            </div>
+                                                                        ) : null}
                                                                     </div>
                                                                 </div>
-                                                            );
-                                                        })}
-                                                    </div>
-                                                ) : null}
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            ) : null}
 
-                                                <div className="mt-4 grid gap-1 text-sm">
-                                                    <div>
-                                                        <span className="opacity-70">Marked answer:</span> {formatAnswer(q.selectedAnswer)}
+                                            <div className="mt-4 grid gap-1 text-sm">
+                                                <div>
+                                                    <span className="opacity-70">Marked answer:</span> {formatAnswer(q.selectedAnswer)}
+                                                </div>
+                                                <div>
+                                                    <span className="opacity-70">Correct answer:</span> {formatAnswer(q.correctAnswer)}
+                                                </div>
+                                            </div>
+
+                                            {(!q.correct || !q.attempted || tookLong) ? (
+                                                <div
+                                                    className="mt-4 rounded border p-3"
+                                                    style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                                                >
+                                                    <div className="text-sm font-medium">Reflection</div>
+                                                    <div className="mt-1 text-xs opacity-70">
+                                                        Add your analysis to improve future attempts.
                                                     </div>
-                                                    <div>
-                                                        <span className="opacity-70">Correct answer:</span> {formatAnswer(q.correctAnswer)}
+
+                                                    {!q.correct && q.attempted ? (
+                                                        <label className="mt-3 block text-sm">
+                                                            <div className="text-xs opacity-70">Why was this answer wrong?</div>
+                                                            <textarea
+                                                                className="mt-2 w-full min-h-20 rounded border px-3 py-2 bg-transparent ui-field"
+                                                                style={{ borderColor: "var(--border)" }}
+                                                                value={draft.wrongReason}
+                                                                onChange={(e) => {
+                                                                    const value = e.target.value;
+                                                                    setReflectionByQid((prev) => ({
+                                                                        ...prev,
+                                                                        [q.questionId]: { ...draft, wrongReason: value },
+                                                                    }));
+                                                                }}
+                                                                placeholder="Example: I misread the condition in line 2 and chose option B too quickly."
+                                                            />
+                                                        </label>
+                                                    ) : null}
+
+                                                    {!q.attempted ? (
+                                                        <label className="mt-3 block text-sm">
+                                                            <div className="text-xs opacity-70">Why did you leave this question?</div>
+                                                            <textarea
+                                                                className="mt-2 w-full min-h-20 rounded border px-3 py-2 bg-transparent ui-field"
+                                                                style={{ borderColor: "var(--border)" }}
+                                                                value={draft.leftReason}
+                                                                onChange={(e) => {
+                                                                    const value = e.target.value;
+                                                                    setReflectionByQid((prev) => ({
+                                                                        ...prev,
+                                                                        [q.questionId]: { ...draft, leftReason: value },
+                                                                    }));
+                                                                }}
+                                                                placeholder="Example: I wasn't confident with the concept and prioritized other questions."
+                                                            />
+                                                        </label>
+                                                    ) : null}
+
+                                                    {tookLong ? (
+                                                        <label className="mt-3 block text-sm">
+                                                            <div className="text-xs opacity-70">Why did this take more than 4 minutes?</div>
+                                                            <textarea
+                                                                className="mt-2 w-full min-h-20 rounded border px-3 py-2 bg-transparent ui-field"
+                                                                style={{ borderColor: "var(--border)" }}
+                                                                value={draft.slowReason}
+                                                                onChange={(e) => {
+                                                                    const value = e.target.value;
+                                                                    setReflectionByQid((prev) => ({
+                                                                        ...prev,
+                                                                        [q.questionId]: { ...draft, slowReason: value },
+                                                                    }));
+                                                                }}
+                                                                placeholder="Example: I tried two long methods before finding the shorter approach."
+                                                            />
+                                                        </label>
+                                                    ) : null}
+
+                                                    <div className="mt-3 flex flex-wrap items-center gap-3">
+                                                        <button
+                                                            type="button"
+                                                            className="text-xs rounded-full border px-3 py-1 ui-click"
+                                                            style={{ borderColor: "var(--border)", background: "var(--card)" }}
+                                                            onClick={() => void saveReflection(q.questionId)}
+                                                            disabled={Boolean(savingByQid[q.questionId])}
+                                                        >
+                                                            {savingByQid[q.questionId] ? "Saving..." : "Save reflection"}
+                                                        </button>
+                                                        {saveMsgByQid[q.questionId] ? (
+                                                            <div className="text-xs opacity-70">{saveMsgByQid[q.questionId]}</div>
+                                                        ) : null}
                                                     </div>
                                                 </div>
-
-                                                {(!q.correct || !q.attempted || tookLong) ? (
-                                                    <div
-                                                        className="mt-4 rounded border p-3"
-                                                        style={{ borderColor: "var(--border)", background: "var(--muted)" }}
-                                                    >
-                                                        <div className="text-sm font-medium">Reflection</div>
-                                                        <div className="mt-1 text-xs opacity-70">
-                                                            Add your analysis to improve future attempts.
-                                                        </div>
-
-                                                        {!q.correct && q.attempted ? (
-                                                            <label className="mt-3 block text-sm">
-                                                                <div className="text-xs opacity-70">Why was this answer wrong?</div>
-                                                                <textarea
-                                                                    className="mt-2 w-full min-h-20 rounded border px-3 py-2 bg-transparent ui-field"
-                                                                    style={{ borderColor: "var(--border)" }}
-                                                                    value={draft.wrongReason}
-                                                                    onChange={(e) => {
-                                                                        const value = e.target.value;
-                                                                        setReflectionByQid((prev) => ({
-                                                                            ...prev,
-                                                                            [q.questionId]: { ...draft, wrongReason: value },
-                                                                        }));
-                                                                    }}
-                                                                    placeholder="Example: I misread the condition in line 2 and chose option B too quickly."
-                                                                />
-                                                            </label>
-                                                        ) : null}
-
-                                                        {!q.attempted ? (
-                                                            <label className="mt-3 block text-sm">
-                                                                <div className="text-xs opacity-70">Why did you leave this question?</div>
-                                                                <textarea
-                                                                    className="mt-2 w-full min-h-20 rounded border px-3 py-2 bg-transparent ui-field"
-                                                                    style={{ borderColor: "var(--border)" }}
-                                                                    value={draft.leftReason}
-                                                                    onChange={(e) => {
-                                                                        const value = e.target.value;
-                                                                        setReflectionByQid((prev) => ({
-                                                                            ...prev,
-                                                                            [q.questionId]: { ...draft, leftReason: value },
-                                                                        }));
-                                                                    }}
-                                                                    placeholder="Example: I wasn't confident with the concept and prioritized other questions."
-                                                                />
-                                                            </label>
-                                                        ) : null}
-
-                                                        {tookLong ? (
-                                                            <label className="mt-3 block text-sm">
-                                                                <div className="text-xs opacity-70">Why did this take more than 4 minutes?</div>
-                                                                <textarea
-                                                                    className="mt-2 w-full min-h-20 rounded border px-3 py-2 bg-transparent ui-field"
-                                                                    style={{ borderColor: "var(--border)" }}
-                                                                    value={draft.slowReason}
-                                                                    onChange={(e) => {
-                                                                        const value = e.target.value;
-                                                                        setReflectionByQid((prev) => ({
-                                                                            ...prev,
-                                                                            [q.questionId]: { ...draft, slowReason: value },
-                                                                        }));
-                                                                    }}
-                                                                    placeholder="Example: I tried two long methods before finding the shorter approach."
-                                                                />
-                                                            </label>
-                                                        ) : null}
-
-                                                        <div className="mt-3 flex flex-wrap items-center gap-3">
-                                                            <button
-                                                                type="button"
-                                                                className="text-xs rounded-full border px-3 py-1 ui-click"
-                                                                style={{ borderColor: "var(--border)", background: "var(--card)" }}
-                                                                onClick={() => void saveReflection(q.questionId)}
-                                                                disabled={Boolean(savingByQid[q.questionId])}
-                                                            >
-                                                                {savingByQid[q.questionId] ? "Saving..." : "Save reflection"}
-                                                            </button>
-                                                            {saveMsgByQid[q.questionId] ? (
-                                                                <div className="text-xs opacity-70">{saveMsgByQid[q.questionId]}</div>
-                                                            ) : null}
-                                                        </div>
-                                                    </div>
-                                                ) : null}
-                                            </>
-                                        ) : null}
+                                            ) : null}
+                                        </>
                                     </div>
                                 );
                             })}
