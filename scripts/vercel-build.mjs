@@ -45,6 +45,15 @@ function isAdvisoryLockTimeout(output) {
     );
 }
 
+function isTransientDbError(output) {
+    return (
+        /\bP1017\b/i.test(output) ||
+        /server has closed the connection/i.test(output) ||
+        /ECONNRESET|ECONNREFUSED|ETIMEDOUT|ENETUNREACH|EHOSTUNREACH/i.test(output) ||
+        /Connection terminated unexpectedly/i.test(output)
+    );
+}
+
 async function main() {
     const prisma = getBin("prisma");
     const next = getBin("next");
@@ -57,15 +66,20 @@ async function main() {
         if (res.code === 0) break;
 
         const combined = `${res.stdout}\n${res.stderr}`;
-        const shouldRetry = isAdvisoryLockTimeout(combined) && attempt < maxRetries;
+        const lockBusy = isAdvisoryLockTimeout(combined);
+        const transientDb = isTransientDbError(combined);
+        const shouldRetry = (lockBusy || transientDb) && attempt < maxRetries;
         if (!shouldRetry) {
             process.exit(res.code);
         }
 
         const backoffMs = Math.min(60000, baseDelayMs * Math.max(1, attempt + 1));
+        const reason = lockBusy
+            ? "advisory lock busy"
+            : "transient database connection issue";
         console.log(
-            `\n[vercel-build] prisma migrate deploy: advisory lock busy. ` +
-                `Retrying in ${Math.round(backoffMs / 1000)}s (${attempt + 1}/${maxRetries})...\n`,
+            `\n[vercel-build] prisma migrate deploy: ${reason}. ` +
+            `Retrying in ${Math.round(backoffMs / 1000)}s (${attempt + 1}/${maxRetries})...\n`,
         );
         await sleep(backoffMs);
     }
