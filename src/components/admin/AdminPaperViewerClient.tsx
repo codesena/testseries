@@ -327,7 +327,10 @@ export function AdminPaperViewerClient({
                 return rest;
             });
 
-            setEditSuccess("Question updated successfully.");
+            setEditOpenForQuestionId(null);
+            setEditError(null);
+            setEditSuccess(null);
+            setEditRaw("");
         } catch (e) {
             setEditError(e instanceof Error ? e.message : "Failed to save question");
         } finally {
