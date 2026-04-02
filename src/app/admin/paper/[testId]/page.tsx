@@ -145,17 +145,17 @@ export default async function AdminPaperViewPage(
                 style={{ borderColor: "var(--border)", background: "var(--background)" }}
             >
                 <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-2">
+                    <div className="flex min-w-0 items-center gap-2 overflow-x-auto whitespace-nowrap [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
                         <Link
                             href="/admin"
-                            className="text-xs rounded-full border px-3 py-1 ui-click"
+                            className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
                             style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                         >
                             Admin
                         </Link>
                         <Link
                             href="/"
-                            className="text-xs rounded-full border px-3 py-1 ui-click"
+                            className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
                             style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                         >
                             Home

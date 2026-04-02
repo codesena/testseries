@@ -87,31 +87,31 @@ export default async function AdminPage() {
                 className="sticky top-0 z-50 border-b"
                 style={{ borderColor: "var(--border)", background: "var(--background)" }}
             >
-                <div className="max-w-5xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-2">
+                <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between gap-2">
                     <Link
                         href="/"
-                        className="inline-flex items-center justify-center h-10 rounded-full border px-4 text-xs ui-click"
+                        className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
                         style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                     >
                         Home
                     </Link>
-                    <div className="flex items-center flex-wrap justify-end gap-2">
+                    <div className="flex min-w-0 items-center gap-2 overflow-x-auto whitespace-nowrap [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
                         <Link
                             href="/admin/consolidated"
-                            className="inline-flex items-center justify-center h-10 rounded-full border px-4 text-xs whitespace-nowrap ui-click"
+                            className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
                             style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                         >
                             Consolidated report
                         </Link>
                         <Link
                             href="/admin/issues"
-                            className="inline-flex items-center justify-center h-10 rounded-full border px-4 text-xs whitespace-nowrap ui-click"
+                            className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
                             style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                         >
                             Issue reports
                         </Link>
                         <span
-                            className="inline-flex items-center justify-center h-10 rounded-full border px-4 text-xs whitespace-nowrap"
+                            className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap"
                             style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                         >
                             Admin
@@ -151,7 +151,7 @@ export default async function AdminPage() {
                                     <div className="flex items-center gap-2 shrink-0">
                                         <Link
                                             href={`/admin/candidate/${a.studentId}`}
-                                            className="inline-flex items-center justify-center h-10 rounded-full border px-4 text-xs whitespace-nowrap ui-click"
+                                            className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
                                             style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                                         >
                                             View papers
