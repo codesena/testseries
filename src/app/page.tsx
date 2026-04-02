@@ -143,7 +143,7 @@ export default async function Home() {
                                 <div className="flex flex-wrap items-center gap-2 sm:justify-end">
                                     {(attemptCountByTestId.get(t.id) ?? 0) === 0 ? (
                                         <span
-                                            className="text-xs rounded-full border px-3 py-1"
+                                            className="inline-flex items-center justify-center h-10 rounded-full border px-4 text-xs whitespace-nowrap"
                                             style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                                         >
                                             Unattempted
@@ -151,18 +151,17 @@ export default async function Home() {
                                     ) : (
                                         <Link
                                             href={`/test/${t.id}/history`}
-                                            className="text-xs rounded-full border px-3 py-1 ui-click"
+                                            className="inline-flex items-center justify-center h-10 rounded-full border px-4 text-xs whitespace-nowrap ui-click"
                                             style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                                         >
-                                            Attempted {attemptCountByTestId.get(t.id) ?? 0} time
-                                            {(attemptCountByTestId.get(t.id) ?? 0) === 1 ? "" : "s"}
+                                            Attempted {attemptCountByTestId.get(t.id) ?? 0}x
                                         </Link>
                                     )}
 
                                     {isAdmin ? (
                                         <Link
                                             href={`/admin/paper/${t.id}`}
-                                            className="text-xs rounded-full border px-3 py-1 ui-click"
+                                            className="inline-flex items-center justify-center h-10 rounded-full border px-4 text-xs whitespace-nowrap ui-click"
                                             style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                                         >
                                             View paper
@@ -171,7 +170,7 @@ export default async function Home() {
 
                                     <Link
                                         href={`/test/${t.id}`}
-                                        className="text-xs rounded-full border px-3 py-1 ui-click"
+                                        className="inline-flex items-center justify-center h-10 rounded-full border px-4 text-xs whitespace-nowrap ui-click"
                                         style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                                     >
                                         Start
