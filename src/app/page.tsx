@@ -104,21 +104,13 @@ export default async function Home(props: {
     });
 
     const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-    const [weeklyAttemptCount, scoreAvg] = await Promise.all([
+    const [weeklyAttemptCount] = await Promise.all([
         prisma.studentAttempt.count({
             where: { studentId: userId, startTimestamp: { gte: oneWeekAgo } },
-        }),
-        prisma.studentAttempt.aggregate({
-            where: { studentId: userId, overallScore: { not: null } },
-            _avg: { overallScore: true },
         }),
     ]);
 
     const attemptedTestsCount = attemptCountByTestId.size;
-    const averageScoreText =
-        scoreAvg._avg.overallScore == null
-            ? "—"
-            : `${Math.round(Number(scoreAvg._avg.overallScore))}%`;
 
     const searchQuery = rawQ.trim().toLowerCase();
     const filteredTests = tests.filter((t) => {
@@ -207,7 +199,7 @@ export default async function Home(props: {
                             : "Kick off this week with your first attempt."}
                     </div>
 
-                    <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                    <div className="mt-4 grid gap-3 sm:grid-cols-2">
                         <div className="rounded-xl border p-4" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
                             <div className="text-xs opacity-60">Total tests</div>
                             <div className="mt-1 text-xl font-semibold">{tests.length}</div>
@@ -215,10 +207,6 @@ export default async function Home(props: {
                         <div className="rounded-xl border p-4" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
                             <div className="text-xs opacity-60">Attempted papers</div>
                             <div className="mt-1 text-xl font-semibold">{attemptedTestsCount}</div>
-                        </div>
-                        <div className="rounded-xl border p-4" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
-                            <div className="text-xs opacity-60">Average score</div>
-                            <div className="mt-1 text-xl font-semibold">{averageScoreText}</div>
                         </div>
                     </div>
                 </section>
