@@ -96,6 +96,23 @@ export default async function Home() {
         },
     });
 
+    const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    const [weeklyAttemptCount, scoreAvg] = await Promise.all([
+        prisma.studentAttempt.count({
+            where: { studentId: userId, startTimestamp: { gte: oneWeekAgo } },
+        }),
+        prisma.studentAttempt.aggregate({
+            where: { studentId: userId, overallScore: { not: null } },
+            _avg: { overallScore: true },
+        }),
+    ]);
+
+    const attemptedTestsCount = attemptCountByTestId.size;
+    const averageScoreText =
+        scoreAvg._avg.overallScore == null
+            ? "—"
+            : `${Math.round(Number(scoreAvg._avg.overallScore))}%`;
+
     return (
         <div className="min-h-screen flex flex-col">
             <header
@@ -124,85 +141,118 @@ export default async function Home() {
             </header>
 
             <main className="max-w-5xl mx-auto w-full px-4 py-8">
-                <h1 className="text-2xl font-semibold">Available Tests</h1>
-                <div className="mt-6 grid gap-3">
-                    {tests.map((t) => (
-                        <div
-                            key={t.id}
-                            className="rounded-2xl border p-4 shadow-sm"
-                            style={{ borderColor: "var(--border)", background: "var(--card)" }}
-                        >
-                            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                                <div className="min-w-0">
-                                    <div className="text-lg font-semibold leading-snug">{t.title}</div>
-                                    <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px]">
-                                        <span
-                                            className="inline-flex items-center justify-center h-7 rounded-full border px-2.5 whitespace-nowrap"
-                                            style={{ borderColor: "var(--border)", background: "var(--muted)" }}
-                                        >
-                                            {t.isAdvancedFormat ? "JEE Advanced" : "JEE Main"}
-                                        </span>
-                                        <span className="opacity-60">{t._count.questions} questions</span>
-                                        <span className="opacity-60">⏱ {t.totalDurationMinutes} mins</span>
-                                        <span className="opacity-60">Created {fmtDate(t.createdAt)}</span>
+                <section>
+                    <h1 className="text-2xl font-semibold">Dashboard</h1>
+                    <div className="mt-2 text-sm opacity-70">
+                        {weeklyAttemptCount > 0
+                            ? `You attempted ${weeklyAttemptCount} test${weeklyAttemptCount === 1 ? "" : "s"} this week.`
+                            : "Kick off this week with your first attempt."}
+                    </div>
+
+                    <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                        <div className="rounded-xl border p-4" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
+                            <div className="text-xs opacity-60">Total tests</div>
+                            <div className="mt-1 text-xl font-semibold">{tests.length}</div>
+                        </div>
+                        <div className="rounded-xl border p-4" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
+                            <div className="text-xs opacity-60">Attempted papers</div>
+                            <div className="mt-1 text-xl font-semibold">{attemptedTestsCount}</div>
+                        </div>
+                        <div className="rounded-xl border p-4" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
+                            <div className="text-xs opacity-60">Average score</div>
+                            <div className="mt-1 text-xl font-semibold">{averageScoreText}</div>
+                        </div>
+                    </div>
+                </section>
+
+                <section className="mt-10">
+                    <h1 className="text-2xl font-semibold">Available Tests</h1>
+                    <div className="mt-6 grid gap-3">
+                        {tests.map((t) => (
+                            <div
+                                key={t.id}
+                                className="rounded-2xl border p-4 shadow-sm"
+                                style={{ borderColor: "var(--border)", background: "var(--card)" }}
+                            >
+                                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                                    <div className="min-w-0">
+                                        <div className="text-lg font-semibold leading-snug">{t.title}</div>
+                                        <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px]">
+                                            <span
+                                                className="inline-flex items-center justify-center h-7 rounded-full border px-2.5 whitespace-nowrap"
+                                                style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                                            >
+                                                {t.isAdvancedFormat ? "JEE Advanced" : "JEE Main"}
+                                            </span>
+                                            <span className="opacity-60">{t._count.questions} questions</span>
+                                            <span className="opacity-60">⏱ {t.totalDurationMinutes} mins</span>
+                                            <span className="opacity-60">Created {fmtDate(t.createdAt)}</span>
+                                        </div>
                                     </div>
-                                </div>
-                                <div className="flex flex-wrap items-center gap-2 sm:justify-end">
-                                    {(attemptCountByTestId.get(t.id) ?? 0) === 0 ? (
-                                        <span
-                                            className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap"
-                                            style={{ borderColor: "var(--border)", background: "var(--muted)" }}
-                                        >
-                                            Unattempted
-                                        </span>
-                                    ) : (
-                                        <span
-                                            className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap"
-                                            style={{ borderColor: "var(--border)", background: "var(--muted)" }}
-                                        >
-                                            Attempted {attemptCountByTestId.get(t.id) ?? 0}x
-                                        </span>
-                                    )}
+                                    <div className="flex flex-wrap items-center gap-2 sm:justify-end">
+                                        {(attemptCountByTestId.get(t.id) ?? 0) === 0 ? (
+                                            <span
+                                                className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap"
+                                                style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                                            >
+                                                Unattempted
+                                            </span>
+                                        ) : (
+                                            <span
+                                                className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap"
+                                                style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                                            >
+                                                Attempted {attemptCountByTestId.get(t.id) ?? 0}x
+                                            </span>
+                                        )}
 
-                                    <Link
-                                        href={`/test/${t.id}/history`}
-                                        className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
-                                        style={{ borderColor: "var(--border)", background: "transparent" }}
-                                    >
-                                        View history
-                                    </Link>
-
-                                    {isAdmin ? (
                                         <Link
-                                            href={`/admin/paper/${t.id}`}
+                                            href={`/test/${t.id}/history`}
                                             className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
                                             style={{ borderColor: "var(--border)", background: "transparent" }}
                                         >
-                                            View paper
+                                            View history
                                         </Link>
-                                    ) : null}
 
-                                    <Link
-                                        href={`/test/${t.id}`}
-                                        className="inline-flex items-center justify-center h-9 rounded-full border px-4 text-xs font-semibold whitespace-nowrap ui-click"
-                                        style={{
-                                            borderColor: "rgba(59, 130, 246, 0.5)",
-                                            background: "linear-gradient(135deg, rgba(37,99,235,0.95), rgba(14,165,233,0.9))",
-                                            color: "#e0f2fe",
-                                        }}
-                                    >
-                                        Start Test
-                                    </Link>
+                                        {isAdmin ? (
+                                            <Link
+                                                href={`/admin/paper/${t.id}`}
+                                                className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
+                                                style={{ borderColor: "var(--border)", background: "transparent" }}
+                                            >
+                                                View paper
+                                            </Link>
+                                        ) : null}
+
+                                        <Link
+                                            href={`/test/${t.id}`}
+                                            className="inline-flex items-center justify-center h-9 rounded-full border px-4 text-xs font-semibold whitespace-nowrap ui-click"
+                                            style={{
+                                                borderColor: "rgba(59, 130, 246, 0.5)",
+                                                background: "linear-gradient(135deg, rgba(37,99,235,0.95), rgba(14,165,233,0.9))",
+                                                color: "#e0f2fe",
+                                            }}
+                                        >
+                                            Start Test
+                                        </Link>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    ))}
-                    {tests.length === 0 ? (
-                        <div className="text-sm opacity-70">
-                            No tests found. Run DB migration + seed.
-                        </div>
-                    ) : null}
-                </div>
+                        ))}
+                        {tests.length === 0 ? (
+                            <div
+                                className="rounded-xl border p-6 text-center"
+                                style={{ borderColor: "var(--border)", background: "var(--card)" }}
+                            >
+                                <div className="text-2xl">🧪</div>
+                                <div className="mt-2 text-base font-medium">No tests available yet</div>
+                                <div className="mt-1 text-sm opacity-70">
+                                    New papers will appear here after sync/seed.
+                                </div>
+                            </div>
+                        ) : null}
+                    </div>
+                </section>
 
                 <div className="mt-10">
                     <h2 className="text-xl font-semibold">Attempt History</h2>
@@ -260,8 +310,15 @@ export default async function Home() {
                         })}
 
                         {recentAttempts.length === 0 ? (
-                            <div className="text-sm opacity-70">
-                                No attempts yet.
+                            <div
+                                className="rounded-xl border p-6 text-center"
+                                style={{ borderColor: "var(--border)", background: "var(--card)" }}
+                            >
+                                <div className="text-2xl">🚀</div>
+                                <div className="mt-2 text-base font-medium">No attempts yet</div>
+                                <div className="mt-1 text-sm opacity-70">
+                                    Start your first test to unlock progress insights.
+                                </div>
                             </div>
                         ) : null}
                     </div>
