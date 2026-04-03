@@ -81,57 +81,73 @@ export default async function TestAttemptHistoryPage({
     return (
         <div className="min-h-screen flex flex-col">
             <header
-                className="sticky top-0 z-50 border-b"
-                style={{ borderColor: "var(--border)", background: "var(--background)" }}
+                className="sticky top-0 z-50 border-b backdrop-blur-md"
+                style={{
+                    borderColor: "var(--border)",
+                    background: "color-mix(in srgb, var(--background) 88%, transparent)",
+                }}
             >
-                <div className="max-w-5xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                        <div
-                            className="inline-flex h-8 w-8 items-center justify-center rounded-full border text-xs font-semibold"
-                            style={{ borderColor: "var(--border)", background: "var(--muted)" }}
-                        >
-                            J
+                <div className="max-w-5xl mx-auto px-4 py-2">
+                    <div className="rounded-2xl border px-3 py-2" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                            <div className="flex items-center gap-2 min-w-0">
+                                <div
+                                    className="inline-flex h-8 w-8 items-center justify-center rounded-full border text-xs font-semibold shrink-0"
+                                    style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                                >
+                                    J
+                                </div>
+                                <div className="text-sm font-medium">JEE Test Series</div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <Link
+                                    href="/"
+                                    className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
+                                    style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                                >
+                                    Dashboard
+                                </Link>
+                                <span
+                                    className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap"
+                                    style={{
+                                        borderColor: "rgba(59, 130, 246, 0.5)",
+                                        background: "linear-gradient(135deg, rgba(37,99,235,0.95), rgba(14,165,233,0.9))",
+                                        color: "#e0f2fe",
+                                    }}
+                                >
+                                    History
+                                </span>
+                            </div>
                         </div>
-                        <div className="text-sm font-medium">JEE Test Series</div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <Link
-                            href="/"
-                            className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
-                            style={{ borderColor: "var(--border)", background: "var(--muted)" }}
-                        >
-                            Dashboard
-                        </Link>
-                        <span className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap" style={{ borderColor: "var(--border)", background: "var(--muted)" }}>
-                            History
-                        </span>
                     </div>
                 </div>
             </header>
 
-            <main className="max-w-5xl mx-auto w-full px-4 py-8">
-                <h1 className="text-2xl font-semibold">{test.title}</h1>
-                <div className="mt-2 text-sm opacity-70">
-                    {test._count.questions} questions · {test.totalDurationMinutes} min
-                </div>
+            <main className="max-w-5xl mx-auto w-full px-4 pt-8 pb-16">
+                <section className="rounded-2xl border p-5 sm:p-6" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
+                    <h1 className="text-2xl font-semibold">{test.title}</h1>
+                    <div className="mt-2 text-sm opacity-70">
+                        {test._count.questions} questions · {test.totalDurationMinutes} min
+                    </div>
 
-                <div className="mt-6 flex flex-wrap items-center gap-2 text-sm">
-                    <span
-                        className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap"
-                        style={{ borderColor: "var(--border)", background: "var(--muted)" }}
-                    >
-                        {attemptsAsc.length === 0
-                            ? "Unattempted"
-                            : `Attempted ${attemptsAsc.length} time${attemptsAsc.length === 1 ? "" : "s"}`}
-                    </span>
-                    <Link
-                        href={`/test/${test.id}`}
-                        className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
-                        style={{ borderColor: "var(--border)", background: "var(--muted)" }}
-                    >
-                        Start test
-                    </Link>
-                </div>
+                    <div className="mt-6 flex flex-wrap items-center gap-2 text-sm">
+                        <span
+                            className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap"
+                            style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                        >
+                            {attemptsAsc.length === 0
+                                ? "Unattempted"
+                                : `Attempted ${attemptsAsc.length} time${attemptsAsc.length === 1 ? "" : "s"}`}
+                        </span>
+                        <Link
+                            href={`/test/${test.id}`}
+                            className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
+                            style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                        >
+                            Start test
+                        </Link>
+                    </div>
+                </section>
 
                 <div className="mt-6 grid gap-3">
                     {attempts.map((a) => {
@@ -154,7 +170,7 @@ export default async function TestAttemptHistoryPage({
                             <Link
                                 key={a.id}
                                 href={`/attempt/${a.id}/report`}
-                                className="rounded-lg border p-3 sm:p-4 ui-click"
+                                className="rounded-2xl border p-3 sm:p-4 ui-click"
                                 style={{ borderColor: "var(--border)", background: "var(--card)" }}
                             >
                                 <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">

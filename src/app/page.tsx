@@ -224,16 +224,6 @@ export default async function Home(props: {
                                                     View history
                                                 </Link>
 
-                                                {isAdmin ? (
-                                                    <Link
-                                                        href={`/admin/paper/${t.id}`}
-                                                        className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
-                                                        style={{ borderColor: "var(--border)", background: "transparent" }}
-                                                    >
-                                                        View paper
-                                                    </Link>
-                                                ) : null}
-
                                                 <Link
                                                     href={`/test/${t.id}`}
                                                     className={`inline-flex items-center justify-center h-9 rounded-full border px-4 text-xs whitespace-nowrap ui-click ${hasAttempts ? "font-medium" : "font-semibold"

@@ -1,7 +1,8 @@
 "use client";
 
 import { MathJax, MathJaxContext } from "better-react-mathjax";
-import { type DragEvent, useMemo, useState } from "react";
+import { type DragEvent, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { optimizeImageDelivery } from "@/lib/image-delivery";
 
 type PaperQuestion = {
@@ -148,6 +149,7 @@ export function AdminPaperViewerClient({
     const [uploadFolderName, setUploadFolderName] = useState("paper-images");
     const [uploadFolderDraft, setUploadFolderDraft] = useState("paper-images");
     const [uploadFolderSaved, setUploadFolderSaved] = useState(false);
+    const [mode, setMode] = useState<"view" | "edit">("view");
     const [editError, setEditError] = useState<string | null>(null);
     const [editSuccess, setEditSuccess] = useState<string | null>(null);
     const [editRaw, setEditRaw] = useState("");
@@ -184,6 +186,15 @@ export function AdminPaperViewerClient({
     const activeUploadFolder = slugifyFolderName(uploadFolderName) || "paper-images";
     const draftUploadFolder = slugifyFolderName(uploadFolderDraft) || "paper-images";
     const isUploadFolderDirty = draftUploadFolder !== activeUploadFolder;
+
+    useEffect(() => {
+        if (mode === "view") {
+            setEditOpenForQuestionId(null);
+            setEditError(null);
+            setEditSuccess(null);
+            setEditRaw("");
+        }
+    }, [mode]);
 
     function saveUploadFolder() {
         setUploadFolderName(uploadFolderDraft);
@@ -573,487 +584,521 @@ export function AdminPaperViewerClient({
 
     return (
         <MathJaxContext config={mathjaxConfig}>
-            <div className="rounded-lg border p-4" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
-                <div className="text-lg font-semibold">{testTitle}</div>
-                <div className="mt-1 text-sm opacity-70">View all questions and report any issue directly.</div>
-            </div>
-
-            <div
-                className="mt-3 rounded-lg border p-3 ring-2"
-                style={uploadFolderSaved
-                    ? {
-                        borderColor: "rgba(34, 197, 94, 0.75)",
-                        background: "rgba(20, 83, 45, 0.2)",
-                        boxShadow: "0 0 0 1px rgba(34, 197, 94, 0.35) inset",
-                    }
-                    : {
-                        borderColor: "rgba(239, 68, 68, 0.75)",
-                        background: "rgba(127, 29, 29, 0.18)",
-                        boxShadow: "0 0 0 1px rgba(239, 68, 68, 0.35) inset",
+            <div className="min-h-screen flex flex-col">
+                <header
+                    className="sticky top-0 z-50 border-b backdrop-blur-md"
+                    style={{
+                        borderColor: "var(--border)",
+                        background: "color-mix(in srgb, var(--background) 88%, transparent)",
                     }}
-            >
-                <div className="text-xs font-semibold tracking-wide" style={{ color: uploadFolderSaved ? "#bbf7d0" : "#fecaca" }}>
-                    Upload folder (inside testseries)
-                </div>
-                <div className="mt-1 text-xs opacity-70">
-                    All uploads go to Cloudinary folder: <span className="font-mono">testseries/{activeUploadFolder}</span>
-                </div>
-                <div className="mt-2 flex flex-wrap items-center gap-2">
-                    <input
-                        className="w-full max-w-md rounded border px-3 py-2 bg-transparent ui-field text-xs"
-                        style={{ borderColor: "var(--border)" }}
-                        value={uploadFolderDraft}
-                        onChange={(e) => {
-                            setUploadFolderDraft(e.target.value);
-                            setUploadFolderSaved(false);
-                        }}
-                        placeholder="e.g. paper5"
-                    />
-                    <button
-                        type="button"
-                        className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
-                        style={{
-                            borderColor: uploadFolderSaved ? "rgba(34, 197, 94, 0.75)" : "rgba(239, 68, 68, 0.75)",
-                            background: uploadFolderSaved ? "rgba(20, 83, 45, 0.35)" : "rgba(127, 29, 29, 0.28)",
-                            color: uploadFolderSaved ? "#bbf7d0" : "#fecaca",
-                        }}
-                        onClick={saveUploadFolder}
-                    >
-                        {uploadFolderSaved ? "Saved" : "Save folder"}
-                    </button>
-                </div>
-                <div className="mt-2">
-                    <span
-                        className="inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-medium break-all"
-                        style={uploadFolderSaved
-                            ? {
-                                borderColor: "rgba(34, 197, 94, 0.7)",
-                                background: "rgba(20, 83, 45, 0.35)",
-                                color: "#bbf7d0",
-                            }
-                            : {
-                                borderColor: "rgba(239, 68, 68, 0.7)",
-                                background: "rgba(127, 29, 29, 0.35)",
-                                color: "#fecaca",
-                            }}
-                    >
-                        Upload destination: testseries/{activeUploadFolder}
-                    </span>
-                </div>
-            </div>
-
-            <div className="mt-4 grid gap-4">
-                {viewerQuestions.map((q) => {
-                    const isEditing = editOpenForQuestionId === q.id;
-                    const preview = previewByQuestionId[q.id] ?? null;
-                    const display = preview
-                        ? {
-                            ...q,
-                            topicName: preview.topicName,
-                            questionText: preview.questionText,
-                            imageUrls: preview.imageUrls,
-                            options: preview.options,
-                            markingSchemeType: preview.markingSchemeType,
-                            correctAnswer: preview.correctAnswer,
-                        }
-                        : q;
-
-                    return (
-                        <div
-                            key={q.id}
-                            className="rounded-lg border p-4"
-                            style={{ borderColor: "var(--border)", background: "var(--card)" }}
-                        >
-                            <div className="flex flex-wrap items-center justify-between gap-3">
-                                <div className="text-xs opacity-70">
-                                    Q{q.index} · {q.subjectName} · {display.topicName}
-                                </div>
-                                <div className="flex flex-wrap items-center gap-2 justify-start sm:justify-end">
-                                    <button
-                                        type="button"
-                                        className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
+                >
+                    <div className="max-w-5xl mx-auto px-4 py-2">
+                        <div className="rounded-2xl border px-3 py-2" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
+                            <div className="flex flex-wrap items-center gap-2 sm:gap-3 sm:flex-nowrap sm:overflow-x-auto sm:whitespace-nowrap [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden lg:w-full lg:justify-between">
+                                <div className="inline-flex items-center gap-2 shrink-0">
+                                    <div
+                                        className="inline-flex h-8 w-8 items-center justify-center rounded-full border text-xs font-semibold"
                                         style={{ borderColor: "var(--border)", background: "var(--muted)" }}
-                                        onClick={() => void openEdit(q.id)}
                                     >
-                                        Edit question
-                                    </button>
-                                    {issueSavedForQuestionId[q.id] ? (
-                                        <span
-                                            className="text-xs rounded-full border px-2 py-0.5"
-                                            style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                                        A
+                                    </div>
+                                    <span className="text-sm sm:text-base font-semibold whitespace-nowrap">Admin panel</span>
+                                </div>
+
+                                <span
+                                    className="inline-flex h-9 min-w-0 max-w-full sm:shrink-0 sm:min-w-[12rem] sm:max-w-[20rem] items-center rounded-full border px-3 text-xs sm:text-sm whitespace-nowrap overflow-hidden text-ellipsis"
+                                    style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                                    title={testTitle}
+                                >
+                                    {testTitle}
+                                </span>
+
+                                {mode === "edit" ? (
+                                    <>
+                                        <div
+                                            className="order-5 w-full h-9 inline-flex items-center rounded-full border px-3 sm:order-none sm:w-auto sm:shrink-0 sm:min-w-[12rem] sm:max-w-[16rem]"
+                                            style={uploadFolderSaved
+                                                ? {
+                                                    borderColor: "rgba(34, 197, 94, 0.65)",
+                                                    background: "rgba(20, 83, 45, 0.12)",
+                                                }
+                                                : {
+                                                    borderColor: "rgba(239, 68, 68, 0.6)",
+                                                    background: "rgba(127, 29, 29, 0.1)",
+                                                }}
                                         >
-                                            Issue reported
-                                        </span>
-                                    ) : null}
-                                    <button
-                                        type="button"
-                                        className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
-                                        style={{ borderColor: "var(--border)", background: "var(--muted)" }}
-                                        onClick={() => {
-                                            setIssueError(null);
-                                            setIssue("Wrong answer");
-                                            setDetails("");
-                                            setIssueOpenForQuestionId(q.id);
-                                        }}
-                                    >
-                                        Report issue
-                                    </button>
-                                    <button
-                                        type="button"
-                                        className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
-                                        style={(issueCountByQuestionId[q.id] ?? 0) > 0 || issueSavedForQuestionId[q.id] || issuesOpenForQuestionId === q.id
-                                            ? {
-                                                borderColor: "rgba(239, 68, 68, 0.75)",
-                                                background: "rgba(127, 29, 29, 0.25)",
-                                                color: "#fecaca",
-                                            }
-                                            : { borderColor: "var(--border)", background: "var(--muted)" }}
-                                        onClick={() => void toggleQuestionIssues(q.id)}
-                                        disabled={loadingIssuesForQuestionId === q.id}
-                                    >
-                                        {loadingIssuesForQuestionId === q.id
-                                            ? "Loading issues..."
-                                            : issuesOpenForQuestionId === q.id
-                                                ? `Hide issues (${issueCountByQuestionId[q.id] ?? 0})`
-                                                : `Issues (${issueCountByQuestionId[q.id] ?? 0})`}
-                                    </button>
-                                </div>
-                            </div>
+                                            <span className="text-xs opacity-70 shrink-0">testseries/</span>
+                                            <input
+                                                className="ml-1 min-w-0 w-full bg-transparent text-xs outline-none"
+                                                value={uploadFolderDraft}
+                                                onChange={(e) => {
+                                                    setUploadFolderDraft(e.target.value);
+                                                    setUploadFolderSaved(false);
+                                                }}
+                                                placeholder="xyz"
+                                            />
+                                        </div>
 
-                            {issuesOpenForQuestionId === q.id ? (
-                                <div className="mt-3 rounded border p-3" style={{ borderColor: "var(--border)", background: "var(--muted)" }}>
-                                    <div className="text-xs font-semibold">Reported issues for this question</div>
-                                    {issuesErrorForQuestionId[q.id] ? (
-                                        <div className="mt-2 text-xs text-red-500">{issuesErrorForQuestionId[q.id]}</div>
+                                        <button
+                                            type="button"
+                                            className="inline-flex shrink-0 items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
+                                            style={{
+                                                borderColor: uploadFolderSaved ? "rgba(34, 197, 94, 0.75)" : "rgba(239, 68, 68, 0.75)",
+                                                background: uploadFolderSaved ? "rgba(20, 83, 45, 0.35)" : "rgba(127, 29, 29, 0.28)",
+                                                color: uploadFolderSaved ? "#bbf7d0" : "#fecaca",
+                                            }}
+                                            onClick={saveUploadFolder}
+                                        >
+                                            {uploadFolderSaved ? "Saved" : "Save folder"}
+                                        </button>
+                                    </>
+                                ) : null}
+
+                                <button
+                                    type="button"
+                                    className="inline-flex shrink-0 items-center justify-center h-9 rounded-full border px-3 text-xs font-medium whitespace-nowrap ui-click"
+                                    style={{
+                                        borderColor: mode === "edit" ? "rgba(59, 130, 246, 0.5)" : "var(--border)",
+                                        background: mode === "edit"
+                                            ? "linear-gradient(135deg, rgba(37,99,235,0.95), rgba(14,165,233,0.9))"
+                                            : "var(--muted)",
+                                        color: mode === "edit" ? "#e0f2fe" : undefined,
+                                    }}
+                                    onClick={() => setMode((prev) => (prev === "view" ? "edit" : "view"))}
+                                >
+                                    {mode === "edit" ? "Edit mode" : "View mode"}
+                                </button>
+
+                                <Link
+                                    href="/admin/papers"
+                                    className="inline-flex shrink-0 items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
+                                    style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                                >
+                                    Papers
+                                </Link>
+                            </div>
+                        </div>
+                    </div>
+                </header>
+
+                <main className="max-w-5xl mx-auto w-full px-4 py-8">
+                    <div className="grid gap-4">
+                        {viewerQuestions.map((q) => {
+                            const isEditing = editOpenForQuestionId === q.id;
+                            const preview = previewByQuestionId[q.id] ?? null;
+                            const display = preview
+                                ? {
+                                    ...q,
+                                    topicName: preview.topicName,
+                                    questionText: preview.questionText,
+                                    imageUrls: preview.imageUrls,
+                                    options: preview.options,
+                                    markingSchemeType: preview.markingSchemeType,
+                                    correctAnswer: preview.correctAnswer,
+                                }
+                                : q;
+
+                            return (
+                                <div
+                                    key={q.id}
+                                    className="rounded-lg border p-4"
+                                    style={{ borderColor: "var(--border)", background: "var(--card)" }}
+                                >
+                                    <div className="flex flex-wrap items-center justify-between gap-3">
+                                        <div className="text-xs opacity-70">
+                                            Q{q.index} · {q.subjectName} · {display.topicName}
+                                        </div>
+                                        <div className="flex flex-wrap items-center gap-2 justify-start sm:justify-end">
+                                            {mode === "edit" ? (
+                                                <button
+                                                    type="button"
+                                                    className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
+                                                    style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                                                    onClick={() => void openEdit(q.id)}
+                                                >
+                                                    Edit question
+                                                </button>
+                                            ) : null}
+                                            {issueSavedForQuestionId[q.id] ? (
+                                                <span
+                                                    className="text-xs rounded-full border px-2 py-0.5"
+                                                    style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                                                >
+                                                    Issue reported
+                                                </span>
+                                            ) : null}
+                                            <button
+                                                type="button"
+                                                className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
+                                                style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                                                onClick={() => {
+                                                    setIssueError(null);
+                                                    setIssue("Wrong answer");
+                                                    setDetails("");
+                                                    setIssueOpenForQuestionId(q.id);
+                                                }}
+                                            >
+                                                Report issue
+                                            </button>
+                                            <button
+                                                type="button"
+                                                className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
+                                                style={(issueCountByQuestionId[q.id] ?? 0) > 0 || issueSavedForQuestionId[q.id] || issuesOpenForQuestionId === q.id
+                                                    ? {
+                                                        borderColor: "rgba(239, 68, 68, 0.75)",
+                                                        background: "rgba(127, 29, 29, 0.25)",
+                                                        color: "#fecaca",
+                                                    }
+                                                    : { borderColor: "var(--border)", background: "var(--muted)" }}
+                                                onClick={() => void toggleQuestionIssues(q.id)}
+                                                disabled={loadingIssuesForQuestionId === q.id}
+                                            >
+                                                {loadingIssuesForQuestionId === q.id
+                                                    ? "Loading issues..."
+                                                    : issuesOpenForQuestionId === q.id
+                                                        ? `Hide issues (${issueCountByQuestionId[q.id] ?? 0})`
+                                                        : `Issues (${issueCountByQuestionId[q.id] ?? 0})`}
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {issuesOpenForQuestionId === q.id ? (
+                                        <div className="mt-3 rounded border p-3" style={{ borderColor: "var(--border)", background: "var(--muted)" }}>
+                                            <div className="text-xs font-semibold">Reported issues for this question</div>
+                                            {issuesErrorForQuestionId[q.id] ? (
+                                                <div className="mt-2 text-xs text-red-500">{issuesErrorForQuestionId[q.id]}</div>
+                                            ) : null}
+                                            {loadingIssuesForQuestionId === q.id ? (
+                                                <div className="mt-2 text-xs opacity-70">Loading...</div>
+                                            ) : null}
+                                            {!loadingIssuesForQuestionId && !issuesErrorForQuestionId[q.id] ? (
+                                                (issuesByQuestionId[q.id] ?? []).length ? (
+                                                    <div className="mt-2 grid gap-2">
+                                                        {(issuesByQuestionId[q.id] ?? []).map((item) => (
+                                                            <div
+                                                                key={item.id}
+                                                                className="rounded border p-2 text-xs"
+                                                                style={{ borderColor: "var(--border)", background: "var(--card)" }}
+                                                            >
+                                                                <div className="flex flex-wrap items-center gap-2 opacity-80">
+                                                                    <span className="rounded-full border px-2 py-0.5" style={{ borderColor: "var(--border)", background: "var(--muted)" }}>
+                                                                        {item.source}
+                                                                    </span>
+                                                                    <span>
+                                                                        {new Intl.DateTimeFormat("en-IN", {
+                                                                            dateStyle: "medium",
+                                                                            timeStyle: "short",
+                                                                            timeZone: "Asia/Kolkata",
+                                                                        }).format(new Date(item.createdAt))}
+                                                                    </span>
+                                                                    {item.reporterUsername ? <span>by {item.reporterUsername}</span> : null}
+                                                                </div>
+                                                                <div className="mt-1 font-medium">{item.issue}</div>
+                                                                {item.details ? <div className="mt-1 opacity-80">{item.details}</div> : null}
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                ) : (
+                                                    <div className="mt-2 text-xs opacity-70">No issues reported for this question yet.</div>
+                                                )
+                                            ) : null}
+                                        </div>
                                     ) : null}
-                                    {loadingIssuesForQuestionId === q.id ? (
-                                        <div className="mt-2 text-xs opacity-70">Loading...</div>
-                                    ) : null}
-                                    {!loadingIssuesForQuestionId && !issuesErrorForQuestionId[q.id] ? (
-                                        (issuesByQuestionId[q.id] ?? []).length ? (
-                                            <div className="mt-2 grid gap-2">
-                                                {(issuesByQuestionId[q.id] ?? []).map((item) => (
+
+                                    <div className="mt-4 text-base leading-relaxed">
+                                        {display.imageUrls.length ? (
+                                            <div className={`mb-3 grid gap-2 mx-auto ${display.imageUrls.length > 1 ? "sm:grid-cols-2 max-w-3xl" : "max-w-4xl"}`}>
+                                                {display.imageUrls.map((url) => (
                                                     <div
-                                                        key={item.id}
-                                                        className="rounded border p-2 text-xs"
+                                                        key={url}
+                                                        className={`rounded border p-2 flex items-center justify-center w-full relative ${display.imageUrls.length > 1 ? "h-44 sm:h-56" : "h-64 sm:h-80"}`}
                                                         style={{ borderColor: "var(--border)", background: "var(--card)" }}
                                                     >
-                                                        <div className="flex flex-wrap items-center gap-2 opacity-80">
-                                                            <span className="rounded-full border px-2 py-0.5" style={{ borderColor: "var(--border)", background: "var(--muted)" }}>
-                                                                {item.source}
-                                                            </span>
-                                                            <span>
-                                                                {new Intl.DateTimeFormat("en-IN", {
-                                                                    dateStyle: "medium",
-                                                                    timeStyle: "short",
-                                                                    timeZone: "Asia/Kolkata",
-                                                                }).format(new Date(item.createdAt))}
-                                                            </span>
-                                                            {item.reporterUsername ? <span>by {item.reporterUsername}</span> : null}
-                                                        </div>
-                                                        <div className="mt-1 font-medium">{item.issue}</div>
-                                                        {item.details ? <div className="mt-1 opacity-80">{item.details}</div> : null}
+                                                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                        <img
+                                                            src={optimizeImageDelivery(url)}
+                                                            alt="Question"
+                                                            className="max-w-full max-h-full object-contain"
+                                                            loading="lazy"
+                                                            decoding="async"
+                                                            referrerPolicy="no-referrer"
+                                                        />
                                                     </div>
                                                 ))}
                                             </div>
+                                        ) : null}
+                                        <MathJax dynamic>{display.questionText}</MathJax>
+                                    </div>
+
+                                    <div className="mt-4 grid gap-2">
+                                        {display.markingSchemeType === "MAINS_NUMERICAL" || display.markingSchemeType === "ADV_NAT" ? (
+                                            <div className="rounded border p-3 text-sm" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
+                                                Correct answer: <span className="font-medium">{formatAnswer(display.correctAnswer)}</span>
+                                            </div>
                                         ) : (
-                                            <div className="mt-2 text-xs opacity-70">No issues reported for this question yet.</div>
-                                        )
-                                    ) : null}
-                                </div>
-                            ) : null}
+                                            display.options.map((o) => {
+                                                const optionImageUrls = o.imageUrl ? splitUrlList(o.imageUrl) : [];
+                                                const optionHasMultipleImages = optionImageUrls.length > 1;
+                                                const correct = isCorrectOption(display.markingSchemeType, display.correctAnswer, o.key);
 
-                            <div className="mt-4 text-base leading-relaxed">
-                                {display.imageUrls.length ? (
-                                    <div className={`mb-3 grid gap-2 mx-auto ${display.imageUrls.length > 1 ? "sm:grid-cols-2 max-w-3xl" : "max-w-4xl"}`}>
-                                        {display.imageUrls.map((url) => (
-                                            <div
-                                                key={url}
-                                                className={`rounded border p-2 flex items-center justify-center w-full relative ${display.imageUrls.length > 1 ? "h-44 sm:h-56" : "h-64 sm:h-80"}`}
-                                                style={{ borderColor: "var(--border)", background: "var(--card)" }}
-                                            >
-                                                {/* eslint-disable-next-line @next/next/no-img-element */}
-                                                <img
-                                                    src={optimizeImageDelivery(url)}
-                                                    alt="Question"
-                                                    className="max-w-full max-h-full object-contain"
-                                                    loading="lazy"
-                                                    decoding="async"
-                                                    referrerPolicy="no-referrer"
-                                                />
-                                            </div>
-                                        ))}
-                                    </div>
-                                ) : null}
-                                <MathJax dynamic>{display.questionText}</MathJax>
-                            </div>
+                                                return (
+                                                    <div
+                                                        key={o.key}
+                                                        className={`rounded border p-3 ${correct ? "ring-1 ring-emerald-500" : ""}`}
+                                                        style={{ borderColor: "var(--border)", background: "var(--card)" }}
+                                                    >
+                                                        <div className="flex items-start gap-3">
+                                                            <div className="text-xs font-mono opacity-70">{o.key}.</div>
+                                                            <div className="min-w-0 text-sm leading-relaxed">
+                                                                <MathJax dynamic>{o.text}</MathJax>
 
-                            <div className="mt-4 grid gap-2">
-                                {display.markingSchemeType === "MAINS_NUMERICAL" || display.markingSchemeType === "ADV_NAT" ? (
-                                    <div className="rounded border p-3 text-sm" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
-                                        Correct answer: <span className="font-medium">{formatAnswer(display.correctAnswer)}</span>
-                                    </div>
-                                ) : (
-                                    display.options.map((o) => {
-                                        const optionImageUrls = o.imageUrl ? splitUrlList(o.imageUrl) : [];
-                                        const optionHasMultipleImages = optionImageUrls.length > 1;
-                                        const correct = isCorrectOption(display.markingSchemeType, display.correctAnswer, o.key);
-
-                                        return (
-                                            <div
-                                                key={o.key}
-                                                className={`rounded border p-3 ${correct ? "ring-1 ring-emerald-500" : ""}`}
-                                                style={{ borderColor: "var(--border)", background: "var(--card)" }}
-                                            >
-                                                <div className="flex items-start gap-3">
-                                                    <div className="text-xs font-mono opacity-70">{o.key}.</div>
-                                                    <div className="min-w-0 text-sm leading-relaxed">
-                                                        <MathJax dynamic>{o.text}</MathJax>
-
-                                                        {optionImageUrls.length ? (
-                                                            <div className={`mt-2 grid gap-2 ${optionHasMultipleImages ? "sm:grid-cols-2" : ""}`}>
-                                                                {optionImageUrls.map((url) => (
-                                                                    <div
-                                                                        key={url}
-                                                                        className={`rounded border p-2 flex items-center justify-center w-full relative ${optionHasMultipleImages ? "h-32 sm:h-40" : "h-40 sm:h-48"}`}
-                                                                        style={{ borderColor: "var(--border)", background: "var(--card)" }}
-                                                                    >
-                                                                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                                                                        <img
-                                                                            src={optimizeImageDelivery(url)}
-                                                                            alt={`Option ${o.key}`}
-                                                                            className="max-w-full max-h-full object-contain"
-                                                                            loading="lazy"
-                                                                            decoding="async"
-                                                                            referrerPolicy="no-referrer"
-                                                                        />
+                                                                {optionImageUrls.length ? (
+                                                                    <div className={`mt-2 grid gap-2 ${optionHasMultipleImages ? "sm:grid-cols-2" : ""}`}>
+                                                                        {optionImageUrls.map((url) => (
+                                                                            <div
+                                                                                key={url}
+                                                                                className={`rounded border p-2 flex items-center justify-center w-full relative ${optionHasMultipleImages ? "h-32 sm:h-40" : "h-40 sm:h-48"}`}
+                                                                                style={{ borderColor: "var(--border)", background: "var(--card)" }}
+                                                                            >
+                                                                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                                                <img
+                                                                                    src={optimizeImageDelivery(url)}
+                                                                                    alt={`Option ${o.key}`}
+                                                                                    className="max-w-full max-h-full object-contain"
+                                                                                    loading="lazy"
+                                                                                    decoding="async"
+                                                                                    referrerPolicy="no-referrer"
+                                                                                />
+                                                                            </div>
+                                                                        ))}
                                                                     </div>
-                                                                ))}
+                                                                ) : null}
                                                             </div>
-                                                        ) : null}
+                                                            {correct ? (
+                                                                <div className="text-xs text-emerald-400 shrink-0">Correct</div>
+                                                            ) : null}
+                                                        </div>
                                                     </div>
-                                                    {correct ? (
-                                                        <div className="text-xs text-emerald-400 shrink-0">Correct</div>
-                                                    ) : null}
-                                                </div>
+                                                );
+                                            })
+                                        )}
+                                    </div>
+
+                                    {isEditing && mode === "edit" ? (
+                                        <div className="mt-4 rounded-lg border p-4" style={{ borderColor: "var(--border)", background: "var(--muted)" }}>
+                                            <div className="text-base font-semibold">Edit question</div>
+                                            <div className="mt-1 text-sm opacity-70">
+                                                Update any field (options, answers, text, images, scheme) and save to DB.
                                             </div>
-                                        );
-                                    })
-                                )}
+
+                                            <textarea
+                                                className="mt-3 w-full min-h-[340px] rounded border px-3 py-2 bg-transparent ui-field font-mono text-xs"
+                                                style={{ borderColor: "var(--border)", background: "var(--card)" }}
+                                                value={editRaw}
+                                                onChange={(e) => setEditRaw(e.target.value)}
+                                                disabled={loadingEdit || savingEdit}
+                                                placeholder={loadingEdit ? "Loading question..." : "Raw question JSON"}
+                                            />
+
+                                            <div className="mt-3 grid gap-3 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5">
+                                                <div
+                                                    className="w-full rounded border p-3"
+                                                    style={{ borderColor: "var(--border)", background: "var(--card)" }}
+                                                    onDragOver={(e) => e.preventDefault()}
+                                                    onDrop={onQuestionDrop}
+                                                >
+                                                    <div className="text-xs font-medium">Question images</div>
+                                                    <div className="mt-1 text-xs opacity-70">Drag and drop image(s) here or pick files.</div>
+                                                    <label
+                                                        className="mt-2 inline-flex items-center justify-center h-9 text-xs rounded-full border px-3 whitespace-nowrap ui-click cursor-pointer"
+                                                        style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                                                    >
+                                                        {uploadingQuestionImage ? "Uploading..." : "Upload question image"}
+                                                        <input
+                                                            type="file"
+                                                            accept="image/*"
+                                                            multiple
+                                                            className="hidden"
+                                                            disabled={uploadingQuestionImage}
+                                                            onChange={(e) => {
+                                                                const files = Array.from(e.target.files ?? []);
+                                                                void uploadQuestionImages(files);
+                                                                e.currentTarget.value = "";
+                                                            }}
+                                                        />
+                                                    </label>
+                                                </div>
+
+                                                {(["A", "B", "C", "D"] as const).map((key) => (
+                                                    <div
+                                                        key={key}
+                                                        className="w-full rounded border p-3"
+                                                        style={{ borderColor: "var(--border)", background: "var(--card)" }}
+                                                        onDragOver={(e) => e.preventDefault()}
+                                                        onDrop={(e) => onOptionDrop(key, e)}
+                                                    >
+                                                        <div className="text-xs font-medium">Option {key} image</div>
+                                                        <div className="mt-1 text-xs opacity-70">Drag and drop one image here for option {key}.</div>
+                                                        <label
+                                                            className="mt-2 inline-flex items-center justify-center h-9 text-xs rounded-full border px-3 whitespace-nowrap ui-click cursor-pointer"
+                                                            style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                                                        >
+                                                            {uploadingOptionImage ? "Uploading..." : `Upload Option ${key}`}
+                                                            <input
+                                                                type="file"
+                                                                accept="image/*"
+                                                                className="hidden"
+                                                                disabled={uploadingOptionImage}
+                                                                onChange={(e) => {
+                                                                    const file = e.target.files?.[0];
+                                                                    if (file) void uploadOptionImage(file, key);
+                                                                    e.currentTarget.value = "";
+                                                                }}
+                                                            />
+                                                        </label>
+                                                    </div>
+                                                ))}
+                                            </div>
+
+                                            {editError ? (
+                                                <div className="mt-2 text-sm text-red-600">{editError}</div>
+                                            ) : null}
+                                            {editSuccess ? (
+                                                <div className="mt-2 text-sm text-emerald-500">{editSuccess}</div>
+                                            ) : null}
+
+                                            <div className="mt-4 flex flex-wrap items-center justify-start sm:justify-end gap-2">
+                                                <button
+                                                    type="button"
+                                                    className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
+                                                    style={{ borderColor: "var(--border)", background: "var(--card)" }}
+                                                    onClick={previewEdit}
+                                                    disabled={loadingEdit || savingEdit || uploadingQuestionImage || uploadingOptionImage || !editRaw.trim()}
+                                                >
+                                                    Preview
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
+                                                    style={{ borderColor: "var(--border)", background: "var(--card)" }}
+                                                    onClick={() => void copyEditJson()}
+                                                    disabled={loadingEdit || savingEdit || uploadingQuestionImage || uploadingOptionImage || copyingEdit || !editRaw.trim()}
+                                                >
+                                                    {copyingEdit ? "Copying..." : "Copy JSON"}
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
+                                                    style={{ borderColor: "var(--border)", background: "var(--card)" }}
+                                                    onClick={() => {
+                                                        setEditOpenForQuestionId(null);
+                                                        setEditError(null);
+                                                        setEditSuccess(null);
+                                                        setEditRaw("");
+                                                        setPreviewByQuestionId((prev) => {
+                                                            const { [q.id]: _removed, ...rest } = prev;
+                                                            return rest;
+                                                        });
+                                                    }}
+                                                    disabled={savingEdit || uploadingQuestionImage || uploadingOptionImage}
+                                                >
+                                                    Close
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs font-medium whitespace-nowrap ui-click"
+                                                    style={{ borderColor: "var(--border)", background: "var(--card)" }}
+                                                    onClick={() => void saveEdit()}
+                                                    disabled={loadingEdit || savingEdit || uploadingQuestionImage || uploadingOptionImage || !editRaw.trim()}
+                                                >
+                                                    {savingEdit ? "Saving..." : "Save changes"}
+                                                </button>
+                                            </div>
+
+                                        </div>
+                                    ) : null}
+                                </div>
+                            );
+                        })}
+                    </div>
+                </main>
+
+                {issueQuestion ? (
+                    <div
+                        className="fixed inset-0 z-50 flex items-center justify-center p-4"
+                        style={{ background: "rgba(0,0,0,0.45)" }}
+                        role="dialog"
+                        aria-modal="true"
+                        aria-label="Report question issue"
+                    >
+                        <div
+                            className="w-full max-w-md rounded-lg border p-4"
+                            style={{ borderColor: "var(--border)", background: "var(--card)" }}
+                        >
+                            <div className="text-base font-semibold">Report issue for Q{issueQuestion.index}</div>
+                            <div className="mt-1 text-sm opacity-70">
+                                {issueQuestion.subjectName} · {issueQuestion.topicName}
                             </div>
 
-                            {isEditing ? (
-                                <div className="mt-4 rounded-lg border p-4" style={{ borderColor: "var(--border)", background: "var(--muted)" }}>
-                                    <div className="text-base font-semibold">Edit question</div>
-                                    <div className="mt-1 text-sm opacity-70">
-                                        Update any field (options, answers, text, images, scheme) and save to DB.
-                                    </div>
+                            <label className="mt-4 block text-sm">
+                                <div className="text-xs opacity-70">What is the issue?</div>
+                                <select
+                                    className="mt-2 w-full rounded border px-3 py-2 bg-transparent ui-field"
+                                    style={{ borderColor: "var(--border)" }}
+                                    value={issue}
+                                    onChange={(e) => setIssue(e.target.value)}
+                                    disabled={sendingIssue}
+                                >
+                                    <option value="">Select...</option>
+                                    <option value="Wrong answer">Wrong answer</option>
+                                    <option value="Wrong question statement">Wrong question statement</option>
+                                    <option value="Typo / formatting">Typo / formatting</option>
+                                    <option value="Image missing">Image missing</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </label>
 
-                                    <textarea
-                                        className="mt-3 w-full min-h-[340px] rounded border px-3 py-2 bg-transparent ui-field font-mono text-xs"
-                                        style={{ borderColor: "var(--border)", background: "var(--card)" }}
-                                        value={editRaw}
-                                        onChange={(e) => setEditRaw(e.target.value)}
-                                        disabled={loadingEdit || savingEdit}
-                                        placeholder={loadingEdit ? "Loading question..." : "Raw question JSON"}
-                                    />
+                            <label className="mt-3 block text-sm">
+                                <div className="text-xs opacity-70">Details (optional)</div>
+                                <textarea
+                                    className="mt-2 w-full min-h-24 rounded border px-3 py-2 bg-transparent ui-field"
+                                    style={{ borderColor: "var(--border)" }}
+                                    value={details}
+                                    onChange={(e) => setDetails(e.target.value)}
+                                    placeholder="Add any extra context"
+                                    disabled={sendingIssue}
+                                />
+                            </label>
 
-                                    <div className="mt-3 grid gap-3 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5">
-                                        <div
-                                            className="w-full rounded border p-3"
-                                            style={{ borderColor: "var(--border)", background: "var(--card)" }}
-                                            onDragOver={(e) => e.preventDefault()}
-                                            onDrop={onQuestionDrop}
-                                        >
-                                            <div className="text-xs font-medium">Question images</div>
-                                            <div className="mt-1 text-xs opacity-70">Drag and drop image(s) here or pick files.</div>
-                                            <label
-                                                className="mt-2 inline-flex items-center justify-center h-9 text-xs rounded-full border px-3 whitespace-nowrap ui-click cursor-pointer"
-                                                style={{ borderColor: "var(--border)", background: "var(--muted)" }}
-                                            >
-                                                {uploadingQuestionImage ? "Uploading..." : "Upload question image"}
-                                                <input
-                                                    type="file"
-                                                    accept="image/*"
-                                                    multiple
-                                                    className="hidden"
-                                                    disabled={uploadingQuestionImage}
-                                                    onChange={(e) => {
-                                                        const files = Array.from(e.target.files ?? []);
-                                                        void uploadQuestionImages(files);
-                                                        e.currentTarget.value = "";
-                                                    }}
-                                                />
-                                            </label>
-                                        </div>
-
-                                        {(["A", "B", "C", "D"] as const).map((key) => (
-                                            <div
-                                                key={key}
-                                                className="w-full rounded border p-3"
-                                                style={{ borderColor: "var(--border)", background: "var(--card)" }}
-                                                onDragOver={(e) => e.preventDefault()}
-                                                onDrop={(e) => onOptionDrop(key, e)}
-                                            >
-                                                <div className="text-xs font-medium">Option {key} image</div>
-                                                <div className="mt-1 text-xs opacity-70">Drag and drop one image here for option {key}.</div>
-                                                <label
-                                                    className="mt-2 inline-flex items-center justify-center h-9 text-xs rounded-full border px-3 whitespace-nowrap ui-click cursor-pointer"
-                                                    style={{ borderColor: "var(--border)", background: "var(--muted)" }}
-                                                >
-                                                    {uploadingOptionImage ? "Uploading..." : `Upload Option ${key}`}
-                                                    <input
-                                                        type="file"
-                                                        accept="image/*"
-                                                        className="hidden"
-                                                        disabled={uploadingOptionImage}
-                                                        onChange={(e) => {
-                                                            const file = e.target.files?.[0];
-                                                            if (file) void uploadOptionImage(file, key);
-                                                            e.currentTarget.value = "";
-                                                        }}
-                                                    />
-                                                </label>
-                                            </div>
-                                        ))}
-                                    </div>
-
-                                    {editError ? (
-                                        <div className="mt-2 text-sm text-red-600">{editError}</div>
-                                    ) : null}
-                                    {editSuccess ? (
-                                        <div className="mt-2 text-sm text-emerald-500">{editSuccess}</div>
-                                    ) : null}
-
-                                    <div className="mt-4 flex flex-wrap items-center justify-start sm:justify-end gap-2">
-                                        <button
-                                            type="button"
-                                            className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
-                                            style={{ borderColor: "var(--border)", background: "var(--card)" }}
-                                            onClick={previewEdit}
-                                            disabled={loadingEdit || savingEdit || uploadingQuestionImage || uploadingOptionImage || !editRaw.trim()}
-                                        >
-                                            Preview
-                                        </button>
-                                        <button
-                                            type="button"
-                                            className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
-                                            style={{ borderColor: "var(--border)", background: "var(--card)" }}
-                                            onClick={() => void copyEditJson()}
-                                            disabled={loadingEdit || savingEdit || uploadingQuestionImage || uploadingOptionImage || copyingEdit || !editRaw.trim()}
-                                        >
-                                            {copyingEdit ? "Copying..." : "Copy JSON"}
-                                        </button>
-                                        <button
-                                            type="button"
-                                            className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
-                                            style={{ borderColor: "var(--border)", background: "var(--card)" }}
-                                            onClick={() => {
-                                                setEditOpenForQuestionId(null);
-                                                setEditError(null);
-                                                setEditSuccess(null);
-                                                setEditRaw("");
-                                                setPreviewByQuestionId((prev) => {
-                                                    const { [q.id]: _removed, ...rest } = prev;
-                                                    return rest;
-                                                });
-                                            }}
-                                            disabled={savingEdit || uploadingQuestionImage || uploadingOptionImage}
-                                        >
-                                            Close
-                                        </button>
-                                        <button
-                                            type="button"
-                                            className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs font-medium whitespace-nowrap ui-click"
-                                            style={{ borderColor: "var(--border)", background: "var(--card)" }}
-                                            onClick={() => void saveEdit()}
-                                            disabled={loadingEdit || savingEdit || uploadingQuestionImage || uploadingOptionImage || !editRaw.trim()}
-                                        >
-                                            {savingEdit ? "Saving..." : "Save changes"}
-                                        </button>
-                                    </div>
-
-                                </div>
+                            {issueError ? (
+                                <div className="mt-3 text-sm text-red-600">{issueError}</div>
                             ) : null}
-                        </div>
-                    );
-                })}
-            </div>
 
-            {issueQuestion ? (
-                <div
-                    className="fixed inset-0 z-50 flex items-center justify-center p-4"
-                    style={{ background: "rgba(0,0,0,0.45)" }}
-                    role="dialog"
-                    aria-modal="true"
-                    aria-label="Report question issue"
-                >
-                    <div
-                        className="w-full max-w-md rounded-lg border p-4"
-                        style={{ borderColor: "var(--border)", background: "var(--card)" }}
-                    >
-                        <div className="text-base font-semibold">Report issue for Q{issueQuestion.index}</div>
-                        <div className="mt-1 text-sm opacity-70">
-                            {issueQuestion.subjectName} · {issueQuestion.topicName}
-                        </div>
-
-                        <label className="mt-4 block text-sm">
-                            <div className="text-xs opacity-70">What is the issue?</div>
-                            <select
-                                className="mt-2 w-full rounded border px-3 py-2 bg-transparent ui-field"
-                                style={{ borderColor: "var(--border)" }}
-                                value={issue}
-                                onChange={(e) => setIssue(e.target.value)}
-                                disabled={sendingIssue}
-                            >
-                                <option value="">Select...</option>
-                                <option value="Wrong answer">Wrong answer</option>
-                                <option value="Wrong question statement">Wrong question statement</option>
-                                <option value="Typo / formatting">Typo / formatting</option>
-                                <option value="Image missing">Image missing</option>
-                                <option value="Other">Other</option>
-                            </select>
-                        </label>
-
-                        <label className="mt-3 block text-sm">
-                            <div className="text-xs opacity-70">Details (optional)</div>
-                            <textarea
-                                className="mt-2 w-full min-h-24 rounded border px-3 py-2 bg-transparent ui-field"
-                                style={{ borderColor: "var(--border)" }}
-                                value={details}
-                                onChange={(e) => setDetails(e.target.value)}
-                                placeholder="Add any extra context"
-                                disabled={sendingIssue}
-                            />
-                        </label>
-
-                        {issueError ? (
-                            <div className="mt-3 text-sm text-red-600">{issueError}</div>
-                        ) : null}
-
-                        <div className="mt-4 flex flex-wrap items-center justify-end gap-2">
-                            <button
-                                type="button"
-                                className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
-                                style={{ borderColor: "var(--border)", background: "var(--muted)" }}
-                                onClick={() => setIssueOpenForQuestionId(null)}
-                                disabled={sendingIssue}
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                type="button"
-                                className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs font-medium whitespace-nowrap ui-click"
-                                style={{ borderColor: "var(--border)", background: "var(--muted)" }}
-                                onClick={() => void submitIssue()}
-                                disabled={sendingIssue || issue.trim().length === 0}
-                            >
-                                {sendingIssue ? "Submitting..." : "Submit"}
-                            </button>
+                            <div className="mt-4 flex flex-wrap items-center justify-end gap-2">
+                                <button
+                                    type="button"
+                                    className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
+                                    style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                                    onClick={() => setIssueOpenForQuestionId(null)}
+                                    disabled={sendingIssue}
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="button"
+                                    className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs font-medium whitespace-nowrap ui-click"
+                                    style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                                    onClick={() => void submitIssue()}
+                                    disabled={sendingIssue || issue.trim().length === 0}
+                                >
+                                    {sendingIssue ? "Submitting..." : "Submit"}
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </div>
-            ) : null}
+                ) : null}
+
+            </div>
 
         </MathJaxContext>
     );

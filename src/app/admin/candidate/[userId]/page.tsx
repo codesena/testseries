@@ -32,23 +32,30 @@ export default async function AdminCandidatePage(
         return (
             <div className="min-h-screen flex flex-col">
                 <header
-                    className="sticky top-0 z-50 border-b"
-                    style={{ borderColor: "var(--border)", background: "var(--background)" }}
+                    className="sticky top-0 z-50 border-b backdrop-blur-md"
+                    style={{
+                        borderColor: "var(--border)",
+                        background: "color-mix(in srgb, var(--background) 88%, transparent)",
+                    }}
                 >
-                    <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
-                        <Link
-                            href="/"
-                            className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
-                            style={{ borderColor: "var(--border)", background: "var(--muted)" }}
-                        >
-                            Home
-                        </Link>
-                        <div className="text-sm opacity-70">Admin</div>
+                    <div className="max-w-5xl mx-auto px-4 py-2">
+                        <div className="rounded-2xl border px-3 py-2" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
+                            <div className="flex items-center justify-between gap-2">
+                                <Link
+                                    href="/"
+                                    className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
+                                    style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                                >
+                                    Home
+                                </Link>
+                                <div className="text-sm opacity-70">Admin</div>
+                            </div>
+                        </div>
                     </div>
                 </header>
 
                 <main className="max-w-5xl mx-auto w-full px-4 py-8">
-                    <div className="rounded-lg border p-4" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
+                    <div className="rounded-2xl border p-4" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
                         <div className="text-sm font-medium">Access denied</div>
                         <div className="mt-1 text-sm opacity-70">Your account is not allowed to view admin reports.</div>
                     </div>
@@ -68,18 +75,25 @@ export default async function AdminCandidatePage(
         return (
             <div className="min-h-screen flex flex-col">
                 <header
-                    className="sticky top-0 z-50 border-b"
-                    style={{ borderColor: "var(--border)", background: "var(--background)" }}
+                    className="sticky top-0 z-50 border-b backdrop-blur-md"
+                    style={{
+                        borderColor: "var(--border)",
+                        background: "color-mix(in srgb, var(--background) 88%, transparent)",
+                    }}
                 >
-                    <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
-                        <Link
-                            href="/admin"
-                            className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
-                            style={{ borderColor: "var(--border)", background: "var(--muted)" }}
-                        >
-                            Admin
-                        </Link>
-                        <div className="text-sm opacity-70">Candidate</div>
+                    <div className="max-w-5xl mx-auto px-4 py-2">
+                        <div className="rounded-2xl border px-3 py-2" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
+                            <div className="flex items-center justify-between gap-2">
+                                <Link
+                                    href="/admin"
+                                    className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
+                                    style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                                >
+                                    Admin
+                                </Link>
+                                <div className="text-sm opacity-70">Candidate</div>
+                            </div>
+                        </div>
                     </div>
                 </header>
 
@@ -108,64 +122,73 @@ export default async function AdminCandidatePage(
     return (
         <div className="min-h-screen flex flex-col">
             <header
-                className="sticky top-0 z-50 border-b"
-                style={{ borderColor: "var(--border)", background: "var(--background)" }}
+                className="sticky top-0 z-50 border-b backdrop-blur-md"
+                style={{
+                    borderColor: "var(--border)",
+                    background: "color-mix(in srgb, var(--background) 88%, transparent)",
+                }}
             >
-                <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
-                    <Link
-                        href="/admin"
-                        className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
-                        style={{ borderColor: "var(--border)", background: "var(--muted)" }}
-                    >
-                        Admin
-                    </Link>
-                    <div className="text-sm opacity-70">Admin</div>
+                <div className="max-w-5xl mx-auto px-4 py-2">
+                    <div className="rounded-2xl border px-3 py-2" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
+                        <div className="flex items-center justify-between gap-2">
+                            <Link
+                                href="/admin"
+                                className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
+                                style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                            >
+                                Admin
+                            </Link>
+                            <div className="text-sm opacity-70">Admin</div>
+                        </div>
+                    </div>
                 </div>
             </header>
 
             <main className="max-w-5xl mx-auto w-full px-4 py-8">
-                <h1 className="text-2xl font-semibold">Papers accessed</h1>
-                <div className="mt-2 text-sm opacity-70">
-                    {candidate.name} ({candidate.username})
-                </div>
+                <section className="rounded-2xl border p-5 sm:p-6" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
+                    <h1 className="text-2xl font-semibold">Papers accessed</h1>
+                    <div className="mt-2 text-sm opacity-70">
+                        {candidate.name} ({candidate.username})
+                    </div>
 
-                <div className="mt-6 grid gap-3">
-                    {testAgg.map((t) => {
-                        const test = testById.get(t.testId);
-                        const title = test?.title ?? t.testId;
-                        return (
-                            <div
-                                key={t.testId}
-                                className="rounded-lg border p-4"
-                                style={{ borderColor: "var(--border)", background: "var(--card)" }}
-                            >
-                                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                                    <div className="min-w-0">
-                                        <div className="font-medium truncate">{title}</div>
-                                        <div className="mt-1 text-xs opacity-60">
-                                            {t._count._all} attempt{t._count._all === 1 ? "" : "s"}
-                                            {t._max.startTimestamp ? ` · Last ${fmtDate(t._max.startTimestamp)}` : ""}
+                    <div className="mt-6 grid gap-3">
+                        {testAgg.map((t) => {
+                            const test = testById.get(t.testId);
+                            const title = test?.title ?? t.testId;
+                            return (
+                                <div
+                                    key={t.testId}
+                                    className="rounded-2xl border p-4"
+                                    style={{ borderColor: "var(--border)", background: "var(--card)" }}
+                                >
+                                    <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                                        <div className="min-w-0">
+                                            <div className="font-medium truncate">{title}</div>
+                                            <div className="mt-1 text-xs opacity-60">
+                                                {t._count._all} attempt{t._count._all === 1 ? "" : "s"}
+                                                {t._max.startTimestamp ? ` · Last ${fmtDate(t._max.startTimestamp)}` : ""}
+                                            </div>
+                                        </div>
+
+                                        <div className="shrink-0">
+                                            <Link
+                                                href={`/admin/candidate/${candidate.id}/test/${t.testId}`}
+                                                className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
+                                                style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                                            >
+                                                View attempts
+                                            </Link>
                                         </div>
                                     </div>
-
-                                    <div className="shrink-0">
-                                        <Link
-                                            href={`/admin/candidate/${candidate.id}/test/${t.testId}`}
-                                            className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
-                                            style={{ borderColor: "var(--border)", background: "var(--muted)" }}
-                                        >
-                                            View attempts
-                                        </Link>
-                                    </div>
                                 </div>
-                            </div>
-                        );
-                    })}
+                            );
+                        })}
 
-                    {testAgg.length === 0 ? (
-                        <div className="text-sm opacity-70">No papers found for this candidate.</div>
-                    ) : null}
-                </div>
+                        {testAgg.length === 0 ? (
+                            <div className="text-sm opacity-70">No papers found for this candidate.</div>
+                        ) : null}
+                    </div>
+                </section>
             </main>
         </div>
     );

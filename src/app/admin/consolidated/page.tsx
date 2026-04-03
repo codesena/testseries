@@ -426,10 +426,10 @@ export default async function AdminConsolidatedPage(
                                 </div>
                             </div>
 
-                            <div className="grid w-full min-w-0 grid-cols-4 gap-2 sm:flex sm:w-auto sm:min-w-0 sm:items-center sm:gap-2 sm:overflow-x-auto sm:whitespace-nowrap sm:pr-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+                            <div className="flex w-full min-w-0 items-center gap-2 overflow-x-auto whitespace-nowrap pr-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden sm:w-auto sm:min-w-0 sm:overflow-visible">
                                 <Link
                                     href="/"
-                                    className="inline-flex w-full sm:w-auto sm:shrink-0 items-center justify-center h-9 rounded-full border px-2 sm:px-3 text-[11px] sm:text-xs whitespace-nowrap ui-click"
+                                    className="inline-flex w-auto shrink-0 items-center justify-center h-9 rounded-full border px-2 sm:px-3 text-[11px] sm:text-xs whitespace-nowrap ui-click"
                                     style={{ borderColor: "var(--border)", background: "transparent" }}
                                 >
                                     <span className="mr-1 hidden sm:inline-flex" aria-hidden>
@@ -442,7 +442,7 @@ export default async function AdminConsolidatedPage(
                                 </Link>
                                 <Link
                                     href="/admin"
-                                    className="inline-flex w-full sm:w-auto sm:shrink-0 items-center justify-center h-9 rounded-full border px-2 sm:px-3 text-[11px] sm:text-xs whitespace-nowrap ui-click"
+                                    className="inline-flex w-auto shrink-0 items-center justify-center h-9 rounded-full border px-2 sm:px-3 text-[11px] sm:text-xs whitespace-nowrap ui-click"
                                     style={{ borderColor: "var(--border)", background: "transparent" }}
                                 >
                                     <span className="mr-1 hidden sm:inline-flex" aria-hidden>
@@ -456,7 +456,7 @@ export default async function AdminConsolidatedPage(
                                 </Link>
                                 <Link
                                     href="/admin/consolidated"
-                                    className="inline-flex w-full sm:w-auto sm:shrink-0 items-center justify-center h-9 rounded-full border px-2 sm:px-3 text-[11px] sm:text-xs whitespace-nowrap ui-click"
+                                    className="inline-flex w-auto shrink-0 items-center justify-center h-9 rounded-full border px-2 sm:px-3 text-[11px] sm:text-xs whitespace-nowrap ui-click"
                                     style={{
                                         borderColor: "rgba(59, 130, 246, 0.5)",
                                         background: "linear-gradient(135deg, rgba(37,99,235,0.95), rgba(14,165,233,0.9))",
@@ -474,8 +474,21 @@ export default async function AdminConsolidatedPage(
                                     Consolidated
                                 </Link>
                                 <Link
+                                    href="/admin/papers"
+                                    className="inline-flex w-auto shrink-0 items-center justify-center h-9 rounded-full border px-2 sm:px-3 text-[11px] sm:text-xs whitespace-nowrap ui-click"
+                                    style={{ borderColor: "var(--border)", background: "transparent" }}
+                                >
+                                    <span className="mr-1 hidden sm:inline-flex" aria-hidden>
+                                        <svg viewBox="0 0 20 20" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                                            <path d="M6 3.8h5.8L15 7v9.2H6z" />
+                                            <path d="M11.8 3.8V7H15" />
+                                        </svg>
+                                    </span>
+                                    Papers
+                                </Link>
+                                <Link
                                     href="/admin/issues"
-                                    className="inline-flex w-full sm:w-auto sm:shrink-0 items-center justify-center h-9 rounded-full border px-2 sm:px-3 text-[11px] sm:text-xs whitespace-nowrap ui-click"
+                                    className="inline-flex w-auto shrink-0 items-center justify-center h-9 rounded-full border px-2 sm:px-3 text-[11px] sm:text-xs whitespace-nowrap ui-click"
                                     style={{ borderColor: "var(--border)", background: "transparent" }}
                                 >
                                     <span className="mr-1 hidden sm:inline-flex" aria-hidden>
