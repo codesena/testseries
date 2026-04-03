@@ -131,6 +131,8 @@ export function AttemptReportClient({ attemptId }: { attemptId: string }) {
     const [error, setError] = useState<string | null>(null);
     const [redirecting, setRedirecting] = useState(false);
     const [attemptNo, setAttemptNo] = useState(0);
+    const [exporting, setExporting] = useState(false);
+    const [exportMsg, setExportMsg] = useState<string | null>(null);
     const [reflectionByQid, setReflectionByQid] = useState<Record<string, ReflectionDraft>>({});
     const [savingByQid, setSavingByQid] = useState<Record<string, boolean>>({});
     const [saveMsgByQid, setSaveMsgByQid] = useState<Record<string, string | null>>({});
@@ -243,6 +245,22 @@ export function AttemptReportClient({ attemptId }: { attemptId: string }) {
     const incorrectCount = Math.max(0, attemptedCount - correctCount);
     const progressPercent = totalQuestions > 0 ? Math.round((attemptedCount / totalQuestions) * 100) : 0;
 
+    function exportReportPdf() {
+        if (exporting) return;
+        if (!data) return;
+
+        setExporting(true);
+        setExportMsg(null);
+        try {
+            window.print();
+            setExportMsg("Print dialog opened. Choose Save as PDF.");
+        } catch {
+            setExportMsg("Failed to export PDF.");
+        } finally {
+            setExporting(false);
+        }
+    }
+
     async function saveReflection(questionId: string) {
         const draft = reflectionByQid[questionId] ?? {
             wrongReason: "",
@@ -288,13 +306,24 @@ export function AttemptReportClient({ attemptId }: { attemptId: string }) {
                     style={{ borderColor: "var(--border)", background: "var(--background)" }}
                 >
                     <div className="max-w-4xl xl:max-w-6xl 2xl:max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-2">
-                        <Link
-                            href="/"
-                            className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
-                            style={{ borderColor: "var(--border)", background: "var(--muted)" }}
-                        >
-                            Home
-                        </Link>
+                        <div className="flex items-center gap-2">
+                            <Link
+                                href="/"
+                                className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
+                                style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                            >
+                                Home
+                            </Link>
+                            <button
+                                type="button"
+                                className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
+                                style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                                onClick={exportReportPdf}
+                                disabled={exporting}
+                            >
+                                {exporting ? "Preparing PDF..." : "Export PDF"}
+                            </button>
+                        </div>
                         <div className="text-sm opacity-70">Attempt Report</div>
                     </div>
                 </header>
@@ -317,6 +346,7 @@ export function AttemptReportClient({ attemptId }: { attemptId: string }) {
                     </div>
 
                     <div className="mt-1 text-xs opacity-60">Student: {data.attempt.studentName ?? "—"}</div>
+                    {exportMsg ? <div className="mt-1 text-xs opacity-70">{exportMsg}</div> : null}
 
                     <div className="mt-3 rounded-xl border p-3" style={{ borderColor: "var(--border)", background: "var(--muted)" }}>
                         <div className="text-xs font-medium opacity-75">Overall Progress</div>
