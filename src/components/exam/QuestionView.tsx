@@ -105,18 +105,18 @@ export const QuestionView = memo(function QuestionView({
 
     return (
         <div
-            className="rounded-lg border p-4"
+            className="rounded-xl border p-4 shadow-sm"
             style={{ borderColor: "var(--border)", background: "var(--card)" }}
         >
             <div className="flex items-start justify-between gap-4">
                 <div>
-                    <div className="text-xs opacity-70">
+                    <div className="text-[11px] uppercase tracking-wide opacity-60">
                         {question.subject.name} · {question.topicName}
                     </div>
                     <div className="mt-2 flex items-center gap-2">
-                        <div className="text-xs opacity-70">Status</div>
+                        <div className="text-xs opacity-65">Status</div>
                         <span
-                            className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${statusBadgeClass(
+                            className={`inline-flex items-center rounded-full h-7 px-2.5 text-xs font-medium ${statusBadgeClass(
                                 paletteStatus,
                             )}`}
                         >
@@ -127,7 +127,7 @@ export const QuestionView = memo(function QuestionView({
                 <div className="flex items-center gap-3">
                     <button
                         className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
-                        style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                        style={{ borderColor: "var(--border)", background: "transparent" }}
                         onClick={() => {
                             setIssueOpen(true);
                             setIssueError(null);

@@ -217,6 +217,17 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
         return questions.filter((q) => q.subject.id === activeSubjectId);
     }, [questions, activeSubjectId]);
 
+    const totalQuestions = questions.length;
+    const answeredCount = useMemo(
+        () => Object.values(paletteByQid).filter((v) => v === "ANSWERED_SAVED" || v === "ANSWERED_MARKED_FOR_REVIEW").length,
+        [paletteByQid],
+    );
+    const markedCount = useMemo(
+        () => Object.values(paletteByQid).filter((v) => v === "MARKED_FOR_REVIEW" || v === "ANSWERED_MARKED_FOR_REVIEW").length,
+        [paletteByQid],
+    );
+    const progressPercent = totalQuestions > 0 ? Math.round((answeredCount / totalQuestions) * 100) : 0;
+
     async function flushOutbox() {
         const items = await listOutbox(attemptId);
         items.sort((a, b) => (a.id ?? 0) - (b.id ?? 0));
@@ -1007,16 +1018,31 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
                     className="sticky top-0 z-50 border-b"
                     style={{ borderColor: "var(--border)", background: "var(--card)" }}
                 >
-                    <div className="px-4 py-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <div className="px-4 py-2.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                         <div className="min-w-0 sm:flex-1">
-                            <div className="font-semibold truncate">{testTitle}</div>
-                            <div className="text-xs opacity-70">
-                                Attempt: {attemptId.slice(0, 8)} · Idle: {idlePaused ? "paused" : "active"}
+                            <div className="text-lg font-semibold truncate">{testTitle}</div>
+                            <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px]">
+                                <span className="inline-flex items-center justify-center h-6 rounded-full border px-2.5" style={{ borderColor: "var(--border)", background: "var(--muted)" }}>
+                                    Attempt {attemptId.slice(0, 8)}
+                                </span>
+                                <span className="inline-flex items-center justify-center h-6 rounded-full border px-2.5" style={{ borderColor: "var(--border)", background: "var(--muted)" }}>
+                                    Answered {answeredCount}/{totalQuestions || "-"}
+                                </span>
+                                <span className="opacity-65">Idle: {idlePaused ? "paused" : "active"}</span>
                             </div>
                         </div>
 
                         <div className="flex items-center flex-wrap justify-end gap-2 sm:gap-3 self-start sm:self-auto shrink-0 max-w-full">
-                            <div className="text-xs sm:text-sm font-mono shrink-0 whitespace-nowrap">{formatTime(timeLeftSeconds)}</div>
+                            <div
+                                className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs sm:text-sm font-mono shrink-0 whitespace-nowrap"
+                                style={{
+                                    borderColor: timeLeftSeconds <= 10 * 60 ? "rgba(239,68,68,0.6)" : "var(--border)",
+                                    background: timeLeftSeconds <= 10 * 60 ? "rgba(127,29,29,0.35)" : "var(--muted)",
+                                    color: timeLeftSeconds <= 10 * 60 ? "#fecaca" : undefined,
+                                }}
+                            >
+                                ⏱ {formatTime(timeLeftSeconds)}
+                            </div>
                             <ThemeToggle />
                             <button
                                 className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs ui-click shrink-0 whitespace-nowrap"
@@ -1030,8 +1056,12 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
                                 {isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
                             </button>
                             <button
-                                className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs ui-click shrink-0 whitespace-nowrap"
-                                style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                                className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs font-medium ui-click shrink-0 whitespace-nowrap"
+                                style={{
+                                    borderColor: "rgba(245, 158, 11, 0.55)",
+                                    background: "rgba(146, 64, 14, 0.22)",
+                                    color: "#fde68a",
+                                }}
                                 onClick={() => setSubmitConfirmOpen(true)}
                                 disabled={submitting || submitConfirmOpen}
                             >
@@ -1067,35 +1097,42 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
                             <div className="text-sm opacity-70">No question loaded.</div>
                         )}
 
-                        <div className="mt-4 flex flex-wrap gap-2">
-                            <button
-                                className="inline-flex items-center justify-center h-10 rounded-full border px-4 text-sm whitespace-nowrap ui-click"
-                                style={{ borderColor: "var(--border)", background: "var(--muted)" }}
-                                onClick={goPrev}
-                            >
-                                Previous
-                            </button>
-                            <button
-                                className="inline-flex items-center justify-center h-10 rounded-full border px-4 text-sm whitespace-nowrap ui-click"
-                                style={{ borderColor: "var(--border)", background: "var(--muted)" }}
-                                onClick={saveAndNext}
-                            >
-                                Save & Next
-                            </button>
-                            <button
-                                className="inline-flex items-center justify-center h-10 rounded-full border px-4 text-sm whitespace-nowrap ui-click"
-                                style={{ borderColor: "var(--border)", background: "var(--muted)" }}
-                                onClick={markForReviewAndNext}
-                            >
-                                Mark for Review & Next
-                            </button>
-                            <button
-                                className="inline-flex items-center justify-center h-10 rounded-full border px-4 text-sm whitespace-nowrap ui-click"
-                                style={{ borderColor: "var(--border)", background: "var(--muted)" }}
-                                onClick={clearResponse}
-                            >
-                                Clear Response
-                            </button>
+                        <div className="mt-4 rounded-xl border p-3" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
+                            <div className="text-xs font-medium opacity-75 mb-2">Actions</div>
+                            <div className="flex flex-wrap gap-2">
+                                <button
+                                    className="inline-flex items-center justify-center h-10 rounded-full border px-4 text-sm whitespace-nowrap ui-click"
+                                    style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                                    onClick={goPrev}
+                                >
+                                    Previous
+                                </button>
+                                <button
+                                    className="inline-flex items-center justify-center h-10 rounded-full border px-4 text-sm font-semibold whitespace-nowrap ui-click"
+                                    style={{
+                                        borderColor: "rgba(59, 130, 246, 0.5)",
+                                        background: "linear-gradient(135deg, rgba(37,99,235,0.95), rgba(14,165,233,0.9))",
+                                        color: "#e0f2fe",
+                                    }}
+                                    onClick={saveAndNext}
+                                >
+                                    Save & Next
+                                </button>
+                                <button
+                                    className="inline-flex items-center justify-center h-10 rounded-full border px-4 text-sm whitespace-nowrap ui-click"
+                                    style={{ borderColor: "rgba(245, 158, 11, 0.5)", background: "rgba(146, 64, 14, 0.18)", color: "#fde68a" }}
+                                    onClick={markForReviewAndNext}
+                                >
+                                    Mark for Review & Next
+                                </button>
+                                <button
+                                    className="inline-flex items-center justify-center h-10 rounded-full border px-4 text-sm whitespace-nowrap ui-click"
+                                    style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                                    onClick={clearResponse}
+                                >
+                                    Clear Response
+                                </button>
+                            </div>
                         </div>
 
                         <div className="mt-3 text-xs opacity-70">
@@ -1111,8 +1148,20 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
                         className="border-t lg:border-t-0 lg:border-l p-4"
                         style={{ borderColor: "var(--border)", background: "var(--card)" }}
                     >
-                        <div className="flex items-center">
+                        <div className="rounded-xl border p-3" style={{ borderColor: "var(--border)", background: "var(--muted)" }}>
                             <div className="font-medium">Question Palette</div>
+                            <div className="mt-2 h-2 w-full rounded-full" style={{ background: "rgba(148, 163, 184, 0.25)" }}>
+                                <div
+                                    className="h-2 rounded-full"
+                                    style={{
+                                        width: `${progressPercent}%`,
+                                        background: "linear-gradient(135deg, rgba(37,99,235,0.95), rgba(14,165,233,0.9))",
+                                    }}
+                                />
+                            </div>
+                            <div className="mt-2 text-xs opacity-70">
+                                Progress {progressPercent}% · Marked {markedCount}
+                            </div>
                         </div>
 
                         <div className="mt-3 flex flex-wrap gap-2">

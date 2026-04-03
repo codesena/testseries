@@ -52,9 +52,9 @@ export function QuestionPalette({
                         key={q.id}
                         type="button"
                         onClick={() => onPick(q.id)}
-                        className={`rounded border aspect-square text-xs sm:text-sm flex items-center justify-center ui-click ${paletteClass(
+                        className={`rounded-lg border aspect-square text-xs sm:text-sm flex items-center justify-center ui-click ${paletteClass(
                             status,
-                        )} ${active ? "ring-2 ring-black/50 dark:ring-white/40" : ""}`}
+                        )} ${active ? "ring-2 ring-sky-500/75" : ""}`}
                         style={{ borderColor: "var(--border)" }}
                         title={`${idx + 1}`}
                     >
@@ -70,23 +70,23 @@ export function QuestionPalette({
                 );
             })}
 
-            <div className="col-span-5 sm:col-span-6 mt-4 text-xs opacity-70">
+            <div className="col-span-5 sm:col-span-6 mt-4 text-xs opacity-75">
                 <div className="grid grid-cols-2 gap-2">
-                    <div className="flex items-center gap-2">
+                    <div className="inline-flex items-center gap-2 rounded-full border px-2.5 py-1" style={{ borderColor: "var(--border)", background: "var(--muted)" }}>
                         <span
-                            className="inline-block w-3 h-3 rounded border"
+                            className="inline-block w-2.5 h-2.5 rounded border"
                             style={{ background: "var(--muted)", borderColor: "var(--border)" }}
                         />
                         Not visited
                     </div>
-                    <div className="flex items-center gap-2">
-                        <span className="inline-block w-3 h-3 rounded bg-amber-300 border" /> Visited
+                    <div className="inline-flex items-center gap-2 rounded-full border px-2.5 py-1" style={{ borderColor: "var(--border)", background: "var(--muted)" }}>
+                        <span className="inline-block w-2.5 h-2.5 rounded bg-amber-300 border" /> Visited
                     </div>
-                    <div className="flex items-center gap-2">
-                        <span className="inline-block w-3 h-3 rounded bg-emerald-400 border" /> Answered
+                    <div className="inline-flex items-center gap-2 rounded-full border px-2.5 py-1" style={{ borderColor: "var(--border)", background: "var(--muted)" }}>
+                        <span className="inline-block w-2.5 h-2.5 rounded bg-emerald-400 border" /> Answered
                     </div>
-                    <div className="flex items-center gap-2">
-                        <span className="inline-block w-3 h-3 rounded bg-violet-400 border" /> Marked
+                    <div className="inline-flex items-center gap-2 rounded-full border px-2.5 py-1" style={{ borderColor: "var(--border)", background: "var(--muted)" }}>
+                        <span className="inline-block w-2.5 h-2.5 rounded bg-violet-400 border" /> Marked
                     </div>
                 </div>
             </div>
