@@ -120,11 +120,43 @@ export default async function Home() {
                 style={{ borderColor: "var(--border)", background: "var(--background)" }}
             >
                 <div className="max-w-5xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-2">
-                    <div className="min-w-0">
-                        <div className="text-base font-semibold">JEE Test Series</div>
-                        <div className="text-xs opacity-60">Student: {user?.name ?? "—"}</div>
+                    <div className="min-w-0 flex items-center gap-2">
+                        <div
+                            className="inline-flex h-8 w-8 items-center justify-center rounded-full border text-xs font-semibold"
+                            style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                        >
+                            J
+                        </div>
+                        <div>
+                            <div className="text-base font-semibold">JEE Test Series</div>
+                            <div className="text-[11px] opacity-60">Practice. Analyze. Improve.</div>
+                        </div>
+                    </div>
+                    <div className="flex min-w-0 items-center gap-2 overflow-x-auto whitespace-nowrap [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+                        <a
+                            href="#dashboard"
+                            className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
+                            style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                        >
+                            Dashboard
+                        </a>
+                        <a
+                            href="#tests"
+                            className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
+                            style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                        >
+                            Tests
+                        </a>
+                        <a
+                            href="#history"
+                            className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
+                            style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                        >
+                            History
+                        </a>
                     </div>
                     <div className="flex items-center flex-wrap justify-end gap-2">
+                        <span className="text-xs opacity-60">Student: {user?.name ?? "—"}</span>
                         {isAdmin ? (
                             <Link
                                 href="/admin"
@@ -141,7 +173,7 @@ export default async function Home() {
             </header>
 
             <main className="max-w-5xl mx-auto w-full px-4 py-8">
-                <section>
+                <section id="dashboard" className="scroll-mt-24">
                     <h1 className="text-2xl font-semibold">Dashboard</h1>
                     <div className="mt-2 text-sm opacity-70">
                         {weeklyAttemptCount > 0
@@ -165,7 +197,7 @@ export default async function Home() {
                     </div>
                 </section>
 
-                <section className="mt-10">
+                <section id="tests" className="mt-10 scroll-mt-24">
                     <h1 className="text-2xl font-semibold">Available Tests</h1>
                     <div className="mt-6 grid gap-3">
                         {tests.map((t) => (
@@ -254,7 +286,7 @@ export default async function Home() {
                     </div>
                 </section>
 
-                <div className="mt-10">
+                <div id="history" className="mt-10 scroll-mt-24">
                     <h2 className="text-xl font-semibold">Attempt History</h2>
                     <div className="mt-2 text-sm opacity-70">
                         Total attempts: {allAttemptIds.length}

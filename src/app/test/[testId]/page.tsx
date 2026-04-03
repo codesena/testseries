@@ -54,7 +54,7 @@ export default async function TestStartPage({
                 >
                     <div className="font-medium">Instructions</div>
                     <ul className="mt-2 text-sm opacity-80 list-disc pl-5 space-y-1">
-                        <li>Test runs in full-screen mode for better focus.</li>
+                        <li>Use the Enter Fullscreen button inside the exam header when ready.</li>
                         <li>Navigation uses a question palette + subject tabs.</li>
                         <li>Auto-save/heartbeat runs periodically; offline attempts are queued.</li>
                         <li>Tab switches and fullscreen exits are logged.</li>

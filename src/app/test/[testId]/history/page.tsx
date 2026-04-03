@@ -84,14 +84,27 @@ export default async function TestAttemptHistoryPage({
                 style={{ borderColor: "var(--border)", background: "var(--background)" }}
             >
                 <div className="max-w-5xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-2">
-                    <Link
-                        href="/"
-                        className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
-                        style={{ borderColor: "var(--border)", background: "var(--muted)" }}
-                    >
-                        Back
-                    </Link>
-                    <div className="text-sm opacity-70">Attempt History</div>
+                    <div className="flex items-center gap-2">
+                        <div
+                            className="inline-flex h-8 w-8 items-center justify-center rounded-full border text-xs font-semibold"
+                            style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                        >
+                            J
+                        </div>
+                        <div className="text-sm font-medium">JEE Test Series</div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Link
+                            href="/"
+                            className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
+                            style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                        >
+                            Dashboard
+                        </Link>
+                        <span className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap" style={{ borderColor: "var(--border)", background: "var(--muted)" }}>
+                            History
+                        </span>
+                    </div>
                 </div>
             </header>
 
@@ -174,7 +187,14 @@ export default async function TestAttemptHistoryPage({
                     })}
 
                     {attempts.length === 0 ? (
-                        <div className="text-sm opacity-70">No attempts yet.</div>
+                        <div
+                            className="rounded-xl border p-6 text-center"
+                            style={{ borderColor: "var(--border)", background: "var(--card)" }}
+                        >
+                            <div className="text-2xl">📘</div>
+                            <div className="mt-2 text-base font-medium">No attempts for this paper yet</div>
+                            <div className="mt-1 text-sm opacity-70">Start the test to generate your first report entry.</div>
+                        </div>
                     ) : null}
                 </div>
             </main>
