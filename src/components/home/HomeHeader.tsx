@@ -53,7 +53,7 @@ export function HomeHeader({ isAdmin, userInitial, userName }: HomeHeaderProps) 
                 background: "color-mix(in srgb, var(--background) 88%, transparent)",
             }}
         >
-            <div className="max-w-6xl mx-auto px-4 py-2">
+            <div className="max-w-5xl mx-auto px-4 py-2">
                 <div className="rounded-2xl border px-3 py-2" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
                     <div className="flex items-center justify-between gap-3">
                         <div className="min-w-0 flex items-center gap-2">
