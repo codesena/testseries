@@ -129,15 +129,22 @@ export default async function Home() {
                     {tests.map((t) => (
                         <div
                             key={t.id}
-                            className="rounded-lg border p-4"
+                            className="rounded-2xl border p-4 shadow-sm"
                             style={{ borderColor: "var(--border)", background: "var(--card)" }}
                         >
                             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                                 <div className="min-w-0">
-                                    <div className="font-medium">{t.title}</div>
-                                    <div className="text-sm opacity-70">
-                                        {t._count.questions} questions · {t.totalDurationMinutes} min
-                                        {t.isAdvancedFormat ? " · Advanced" : ""}
+                                    <div className="text-lg font-semibold leading-snug">{t.title}</div>
+                                    <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px]">
+                                        <span
+                                            className="inline-flex items-center justify-center h-7 rounded-full border px-2.5 whitespace-nowrap"
+                                            style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                                        >
+                                            {t.isAdvancedFormat ? "JEE Advanced" : "JEE Main"}
+                                        </span>
+                                        <span className="opacity-60">{t._count.questions} questions</span>
+                                        <span className="opacity-60">⏱ {t.totalDurationMinutes} mins</span>
+                                        <span className="opacity-60">Created {fmtDate(t.createdAt)}</span>
                                     </div>
                                 </div>
                                 <div className="flex flex-wrap items-center gap-2 sm:justify-end">
@@ -149,20 +156,27 @@ export default async function Home() {
                                             Unattempted
                                         </span>
                                     ) : (
-                                        <Link
-                                            href={`/test/${t.id}/history`}
-                                            className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
+                                        <span
+                                            className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap"
                                             style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                                         >
                                             Attempted {attemptCountByTestId.get(t.id) ?? 0}x
-                                        </Link>
+                                        </span>
                                     )}
+
+                                    <Link
+                                        href={`/test/${t.id}/history`}
+                                        className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
+                                        style={{ borderColor: "var(--border)", background: "transparent" }}
+                                    >
+                                        View history
+                                    </Link>
 
                                     {isAdmin ? (
                                         <Link
                                             href={`/admin/paper/${t.id}`}
                                             className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
-                                            style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                                            style={{ borderColor: "var(--border)", background: "transparent" }}
                                         >
                                             View paper
                                         </Link>
@@ -170,10 +184,14 @@ export default async function Home() {
 
                                     <Link
                                         href={`/test/${t.id}`}
-                                        className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
-                                        style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                                        className="inline-flex items-center justify-center h-9 rounded-full border px-4 text-xs font-semibold whitespace-nowrap ui-click"
+                                        style={{
+                                            borderColor: "rgba(59, 130, 246, 0.5)",
+                                            background: "linear-gradient(135deg, rgba(37,99,235,0.95), rgba(14,165,233,0.9))",
+                                            color: "#e0f2fe",
+                                        }}
                                     >
-                                        Start
+                                        Start Test
                                     </Link>
                                 </div>
                             </div>
