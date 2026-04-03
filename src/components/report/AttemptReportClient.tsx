@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { MathJax, MathJaxContext } from "better-react-mathjax";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { apiGet } from "@/lib/api";
 import type { QuestionOption } from "@/lib/types";
 import { optimizeImageDelivery } from "@/lib/image-delivery";
@@ -238,14 +238,8 @@ export function AttemptReportClient({ attemptId }: { attemptId: string }) {
 
     const subjects = Object.entries(data.analytics.subjectSummary);
     const totalQuestions = data.analytics.perQuestion.length;
-    const attemptedCount = useMemo(
-        () => data.analytics.perQuestion.filter((q) => q.attempted).length,
-        [data.analytics.perQuestion],
-    );
-    const correctCount = useMemo(
-        () => data.analytics.perQuestion.filter((q) => q.correct).length,
-        [data.analytics.perQuestion],
-    );
+    const attemptedCount = data.analytics.perQuestion.filter((q) => q.attempted).length;
+    const correctCount = data.analytics.perQuestion.filter((q) => q.correct).length;
     const incorrectCount = Math.max(0, attemptedCount - correctCount);
     const progressPercent = totalQuestions > 0 ? Math.round((attemptedCount / totalQuestions) * 100) : 0;
 
