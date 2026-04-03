@@ -31,7 +31,9 @@ function fmtDate(d: Date) {
     }).format(d);
 }
 
-export default async function Home() {
+export default async function Home(props: {
+    searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
     const auth = await getAuthUser();
     if (!auth) {
         redirect("/login");
@@ -39,6 +41,10 @@ export default async function Home() {
 
     const userId = auth.userId;
     const isAdmin = isAdminUsername(auth.username);
+    const searchParams = await props.searchParams;
+    const rawQ = typeof searchParams.q === "string" ? searchParams.q : "";
+    const rawStatus = typeof searchParams.status === "string" ? searchParams.status : "all";
+    const rawFormat = typeof searchParams.format === "string" ? searchParams.format : "all";
 
     const user = await prisma.user.findUnique({
         where: { id: userId },
@@ -112,6 +118,25 @@ export default async function Home() {
         scoreAvg._avg.overallScore == null
             ? "—"
             : `${Math.round(Number(scoreAvg._avg.overallScore))}%`;
+
+    const searchQuery = rawQ.trim().toLowerCase();
+    const filteredTests = tests.filter((t) => {
+        const matchesQuery =
+            searchQuery.length === 0 || t.title.toLowerCase().includes(searchQuery);
+
+        const count = attemptCountByTestId.get(t.id) ?? 0;
+        const matchesStatus =
+            rawStatus === "all" ||
+            (rawStatus === "attempted" && count > 0) ||
+            (rawStatus === "unattempted" && count === 0);
+
+        const matchesFormat =
+            rawFormat === "all" ||
+            (rawFormat === "advanced" && t.isAdvancedFormat) ||
+            (rawFormat === "main" && !t.isAdvancedFormat);
+
+        return matchesQuery && matchesStatus && matchesFormat;
+    });
 
     return (
         <div className="min-h-screen flex flex-col">
@@ -199,8 +224,47 @@ export default async function Home() {
 
                 <section id="tests" className="mt-10 scroll-mt-24">
                     <h1 className="text-2xl font-semibold">Available Tests</h1>
+                    <form className="mt-4 grid gap-2 sm:grid-cols-[1fr_170px_170px_auto]" method="GET">
+                        <input
+                            name="q"
+                            defaultValue={rawQ}
+                            placeholder="Search tests"
+                            className="h-10 rounded-full border px-4 bg-transparent ui-field text-sm"
+                            style={{ borderColor: "var(--border)" }}
+                        />
+                        <select
+                            name="status"
+                            defaultValue={rawStatus}
+                            className="h-10 rounded-full border px-4 bg-transparent ui-field text-sm"
+                            style={{ borderColor: "var(--border)" }}
+                        >
+                            <option value="all">All status</option>
+                            <option value="attempted">Attempted</option>
+                            <option value="unattempted">Unattempted</option>
+                        </select>
+                        <select
+                            name="format"
+                            defaultValue={rawFormat}
+                            className="h-10 rounded-full border px-4 bg-transparent ui-field text-sm"
+                            style={{ borderColor: "var(--border)" }}
+                        >
+                            <option value="all">All formats</option>
+                            <option value="main">JEE Main</option>
+                            <option value="advanced">JEE Advanced</option>
+                        </select>
+                        <button
+                            type="submit"
+                            className="inline-flex items-center justify-center h-10 rounded-full border px-4 text-sm font-medium ui-click"
+                            style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                        >
+                            Apply
+                        </button>
+                    </form>
+                    <div className="mt-2 text-xs opacity-60">
+                        Showing {filteredTests.length} of {tests.length} tests
+                    </div>
                     <div className="mt-6 grid gap-3">
-                        {tests.map((t) => (
+                        {filteredTests.map((t) => (
                             <div
                                 key={t.id}
                                 className="rounded-2xl border p-4 shadow-sm"
@@ -281,6 +345,15 @@ export default async function Home() {
                                 <div className="mt-1 text-sm opacity-70">
                                     New papers will appear here after sync/seed.
                                 </div>
+                            </div>
+                        ) : filteredTests.length === 0 ? (
+                            <div
+                                className="rounded-xl border p-6 text-center"
+                                style={{ borderColor: "var(--border)", background: "var(--card)" }}
+                            >
+                                <div className="text-2xl">🔎</div>
+                                <div className="mt-2 text-base font-medium">No tests match your filter</div>
+                                <div className="mt-1 text-sm opacity-70">Try a different search keyword or reset filters.</div>
                             </div>
                         ) : null}
                     </div>
