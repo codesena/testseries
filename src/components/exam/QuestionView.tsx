@@ -6,6 +6,7 @@ import type { AttemptQuestion } from "@/lib/types";
 import { apiPost } from "@/lib/api";
 import type { PaletteStatus } from "@/components/exam/palette";
 import { optimizeImageDelivery } from "@/lib/image-delivery";
+import { ImageCarousel } from "@/components/common/ImageCarousel";
 
 function isNullLikeToken(s: string): boolean {
     const v = s.trim().toLowerCase();
@@ -142,30 +143,12 @@ export const QuestionView = memo(function QuestionView({
 
             <div className="mt-4 text-base leading-relaxed">
                 {question.imageUrls?.length ? (
-                    <div
-                        className={`mb-3 grid gap-2 mx-auto ${question.imageUrls.length > 1 ? "sm:grid-cols-2 max-w-3xl" : "max-w-4xl"
-                            }`}
-                    >
-                        {question.imageUrls.map((url) => (
-                            <div
-                                key={url}
-                                className={`rounded border p-2 flex items-center justify-center w-full relative ${question.imageUrls && question.imageUrls.length > 1
-                                    ? "h-44 sm:h-56"
-                                    : "h-64 sm:h-80"
-                                    }`}
-                                style={{ borderColor: "var(--border)", background: "var(--card)" }}
-                            >
-                                {/* eslint-disable-next-line @next/next/no-img-element */}
-                                <img
-                                    src={optimizeImageDelivery(url)}
-                                    alt="Question"
-                                    className="max-w-full max-h-full object-contain"
-                                    loading="lazy"
-                                    decoding="async"
-                                    referrerPolicy="no-referrer"
-                                />
-                            </div>
-                        ))}
+                    <div className="mb-3 mx-auto max-w-4xl">
+                        <ImageCarousel
+                            imageUrls={question.imageUrls}
+                            altBase="Question image"
+                            heightClass="h-64 sm:h-80"
+                        />
                     </div>
                 ) : null}
                 <MathJax dynamic>{question.questionText}</MathJax>

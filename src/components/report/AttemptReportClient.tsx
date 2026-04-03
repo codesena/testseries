@@ -2,11 +2,13 @@
 
 import Link from "next/link";
 import { MathJax, MathJaxContext } from "better-react-mathjax";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { apiGet } from "@/lib/api";
 import type { QuestionOption } from "@/lib/types";
 import { optimizeImageDelivery } from "@/lib/image-delivery";
 import { apiPost } from "@/lib/api";
+import { ImageCarousel } from "@/components/common/ImageCarousel";
+import { formatDateTimeIST } from "@/lib/time";
 
 const mathjaxConfig = {
     loader: { load: ["[tex]/mhchem"] },
@@ -235,6 +237,17 @@ export function AttemptReportClient({ attemptId }: { attemptId: string }) {
     }
 
     const subjects = Object.entries(data.analytics.subjectSummary);
+    const totalQuestions = data.analytics.perQuestion.length;
+    const attemptedCount = useMemo(
+        () => data.analytics.perQuestion.filter((q) => q.attempted).length,
+        [data.analytics.perQuestion],
+    );
+    const correctCount = useMemo(
+        () => data.analytics.perQuestion.filter((q) => q.correct).length,
+        [data.analytics.perQuestion],
+    );
+    const incorrectCount = Math.max(0, attemptedCount - correctCount);
+    const progressPercent = totalQuestions > 0 ? Math.round((attemptedCount / totalQuestions) * 100) : 0;
 
     async function saveReflection(questionId: string) {
         const draft = reflectionByQid[questionId] ?? {
@@ -294,26 +307,53 @@ export function AttemptReportClient({ attemptId }: { attemptId: string }) {
 
                 <main className="max-w-4xl xl:max-w-6xl 2xl:max-w-7xl mx-auto w-full px-4 py-8">
                     <h1 className="text-xl sm:text-2xl font-semibold break-words">{data.attempt.test.title}</h1>
-                    <div className="mt-2 text-sm opacity-70">
-                        Attempt {data.attempt.id.slice(0, 8)} · Status {data.attempt.status}
+                    <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+                        <span className="inline-flex items-center justify-center h-7 rounded-full border px-2.5" style={{ borderColor: "var(--border)", background: "var(--muted)" }}>
+                            Attempt {data.attempt.id.slice(0, 8)}
+                        </span>
+                        <span className="inline-flex items-center justify-center h-7 rounded-full border px-2.5" style={{ borderColor: "var(--border)", background: "var(--muted)" }}>
+                            Status {data.attempt.status}
+                        </span>
+                        <span className="inline-flex items-center justify-center h-7 rounded-full border px-2.5" style={{ borderColor: "var(--border)", background: "var(--muted)" }}>
+                            Started {formatDateTimeIST(data.attempt.startTimestamp)} IST
+                        </span>
+                        <span className="inline-flex items-center justify-center h-7 rounded-full border px-2.5" style={{ borderColor: "var(--border)", background: "var(--muted)" }}>
+                            Ended {data.attempt.endTimestamp ? `${formatDateTimeIST(data.attempt.endTimestamp)} IST` : "In progress"}
+                        </span>
                     </div>
 
                     <div className="mt-1 text-xs opacity-60">Student: {data.attempt.studentName ?? "—"}</div>
 
+                    <div className="mt-3 rounded-xl border p-3" style={{ borderColor: "var(--border)", background: "var(--muted)" }}>
+                        <div className="text-xs font-medium opacity-75">Overall Progress</div>
+                        <div className="mt-2 h-2 w-full rounded-full" style={{ background: "rgba(148, 163, 184, 0.25)" }}>
+                            <div
+                                className="h-2 rounded-full"
+                                style={{
+                                    width: `${progressPercent}%`,
+                                    background: "linear-gradient(135deg, rgba(37,99,235,0.95), rgba(14,165,233,0.9))",
+                                }}
+                            />
+                        </div>
+                        <div className="mt-2 text-xs opacity-70">
+                            Attempted {attemptedCount}/{totalQuestions || "-"} · Correct {correctCount} · Incorrect {incorrectCount}
+                        </div>
+                    </div>
+
                     <div className="mt-6 grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-                        <div className="rounded-lg border p-4" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
+                        <div className="rounded-xl border p-4" style={{ borderColor: "rgba(59, 130, 246, 0.5)", background: "rgba(37,99,235,0.16)" }}>
                             <div className="text-xs opacity-70">Score</div>
                             <div className="text-2xl font-semibold">{data.attempt.score ?? "—"}</div>
                         </div>
-                        <div className="rounded-lg border p-4" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
+                        <div className="rounded-xl border p-4" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
                             <div className="text-xs opacity-70">Total Time Spent</div>
                             <div className="text-lg font-semibold">{fmt(data.analytics.totalTimeSeconds)}</div>
                         </div>
-                        <div className="rounded-lg border p-4" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
+                        <div className="rounded-xl border p-4" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
                             <div className="text-xs opacity-70">Time on Correct</div>
                             <div className="text-lg font-semibold">{fmt(data.analytics.timeOnCorrectSeconds)}</div>
                         </div>
-                        <div className="rounded-lg border p-4" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
+                        <div className="rounded-xl border p-4" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
                             <div className="text-xs opacity-70">Time on Incorrect</div>
                             <div className="text-lg font-semibold">{fmt(data.analytics.timeOnIncorrectSeconds)}</div>
                         </div>
@@ -375,11 +415,7 @@ export function AttemptReportClient({ attemptId }: { attemptId: string }) {
                                 };
 
                                 return (
-                                    <div
-                                        key={q.questionId}
-                                        className="rounded-lg border p-4"
-                                        style={{ borderColor: "var(--border)", background: "var(--card)" }}
-                                    >
+                                    <div key={q.questionId} className="rounded-xl border p-4 shadow-sm" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
                                         <div className="flex flex-wrap items-center justify-between gap-3">
                                             <div className="text-xs opacity-70 break-words">
                                                 Q{idx + 1} · {q.subject} · {q.topicName}
@@ -394,28 +430,12 @@ export function AttemptReportClient({ attemptId }: { attemptId: string }) {
                                         <>
                                             <div className="mt-3 text-base leading-relaxed">
                                                 {q.imageUrls?.length ? (
-                                                    <div
-                                                        className={`mb-3 grid gap-2 mx-auto ${q.imageUrls.length > 1 ? "sm:grid-cols-2 max-w-3xl" : "max-w-4xl"}`}
-                                                    >
-                                                        {q.imageUrls.map((url) => (
-                                                            <div
-                                                                key={url}
-                                                                className={`rounded border p-2 flex items-center justify-center w-full relative ${q.imageUrls && q.imageUrls.length > 1
-                                                                    ? "h-44 sm:h-56"
-                                                                    : "h-64 sm:h-80"}`}
-                                                                style={{ borderColor: "var(--border)", background: "var(--card)" }}
-                                                            >
-                                                                {/* eslint-disable-next-line @next/next/no-img-element */}
-                                                                <img
-                                                                    src={optimizeImageDelivery(url)}
-                                                                    alt="Question"
-                                                                    className="max-w-full max-h-full object-contain"
-                                                                    loading="lazy"
-                                                                    decoding="async"
-                                                                    referrerPolicy="no-referrer"
-                                                                />
-                                                            </div>
-                                                        ))}
+                                                    <div className="mb-3 mx-auto max-w-4xl">
+                                                        <ImageCarousel
+                                                            imageUrls={q.imageUrls}
+                                                            altBase="Report question image"
+                                                            heightClass="h-64 sm:h-80"
+                                                        />
                                                     </div>
                                                 ) : null}
 

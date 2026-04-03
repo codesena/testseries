@@ -109,12 +109,13 @@ function readAttemptIds(searchParams: SearchParams): string[] {
 function fmtDate(d: Date | null): string {
     if (!d) return "-";
     try {
-        return new Intl.DateTimeFormat(undefined, {
+        return new Intl.DateTimeFormat("en-IN", {
             year: "numeric",
             month: "short",
             day: "2-digit",
             hour: "2-digit",
             minute: "2-digit",
+            timeZone: "Asia/Kolkata",
         }).format(d);
     } catch {
         return d.toISOString();

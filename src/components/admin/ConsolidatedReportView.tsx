@@ -111,12 +111,13 @@ function fmtTime(seconds: number): string {
 function fmtDate(iso: string | null): string {
     if (!iso) return "-";
     try {
-        return new Intl.DateTimeFormat(undefined, {
+        return new Intl.DateTimeFormat("en-IN", {
             year: "numeric",
             month: "short",
             day: "2-digit",
             hour: "2-digit",
             minute: "2-digit",
+            timeZone: "Asia/Kolkata",
         }).format(new Date(iso));
     } catch {
         return iso;

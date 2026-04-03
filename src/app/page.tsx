@@ -28,6 +28,7 @@ function fmtDate(d: Date) {
     return new Intl.DateTimeFormat("en-IN", {
         dateStyle: "medium",
         timeStyle: "short",
+        timeZone: "Asia/Kolkata",
     }).format(d);
 }
 

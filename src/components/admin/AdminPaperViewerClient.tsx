@@ -742,7 +742,13 @@ export function AdminPaperViewerClient({
                                                             <span className="rounded-full border px-2 py-0.5" style={{ borderColor: "var(--border)", background: "var(--muted)" }}>
                                                                 {item.source}
                                                             </span>
-                                                            <span>{new Date(item.createdAt).toLocaleString()}</span>
+                                                            <span>
+                                                                {new Intl.DateTimeFormat("en-IN", {
+                                                                    dateStyle: "medium",
+                                                                    timeStyle: "short",
+                                                                    timeZone: "Asia/Kolkata",
+                                                                }).format(new Date(item.createdAt))}
+                                                            </span>
                                                             {item.reporterUsername ? <span>by {item.reporterUsername}</span> : null}
                                                         </div>
                                                         <div className="mt-1 font-medium">{item.issue}</div>
