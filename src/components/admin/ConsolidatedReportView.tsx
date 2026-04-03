@@ -190,11 +190,11 @@ export function ConsolidatedReportView({ data }: { data: ConsolidatedReportData 
     return (
         <MathJaxContext config={mathjaxConfig}>
             <div className="grid gap-5">
-                <div className="rounded-lg border p-4" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
+                <div className="rounded-2xl border p-4" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
                     <div className="text-sm font-medium">Selected attempts</div>
                     <div className="mt-3 grid gap-2">
                         {data.attempts.map((a) => (
-                            <div key={a.id} className="rounded border p-3" style={{ borderColor: "var(--border)", background: "var(--muted)" }}>
+                            <div key={a.id} className="rounded-xl border p-3" style={{ borderColor: "var(--border)", background: "var(--muted)" }}>
                                 <div className="text-sm font-medium">{a.studentName} ({a.studentUsername})</div>
                                 <div className="mt-1 text-xs opacity-70">
                                     Attempt {shortAttemptId(a.id)} · {a.status} · Score {a.overallScore ?? "-"}
@@ -208,7 +208,7 @@ export function ConsolidatedReportView({ data }: { data: ConsolidatedReportData 
                 {data.questions.map((q) => (
                     <div
                         key={q.questionId}
-                        className="rounded-lg border p-4"
+                        className="rounded-2xl border p-4"
                         style={{ borderColor: "var(--border)", background: "var(--card)" }}
                     >
                         <div className="flex flex-wrap items-center justify-between gap-2">
@@ -333,7 +333,7 @@ export function ConsolidatedReportView({ data }: { data: ConsolidatedReportData 
                                     return (
                                         <div
                                             key={s.attemptId}
-                                            className="rounded-lg border p-3"
+                                            className="rounded-xl border p-3"
                                             style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                                         >
                                             <div className="flex flex-wrap items-center justify-between gap-2">

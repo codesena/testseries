@@ -132,13 +132,13 @@ export default async function AdminPage() {
                                 </div>
                             </div>
 
-                            <div className="flex w-full sm:w-auto min-w-0 items-center gap-2 overflow-x-auto whitespace-nowrap pr-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+                            <div className="grid w-full min-w-0 grid-cols-4 gap-2 sm:flex sm:w-auto sm:min-w-0 sm:items-center sm:gap-2 sm:overflow-x-auto sm:whitespace-nowrap sm:pr-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
                                 <Link
                                     href="/"
-                                    className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
+                                    className="inline-flex w-full sm:w-auto sm:shrink-0 items-center justify-center h-9 rounded-full border px-2 sm:px-3 text-[11px] sm:text-xs whitespace-nowrap ui-click"
                                     style={{ borderColor: "var(--border)", background: "transparent" }}
                                 >
-                                    <span className="mr-1 inline-flex" aria-hidden>
+                                    <span className="mr-1 hidden sm:inline-flex" aria-hidden>
                                         <svg viewBox="0 0 20 20" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                                             <path d="M3 9.5L10 4l7 5.5" />
                                             <path d="M5.5 8.8V16h9V8.8" />
@@ -147,11 +147,29 @@ export default async function AdminPage() {
                                     Home
                                 </Link>
                                 <Link
+                                    href="/admin"
+                                    className="inline-flex w-full sm:w-auto sm:shrink-0 items-center justify-center h-9 rounded-full border px-2 sm:px-3 text-[11px] sm:text-xs whitespace-nowrap ui-click"
+                                    style={{
+                                        borderColor: "rgba(59, 130, 246, 0.5)",
+                                        background: "linear-gradient(135deg, rgba(37,99,235,0.95), rgba(14,165,233,0.9))",
+                                        color: "#e0f2fe",
+                                    }}
+                                >
+                                    <span className="mr-1 hidden sm:inline-flex" aria-hidden>
+                                        <svg viewBox="0 0 20 20" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                                            <path d="M4.5 15.5h11" />
+                                            <circle cx="7" cy="8" r="1.5" />
+                                            <circle cx="13" cy="8" r="1.5" />
+                                        </svg>
+                                    </span>
+                                    Candidates
+                                </Link>
+                                <Link
                                     href="/admin/consolidated"
-                                    className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
+                                    className="inline-flex w-full sm:w-auto sm:shrink-0 items-center justify-center h-9 rounded-full border px-2 sm:px-3 text-[11px] sm:text-xs whitespace-nowrap ui-click"
                                     style={{ borderColor: "var(--border)", background: "transparent" }}
                                 >
-                                    <span className="mr-1 inline-flex" aria-hidden>
+                                    <span className="mr-1 hidden sm:inline-flex" aria-hidden>
                                         <svg viewBox="0 0 20 20" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                                             <path d="M4 15h12" />
                                             <path d="M6 13V9" />
@@ -159,14 +177,14 @@ export default async function AdminPage() {
                                             <path d="M14 13V10" />
                                         </svg>
                                     </span>
-                                    Reports
+                                    Consolidated
                                 </Link>
                                 <Link
                                     href="/admin/issues"
-                                    className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
+                                    className="inline-flex w-full sm:w-auto sm:shrink-0 items-center justify-center h-9 rounded-full border px-2 sm:px-3 text-[11px] sm:text-xs whitespace-nowrap ui-click"
                                     style={{ borderColor: "var(--border)", background: "transparent" }}
                                 >
-                                    <span className="mr-1 inline-flex" aria-hidden>
+                                    <span className="mr-1 hidden sm:inline-flex" aria-hidden>
                                         <svg viewBox="0 0 20 20" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                                             <circle cx="10" cy="10" r="7" />
                                             <path d="M10 6.8v4.4" />

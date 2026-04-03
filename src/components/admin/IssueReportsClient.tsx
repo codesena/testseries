@@ -116,7 +116,7 @@ function fmtDate(iso: string) {
 export function IssueReportsClient({ groups }: { groups: IssueQuestionGroup[] }) {
     return (
         <MathJaxContext config={mathjaxConfig}>
-            <div className="grid gap-3">
+            <div className="grid gap-3 overflow-x-hidden">
                 {groups.map((g, idx) => {
                     const options = coerceOptions(g.options);
                     const questionText = (g.questionText ?? "").trim();
@@ -124,7 +124,7 @@ export function IssueReportsClient({ groups }: { groups: IssueQuestionGroup[] })
                     return (
                         <div
                             key={g.questionId}
-                            className="rounded-lg border p-4"
+                            className="rounded-2xl border p-4 overflow-hidden"
                             style={{ borderColor: "var(--border)", background: "var(--card)" }}
                         >
                             <div className="flex flex-wrap items-center justify-between gap-3">
@@ -136,15 +136,15 @@ export function IssueReportsClient({ groups }: { groups: IssueQuestionGroup[] })
                                 <div className="text-xs opacity-60">Latest: {fmtDate(g.latestCreatedAt)}</div>
                             </div>
 
-                            <div className="mt-3 text-base leading-relaxed">
+                            <div className="mt-3 min-w-0 text-base leading-relaxed">
                                 {g.imageUrls?.length ? (
                                     <div
-                                        className={`mb-3 grid gap-2 mx-auto ${g.imageUrls.length > 1 ? "sm:grid-cols-2 max-w-3xl" : "max-w-4xl"}`}
+                                        className={`mb-3 grid gap-2 mx-auto w-full ${g.imageUrls.length > 1 ? "sm:grid-cols-2 max-w-3xl" : "max-w-4xl"}`}
                                     >
                                         {g.imageUrls.map((url) => (
                                             <div
                                                 key={url}
-                                                className={`rounded border p-2 flex items-center justify-center w-full relative ${g.imageUrls && g.imageUrls.length > 1
+                                                className={`rounded border p-2 flex items-center justify-center w-full relative overflow-hidden ${g.imageUrls && g.imageUrls.length > 1
                                                     ? "h-44 sm:h-56"
                                                     : "h-64 sm:h-80"}`}
                                                 style={{ borderColor: "var(--border)", background: "var(--card)" }}
@@ -164,7 +164,9 @@ export function IssueReportsClient({ groups }: { groups: IssueQuestionGroup[] })
                                 ) : null}
 
                                 {questionText ? (
-                                    <MathJax dynamic>{questionText}</MathJax>
+                                    <div className="min-w-0 overflow-x-auto">
+                                        <MathJax dynamic>{questionText}</MathJax>
+                                    </div>
                                 ) : (
                                     <div className="text-sm opacity-70">Question not found.</div>
                                 )}
@@ -179,14 +181,14 @@ export function IssueReportsClient({ groups }: { groups: IssueQuestionGroup[] })
                                         return (
                                             <div
                                                 key={o.key}
-                                                className="rounded border p-3"
+                                                className="rounded border p-3 overflow-hidden"
                                                 style={{ borderColor: "var(--border)", background: "var(--card)" }}
                                             >
                                                 <div className="flex items-start gap-3">
                                                     <div className="mt-0.5 text-xs opacity-70 shrink-0">({o.key})</div>
                                                     <div className="min-w-0">
                                                         {o.text ? (
-                                                            <div className="text-sm min-w-0">
+                                                            <div className="text-sm min-w-0 overflow-x-auto">
                                                                 <MathJax dynamic>{o.text}</MathJax>
                                                             </div>
                                                         ) : null}
@@ -198,7 +200,7 @@ export function IssueReportsClient({ groups }: { groups: IssueQuestionGroup[] })
                                                                 {optionImageUrls.map((url) => (
                                                                     <div
                                                                         key={url}
-                                                                        className={`rounded border p-2 flex items-center justify-center w-full relative ${optionHasMultipleImages
+                                                                        className={`rounded border p-2 flex items-center justify-center w-full relative overflow-hidden ${optionHasMultipleImages
                                                                             ? "h-32 sm:h-40"
                                                                             : "h-40 sm:h-48"}`}
                                                                         style={{
@@ -255,10 +257,10 @@ export function IssueReportsClient({ groups }: { groups: IssueQuestionGroup[] })
                                         >
                                             <div className="flex flex-wrap items-start justify-between gap-2">
                                                 <div className="min-w-0">
-                                                    <div className="text-sm font-medium truncate">{r.issue}</div>
-                                                    <div className="mt-1 text-xs opacity-70 truncate">{meta}</div>
+                                                    <div className="text-sm font-medium break-words">{r.issue}</div>
+                                                    <div className="mt-1 text-xs opacity-70 break-words">{meta}</div>
                                                 </div>
-                                                <div className="text-xs opacity-70">AttemptId: {r.attemptId ?? "-"}</div>
+                                                <div className="text-xs opacity-70 break-all">AttemptId: {r.attemptId ?? "-"}</div>
                                             </div>
 
                                             {r.details ? (

@@ -51,41 +51,48 @@ export function ConsolidatedFilterForm({
     return (
         <form
             method="get"
-            className="mt-6 rounded-lg border p-4"
+            className="mt-6 rounded-2xl border p-4 sm:p-5"
             style={{ borderColor: "var(--border)", background: "var(--card)" }}
         >
             <div className="grid gap-4 lg:grid-cols-[1fr,2fr]">
                 <label className="block text-sm">
                     <div className="text-xs opacity-70">Select paper</div>
-                    <select
-                        name="testId"
-                        value={selectedTestId}
-                        className="mt-2 w-full rounded border px-3 py-2 bg-transparent ui-field"
-                        style={{ borderColor: "var(--border)" }}
-                        onChange={(e) => {
-                            const nextTestId = e.target.value;
-                            const params = new URLSearchParams();
-                            params.set("testId", nextTestId);
-                            router.replace(`${pathname}?${params.toString()}`);
-                        }}
-                    >
-                        {tests.map((t) => (
-                            <option key={t.id} value={t.id}>
-                                {t.title} ({fmtDate(t.createdAt)})
-                            </option>
-                        ))}
-                    </select>
+                    <div className="relative mt-2">
+                        <select
+                            name="testId"
+                            value={selectedTestId}
+                            className="w-full h-10 rounded-full border pl-4 pr-12 bg-transparent ui-field appearance-none"
+                            style={{ borderColor: "var(--border)" }}
+                            onChange={(e) => {
+                                const nextTestId = e.target.value;
+                                const params = new URLSearchParams();
+                                params.set("testId", nextTestId);
+                                router.replace(`${pathname}?${params.toString()}`);
+                            }}
+                        >
+                            {tests.map((t) => (
+                                <option key={t.id} value={t.id}>
+                                    {t.title} ({fmtDate(t.createdAt)})
+                                </option>
+                            ))}
+                        </select>
+                        <span className="pointer-events-none absolute inset-y-0 right-4 inline-flex items-center" style={{ color: "var(--foreground)", opacity: 0.75 }} aria-hidden>
+                            <svg viewBox="0 0 20 20" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M6 8l4 4 4-4" />
+                            </svg>
+                        </span>
+                    </div>
                 </label>
 
                 <div className="text-sm">
                     <div className="text-xs opacity-70">Select attempts (multiple students allowed)</div>
-                    <div className="mt-2 max-h-56 overflow-auto rounded border p-2" style={{ borderColor: "var(--border)" }}>
+                    <div className="mt-2 max-h-56 overflow-auto rounded-xl border p-2" style={{ borderColor: "var(--border)" }}>
                         {attemptChoices.length ? (
                             <div className="grid gap-2">
                                 {attemptChoices.map((a) => (
                                     <label
                                         key={a.id}
-                                        className="rounded border px-3 py-2 flex items-start gap-3"
+                                        className="rounded-xl border px-3 py-2 flex items-start gap-3"
                                         style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                                     >
                                         <input
@@ -113,7 +120,11 @@ export function ConsolidatedFilterForm({
                 <button
                     type="submit"
                     className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
-                    style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                    style={{
+                        borderColor: "rgba(59, 130, 246, 0.5)",
+                        background: "linear-gradient(135deg, rgba(37,99,235,0.95), rgba(14,165,233,0.9))",
+                        color: "#e0f2fe",
+                    }}
                 >
                     Load consolidated view
                 </button>

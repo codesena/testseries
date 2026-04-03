@@ -14,6 +14,7 @@ type HomeHeaderProps = {
 export function HomeHeader({ isAdmin, userInitial, userName }: HomeHeaderProps) {
     const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
     const [isProfileOpen, setIsProfileOpen] = useState(false);
+    const [activeSection, setActiveSection] = useState<"dashboard" | "history" | "tests">("dashboard");
     const mobileNavRef = useRef<HTMLDivElement | null>(null);
     const profileRef = useRef<HTMLDivElement | null>(null);
 
@@ -45,6 +46,37 @@ export function HomeHeader({ isAdmin, userInitial, userName }: HomeHeaderProps) 
         };
     }, []);
 
+    useEffect(() => {
+        const sectionIds = ["dashboard", "tests", "history"] as const;
+        const sections = sectionIds
+            .map((id) => document.getElementById(id))
+            .filter((el): el is HTMLElement => Boolean(el));
+
+        if (!sections.length) return;
+
+        const computeActiveSection = () => {
+            const y = window.scrollY + 180;
+            let current: "dashboard" | "tests" | "history" = "dashboard";
+
+            for (const section of sections) {
+                if (section.offsetTop <= y) {
+                    current = section.id as "dashboard" | "tests" | "history";
+                }
+            }
+
+            setActiveSection(current);
+        };
+
+        computeActiveSection();
+        window.addEventListener("scroll", computeActiveSection, { passive: true });
+        window.addEventListener("hashchange", computeActiveSection);
+
+        return () => {
+            window.removeEventListener("scroll", computeActiveSection);
+            window.removeEventListener("hashchange", computeActiveSection);
+        };
+    }, []);
+
     return (
         <header
             className="sticky top-0 z-50 border-b backdrop-blur-md"
@@ -64,7 +96,7 @@ export function HomeHeader({ isAdmin, userInitial, userName }: HomeHeaderProps) 
                                 J
                             </div>
                             <div className="min-w-0">
-                                <div className="text-[clamp(1.35rem,2.6vw,1.7rem)] font-semibold leading-none">JEE Test Series</div>
+                                <div className="text-[1.22rem] sm:text-[clamp(1.35rem,2.6vw,1.7rem)] font-semibold leading-none">JEE Test Series</div>
                                 <div className="hidden sm:block text-[11px] leading-tight" style={{ color: "var(--foreground)", opacity: 0.8 }}>
                                     Practice. Analyze. Improve.
                                 </div>
@@ -75,28 +107,62 @@ export function HomeHeader({ isAdmin, userInitial, userName }: HomeHeaderProps) 
                             <Link
                                 href="#dashboard"
                                 className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
-                                style={{ borderColor: "var(--border)", background: "transparent" }}
+                                style={
+                                    activeSection === "dashboard"
+                                        ? {
+                                            borderColor: "rgba(59, 130, 246, 0.5)",
+                                            background: "linear-gradient(135deg, rgba(37,99,235,0.95), rgba(14,165,233,0.9))",
+                                            color: "#e0f2fe",
+                                        }
+                                        : { borderColor: "var(--border)", background: "transparent" }
+                                }
                             >
                                 Dashboard
                             </Link>
                             <Link
-                                href="#history"
-                                className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
-                                style={{ borderColor: "var(--border)", background: "transparent" }}
-                            >
-                                My Reports
-                            </Link>
-                            <Link
                                 href="#tests"
                                 className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
-                                style={{ borderColor: "var(--border)", background: "transparent" }}
+                                style={
+                                    activeSection === "tests"
+                                        ? {
+                                            borderColor: "rgba(59, 130, 246, 0.5)",
+                                            background: "linear-gradient(135deg, rgba(37,99,235,0.95), rgba(14,165,233,0.9))",
+                                            color: "#e0f2fe",
+                                        }
+                                        : { borderColor: "var(--border)", background: "transparent" }
+                                }
                             >
                                 Available Tests
+                            </Link>
+                            <Link
+                                href="#history"
+                                className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
+                                style={
+                                    activeSection === "history"
+                                        ? {
+                                            borderColor: "rgba(59, 130, 246, 0.5)",
+                                            background: "linear-gradient(135deg, rgba(37,99,235,0.95), rgba(14,165,233,0.9))",
+                                            color: "#e0f2fe",
+                                        }
+                                        : { borderColor: "var(--border)", background: "transparent" }
+                                }
+                            >
+                                Attempted History
                             </Link>
                         </nav>
 
                         <div className="flex items-center gap-2 shrink-0">
                             <ThemeIconToggle />
+
+                            {isAdmin ? (
+                                <Link
+                                    href="/admin"
+                                    className="hidden md:inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
+                                    style={{ borderColor: "var(--border)", background: "color-mix(in srgb, var(--muted) 70%, black 30%)" }}
+                                >
+                                    ⇄ Switch to Admin
+                                </Link>
+                            ) : null}
 
                             <div className="relative md:hidden" ref={mobileNavRef}>
                                 <button
@@ -117,11 +183,11 @@ export function HomeHeader({ isAdmin, userInitial, userName }: HomeHeaderProps) 
                                         <Link href="#dashboard" className="inline-flex items-center h-9 rounded-md px-3 text-sm ui-click" style={{ background: "transparent" }} onClick={() => setIsMobileNavOpen(false)}>
                                             Dashboard
                                         </Link>
-                                        <Link href="#history" className="inline-flex items-center h-9 rounded-md px-3 text-sm ui-click" style={{ background: "transparent" }} onClick={() => setIsMobileNavOpen(false)}>
-                                            My Reports
-                                        </Link>
                                         <Link href="#tests" className="inline-flex items-center h-9 rounded-md px-3 text-sm ui-click" style={{ background: "transparent" }} onClick={() => setIsMobileNavOpen(false)}>
                                             Available Tests
+                                        </Link>
+                                        <Link href="#history" className="inline-flex items-center h-9 rounded-md px-3 text-sm ui-click" style={{ background: "transparent" }} onClick={() => setIsMobileNavOpen(false)}>
+                                            Attempted History
                                         </Link>
                                     </div>
                                 ) : null}
@@ -147,7 +213,7 @@ export function HomeHeader({ isAdmin, userInitial, userName }: HomeHeaderProps) 
                                         {isAdmin ? (
                                             <Link
                                                 href="/admin"
-                                                className="inline-flex items-center h-9 rounded-md px-3 text-sm ui-click"
+                                                className="md:hidden inline-flex items-center h-9 rounded-md px-3 text-sm ui-click"
                                                 style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                                                 onClick={() => setIsProfileOpen(false)}
                                             >
