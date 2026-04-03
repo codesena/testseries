@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { prisma } from "@/server/db";
-import { ThemeToggle } from "@/components/ThemeToggle";
 import { getAuthUser } from "@/server/auth";
-import { LogoutButton } from "@/components/LogoutButton";
 import { isAdminUsername } from "@/server/admin";
+import { TestsFilterForm } from "@/components/home/TestsFilterForm";
+import { HomeHeader } from "@/components/home/HomeHeader";
 
 export const dynamic = "force-dynamic";
 
@@ -51,6 +51,7 @@ export default async function Home(props: {
         where: { id: userId },
         select: { name: true },
     });
+    const userInitial = (user?.name?.trim()?.[0] ?? "U").toUpperCase();
 
     const tests = await prisma.testSeries.findMany({
         orderBy: { createdAt: "desc" },
@@ -133,45 +134,9 @@ export default async function Home(props: {
 
     return (
         <div className="min-h-screen flex flex-col">
-            <header
-                className="sticky top-0 z-50 border-b"
-                style={{ borderColor: "var(--border)", background: "var(--background)" }}
-            >
-                <div className="max-w-5xl mx-auto px-4 py-2">
-                    <div className="rounded-xl border px-3 py-2" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
-                        <div className="flex flex-wrap items-center justify-between gap-2">
-                            <div className="min-w-0 flex items-center gap-2">
-                                <div
-                                    className="inline-flex h-8 w-8 items-center justify-center rounded-full border text-xs font-semibold shrink-0"
-                                    style={{ borderColor: "var(--border)", background: "var(--muted)" }}
-                                >
-                                    J
-                                </div>
-                                <div className="min-w-0">
-                                    <div className="text-[clamp(1.35rem,2.6vw,1.7rem)] font-semibold leading-none">JEE Test Series</div>
-                                    <div className="text-[11px] opacity-60 leading-tight">Practice. Analyze. Improve. · {user?.name ?? "—"}</div>
-                                </div>
-                            </div>
+            <HomeHeader isAdmin={isAdmin} userInitial={userInitial} userName={user?.name ?? "User"} />
 
-                            <div className="flex items-center gap-2 shrink-0">
-                                {isAdmin ? (
-                                    <Link
-                                        href="/admin"
-                                        className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
-                                        style={{ borderColor: "var(--border)", background: "var(--muted)" }}
-                                    >
-                                        Admin
-                                    </Link>
-                                ) : null}
-                                <ThemeToggle />
-                                <LogoutButton />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </header>
-
-            <main className="max-w-5xl mx-auto w-full px-4 py-8">
+            <main className="max-w-5xl mx-auto w-full px-4 pt-8 pb-24 md:pb-8">
                 <section id="dashboard" className="scroll-mt-24">
                     <h1 className="text-2xl font-semibold">Dashboard</h1>
                     <div className="mt-2 text-sm opacity-70">
@@ -194,42 +159,7 @@ export default async function Home(props: {
 
                 <section id="tests" className="mt-10 scroll-mt-24">
                     <h1 className="text-2xl font-semibold">Available Tests</h1>
-                    <form className="mt-4 grid gap-2 sm:grid-cols-[1fr_170px_170px_auto]" method="GET">
-                        <input
-                            name="q"
-                            defaultValue={rawQ}
-                            placeholder="Search tests"
-                            className="h-10 rounded-full border px-4 bg-transparent ui-field text-sm"
-                            style={{ borderColor: "var(--border)" }}
-                        />
-                        <select
-                            name="status"
-                            defaultValue={rawStatus}
-                            className="h-10 rounded-full border px-4 bg-transparent ui-field text-sm"
-                            style={{ borderColor: "var(--border)" }}
-                        >
-                            <option value="all">All status</option>
-                            <option value="attempted">Attempted</option>
-                            <option value="unattempted">Unattempted</option>
-                        </select>
-                        <select
-                            name="format"
-                            defaultValue={rawFormat}
-                            className="h-10 rounded-full border px-4 bg-transparent ui-field text-sm"
-                            style={{ borderColor: "var(--border)" }}
-                        >
-                            <option value="all">All formats</option>
-                            <option value="main">JEE Main</option>
-                            <option value="advanced">JEE Advanced</option>
-                        </select>
-                        <button
-                            type="submit"
-                            className="inline-flex items-center justify-center h-10 rounded-full border px-4 text-sm font-medium ui-click"
-                            style={{ borderColor: "var(--border)", background: "var(--muted)" }}
-                        >
-                            Apply
-                        </button>
-                    </form>
+                    <TestsFilterForm rawQ={rawQ} rawStatus={rawStatus} rawFormat={rawFormat} />
                     <div className="mt-2 text-xs opacity-60">
                         Showing {filteredTests.length} of {tests.length} tests
                     </div>
@@ -240,69 +170,90 @@ export default async function Home(props: {
                                 className="rounded-2xl border p-4 shadow-sm"
                                 style={{ borderColor: "var(--border)", background: "var(--card)" }}
                             >
-                                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                                    <div className="min-w-0">
-                                        <div className="text-lg font-semibold leading-snug">{t.title}</div>
-                                        <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px]">
-                                            <span
-                                                className="inline-flex items-center justify-center h-7 rounded-full border px-2.5 whitespace-nowrap"
-                                                style={{ borderColor: "var(--border)", background: "var(--muted)" }}
-                                            >
-                                                {t.isAdvancedFormat ? "JEE Advanced" : "JEE Main"}
-                                            </span>
-                                            <span className="opacity-60">{t._count.questions} questions</span>
-                                            <span className="opacity-60">⏱ {t.totalDurationMinutes} mins</span>
-                                            <span className="opacity-60">Created {fmtDate(t.createdAt)}</span>
+                                {(() => {
+                                    const attemptCount = attemptCountByTestId.get(t.id) ?? 0;
+                                    const hasAttempts = attemptCount > 0;
+
+                                    return (
+                                        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                                            <div className="min-w-0">
+                                                <div className="text-lg font-semibold leading-snug">{t.title}</div>
+                                                <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px]">
+                                                    <span
+                                                        className="inline-flex items-center justify-center h-7 rounded-full border px-2.5 whitespace-nowrap"
+                                                        style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                                                    >
+                                                        {t.isAdvancedFormat ? "JEE Advanced" : "JEE Main"}
+                                                    </span>
+                                                    <span className="opacity-60">{t._count.questions} questions</span>
+                                                    <span className="opacity-60">⏱ {t.totalDurationMinutes} mins</span>
+                                                    <span className="opacity-60">Created {fmtDate(t.createdAt)}</span>
+                                                </div>
+                                            </div>
+                                            <div className="flex flex-wrap items-center gap-2 sm:justify-end">
+                                                {!hasAttempts ? (
+                                                    <span
+                                                        className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap"
+                                                        style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                                                    >
+                                                        Unattempted
+                                                    </span>
+                                                ) : (
+                                                    <span
+                                                        className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap"
+                                                        style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                                                    >
+                                                        Attempted {attemptCount}x
+                                                    </span>
+                                                )}
+
+                                                <Link
+                                                    href={`/test/${t.id}/history`}
+                                                    className={`inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click ${hasAttempts ? "font-semibold" : ""
+                                                        }`}
+                                                    style={
+                                                        hasAttempts
+                                                            ? {
+                                                                borderColor: "rgba(59, 130, 246, 0.5)",
+                                                                background: "linear-gradient(135deg, rgba(37,99,235,0.95), rgba(14,165,233,0.9))",
+                                                                color: "#e0f2fe",
+                                                            }
+                                                            : { borderColor: "var(--border)", background: "transparent" }
+                                                    }
+                                                >
+                                                    View history
+                                                </Link>
+
+                                                {isAdmin ? (
+                                                    <Link
+                                                        href={`/admin/paper/${t.id}`}
+                                                        className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
+                                                        style={{ borderColor: "var(--border)", background: "transparent" }}
+                                                    >
+                                                        View paper
+                                                    </Link>
+                                                ) : null}
+
+                                                <Link
+                                                    href={`/test/${t.id}`}
+                                                    className={`inline-flex items-center justify-center h-9 rounded-full border px-4 text-xs whitespace-nowrap ui-click ${hasAttempts ? "font-medium" : "font-semibold"
+                                                        }`}
+                                                    style={
+                                                        hasAttempts
+                                                            ? { borderColor: "var(--border)", background: "transparent" }
+                                                            : {
+                                                                borderColor: "rgba(59, 130, 246, 0.5)",
+                                                                background: "linear-gradient(135deg, rgba(37,99,235,0.95), rgba(14,165,233,0.9))",
+                                                                color: "#e0f2fe",
+                                                            }
+                                                    }
+                                                >
+                                                    {hasAttempts ? "Retake Test" : "Start Test"}
+                                                </Link>
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div className="flex flex-wrap items-center gap-2 sm:justify-end">
-                                        {(attemptCountByTestId.get(t.id) ?? 0) === 0 ? (
-                                            <span
-                                                className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap"
-                                                style={{ borderColor: "var(--border)", background: "var(--muted)" }}
-                                            >
-                                                Unattempted
-                                            </span>
-                                        ) : (
-                                            <span
-                                                className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap"
-                                                style={{ borderColor: "var(--border)", background: "var(--muted)" }}
-                                            >
-                                                Attempted {attemptCountByTestId.get(t.id) ?? 0}x
-                                            </span>
-                                        )}
-
-                                        <Link
-                                            href={`/test/${t.id}/history`}
-                                            className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
-                                            style={{ borderColor: "var(--border)", background: "transparent" }}
-                                        >
-                                            View history
-                                        </Link>
-
-                                        {isAdmin ? (
-                                            <Link
-                                                href={`/admin/paper/${t.id}`}
-                                                className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
-                                                style={{ borderColor: "var(--border)", background: "transparent" }}
-                                            >
-                                                View paper
-                                            </Link>
-                                        ) : null}
-
-                                        <Link
-                                            href={`/test/${t.id}`}
-                                            className="inline-flex items-center justify-center h-9 rounded-full border px-4 text-xs font-semibold whitespace-nowrap ui-click"
-                                            style={{
-                                                borderColor: "rgba(59, 130, 246, 0.5)",
-                                                background: "linear-gradient(135deg, rgba(37,99,235,0.95), rgba(14,165,233,0.9))",
-                                                color: "#e0f2fe",
-                                            }}
-                                        >
-                                            Start Test
-                                        </Link>
-                                    </div>
-                                </div>
+                                    );
+                                })()}
                             </div>
                         ))}
                         {tests.length === 0 ? (
@@ -405,6 +356,26 @@ export default async function Home(props: {
                     ) : null}
                 </div>
             </main>
+
+            <nav
+                className="fixed bottom-3 left-1/2 z-40 -translate-x-1/2 md:hidden"
+                aria-label="Mobile quick navigation"
+            >
+                <div className="flex items-center gap-1 rounded-full border p-1 shadow-lg" style={{ borderColor: "var(--border)", background: "color-mix(in srgb, var(--card) 90%, transparent)" }}>
+                    <Link href="#dashboard" className="inline-flex h-9 items-center justify-center rounded-full px-3 text-xs ui-click" style={{ background: "transparent" }}>
+                        Home
+                    </Link>
+                    <Link href="#tests" className="inline-flex h-9 items-center justify-center rounded-full px-3 text-xs ui-click" style={{ background: "transparent" }}>
+                        Tests
+                    </Link>
+                    <Link href="#history" className="inline-flex h-9 items-center justify-center rounded-full px-3 text-xs ui-click" style={{ background: "transparent" }}>
+                        History
+                    </Link>
+                    <Link href="/reset-password" className="inline-flex h-9 items-center justify-center rounded-full px-3 text-xs ui-click" style={{ background: "transparent" }}>
+                        Profile
+                    </Link>
+                </div>
+            </nav>
         </div>
     );
 }
