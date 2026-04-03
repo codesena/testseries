@@ -11,8 +11,12 @@ export function StartAttemptButton({ testId }: { testId: string }) {
     return (
         <div className="flex flex-col gap-2">
             <button
-                className="inline-flex items-center justify-center h-10 rounded-full border px-4 text-sm font-medium whitespace-nowrap ui-click"
-                style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                className="inline-flex items-center justify-center h-10 rounded-full border px-4 text-sm font-semibold whitespace-nowrap ui-click"
+                style={{
+                    borderColor: "rgba(59, 130, 246, 0.5)",
+                    background: "linear-gradient(135deg, rgba(37,99,235,0.95), rgba(14,165,233,0.9))",
+                    color: "#e0f2fe",
+                }}
                 disabled={loading}
                 onClick={async () => {
                     if (loadingRef.current) return;
@@ -37,7 +41,12 @@ export function StartAttemptButton({ testId }: { testId: string }) {
                     }
                 }}
             >
-                {loading ? "Starting…" : "Start Test"}
+                {loading ? (
+                    <span className="inline-flex items-center gap-2">
+                        <span className="h-3.5 w-3.5 rounded-full border-2 border-current border-t-transparent animate-spin" />
+                        Starting...
+                    </span>
+                ) : "Start Test"}
             </button>
             {error ? <div className="text-sm text-red-600">{error}</div> : null}
         </div>
