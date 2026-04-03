@@ -137,55 +137,62 @@ export default async function Home(props: {
                 className="sticky top-0 z-50 border-b"
                 style={{ borderColor: "var(--border)", background: "var(--background)" }}
             >
-                <div className="max-w-5xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-2">
-                    <div className="min-w-0 flex items-center gap-2">
-                        <div
-                            className="inline-flex h-8 w-8 items-center justify-center rounded-full border text-xs font-semibold"
-                            style={{ borderColor: "var(--border)", background: "var(--muted)" }}
-                        >
-                            J
+                <div className="max-w-5xl mx-auto px-4 py-3">
+                    <div className="rounded-2xl border p-3" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
+                        <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0 flex items-center gap-3">
+                                <div
+                                    className="inline-flex h-9 w-9 items-center justify-center rounded-full border text-sm font-semibold shrink-0"
+                                    style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                                >
+                                    J
+                                </div>
+                                <div className="min-w-0">
+                                    <div className="text-[clamp(1.35rem,4vw,1.75rem)] font-semibold leading-tight">JEE Test Series</div>
+                                    <div className="text-xs opacity-60 leading-tight">Practice. Analyze. Improve.</div>
+                                    <div className="mt-1 text-xs opacity-60 truncate">Student: {user?.name ?? "—"}</div>
+                                </div>
+                            </div>
+
+                            {isAdmin ? (
+                                <Link
+                                    href="/admin"
+                                    className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click shrink-0"
+                                    style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                                >
+                                    Admin
+                                </Link>
+                            ) : null}
                         </div>
-                        <div>
-                            <div className="text-base font-semibold">JEE Test Series</div>
-                            <div className="text-[11px] opacity-60">Practice. Analyze. Improve.</div>
-                        </div>
-                    </div>
-                    <div className="flex min-w-0 items-center gap-2 overflow-x-auto whitespace-nowrap [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-                        <a
-                            href="#dashboard"
-                            className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
-                            style={{ borderColor: "var(--border)", background: "var(--muted)" }}
-                        >
-                            Dashboard
-                        </a>
-                        <a
-                            href="#tests"
-                            className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
-                            style={{ borderColor: "var(--border)", background: "var(--muted)" }}
-                        >
-                            Tests
-                        </a>
-                        <a
-                            href="#history"
-                            className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
-                            style={{ borderColor: "var(--border)", background: "var(--muted)" }}
-                        >
-                            History
-                        </a>
-                    </div>
-                    <div className="flex items-center flex-wrap justify-end gap-2">
-                        <span className="text-xs opacity-60">Student: {user?.name ?? "—"}</span>
-                        {isAdmin ? (
-                            <Link
-                                href="/admin"
+
+                        <div className="mt-3 flex min-w-0 items-center gap-2 overflow-x-auto whitespace-nowrap [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+                            <a
+                                href="#dashboard"
                                 className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
                                 style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                             >
-                                Admin
-                            </Link>
-                        ) : null}
-                        <ThemeToggle />
-                        <LogoutButton />
+                                Dashboard
+                            </a>
+                            <a
+                                href="#tests"
+                                className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
+                                style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                            >
+                                Tests
+                            </a>
+                            <a
+                                href="#history"
+                                className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
+                                style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                            >
+                                History
+                            </a>
+                        </div>
+
+                        <div className="mt-3 flex min-w-0 items-center justify-end gap-2 overflow-x-auto whitespace-nowrap [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+                            <ThemeToggle />
+                            <LogoutButton />
+                        </div>
                     </div>
                 </div>
             </header>
