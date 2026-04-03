@@ -1,7 +1,6 @@
 import { prisma } from "@/server/db";
 import { getAuthUserId } from "@/server/auth";
 import { json } from "@/server/json";
-import { shuffled } from "@/server/utils/shuffle";
 import { z } from "zod";
 
 export const runtime = "nodejs";
@@ -55,7 +54,8 @@ export async function POST(req: Request) {
     for (const qid of questionOrder) {
         const q = byId.get(qid);
         const opt = (q?.options ?? {}) as Record<string, unknown>;
-        optionOrders[qid] = shuffled(Object.keys(opt));
+        // Preserve author-defined option order; no randomization in exam mode.
+        optionOrders[qid] = Object.keys(opt);
     }
 
     const attempt = await prisma.studentAttempt.create({

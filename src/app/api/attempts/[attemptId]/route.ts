@@ -152,8 +152,6 @@ export async function GET(
     }
 
     const storedQuestionOrder = attempt.questionOrder as string[];
-    const optionOrders = attempt.optionOrders as Record<string, string[]>;
-
     // Prefer the test's defined order so questions are sequential by section,
     // even if older attempts stored a randomized order.
     let questionOrder = storedQuestionOrder;
@@ -191,7 +189,8 @@ export async function GET(
             const parsedOptions = coerceQuestionOptions(q.options);
             const parsedByKey = new Map(parsedOptions.map((o) => [o.key, o] as const));
             const fallbackOrder = parsedOptions.map((o) => o.key);
-            const order = optionOrders[qid] ?? fallbackOrder;
+            // Always serve canonical option order (no shuffle), including old attempts.
+            const order = fallbackOrder;
             const orderedOptions = order
                 .map((k) => parsedByKey.get(k))
                 .filter((o): o is { key: string; text: string; imageUrl: string | null } => Boolean(o));

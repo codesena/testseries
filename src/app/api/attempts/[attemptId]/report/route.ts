@@ -171,11 +171,6 @@ export async function GET(
         ? (attempt.questionOrder as unknown[]).map(String)
         : [];
 
-    const optionOrders =
-        attempt.optionOrders && typeof attempt.optionOrders === "object"
-            ? (attempt.optionOrders as Record<string, string[]>)
-            : {};
-
     // Prefer the test's defined order so questions are sequential by section,
     // even if older attempts stored a randomized order.
     let questionOrder = storedQuestionOrder;
@@ -309,7 +304,8 @@ export async function GET(
         const parsedOptions = coerceQuestionOptions(q.options);
         const parsedByKey = new Map(parsedOptions.map((o) => [o.key, o] as const));
         const fallbackOrder = parsedOptions.map((o) => o.key);
-        const order = Array.isArray(optionOrders[qid]) ? optionOrders[qid] : fallbackOrder;
+        // Keep report options in canonical order to match exam display.
+        const order = fallbackOrder;
         const orderedOptions = order
             .map((k) => parsedByKey.get(k))
             .filter((o): o is { key: string; text: string; imageUrl: string | null } => Boolean(o));
