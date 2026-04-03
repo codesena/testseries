@@ -947,6 +947,40 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
         }
     }
 
+    function exitFullscreenMode() {
+        if (!document.fullscreenElement || fullscreenRequestInFlightRef.current) return;
+
+        const doc = document as Document & {
+            webkitExitFullscreen?: () => Promise<void> | void;
+            mozCancelFullScreen?: () => Promise<void> | void;
+            msExitFullscreen?: () => Promise<void> | void;
+        };
+
+        const exitFn =
+            doc.exitFullscreen ??
+            doc.webkitExitFullscreen ??
+            doc.mozCancelFullScreen ??
+            doc.msExitFullscreen;
+
+        if (!exitFn) return;
+
+        try {
+            const result = exitFn.call(doc);
+            if (result && typeof (result as Promise<void>).catch === "function") {
+                fullscreenRequestInFlightRef.current = true;
+                void (result as Promise<void>)
+                    .catch(() => {
+                        // Ignore browser-specific exit failures.
+                    })
+                    .finally(() => {
+                        fullscreenRequestInFlightRef.current = false;
+                    });
+            }
+        } catch {
+            // Ignore browser-specific exit failures.
+        }
+    }
+
     if (loading) {
         return (
             <div className="min-h-screen flex items-center justify-center">
@@ -968,15 +1002,7 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
 
     return (
         <MathJaxContext version={3} config={mathjaxConfig}>
-            <div
-                className="min-h-screen flex flex-col"
-                onPointerDownCapture={() => {
-                    if (!isFullscreen) enterFullscreenMode();
-                }}
-                onClickCapture={() => {
-                    if (!isFullscreen) enterFullscreenMode();
-                }}
-            >
+            <div className="min-h-screen flex flex-col">
                 <header
                     className="sticky top-0 z-50 border-b"
                     style={{ borderColor: "var(--border)", background: "var(--card)" }}
@@ -992,6 +1018,17 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
                         <div className="flex items-center flex-wrap justify-end gap-2 sm:gap-3 self-start sm:self-auto shrink-0 max-w-full">
                             <div className="text-xs sm:text-sm font-mono shrink-0 whitespace-nowrap">{formatTime(timeLeftSeconds)}</div>
                             <ThemeToggle />
+                            <button
+                                className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs ui-click shrink-0 whitespace-nowrap"
+                                style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                                onClick={() => {
+                                    if (isFullscreen) exitFullscreenMode();
+                                    else enterFullscreenMode();
+                                }}
+                                disabled={fullscreenRequestInFlightRef.current}
+                            >
+                                {isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
+                            </button>
                             <button
                                 className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs ui-click shrink-0 whitespace-nowrap"
                                 style={{ borderColor: "var(--border)", background: "var(--muted)" }}
