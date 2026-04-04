@@ -146,10 +146,11 @@ export function AdminPaperViewerClient({
     const [copyingEdit, setCopyingEdit] = useState(false);
     const [uploadingQuestionImage, setUploadingQuestionImage] = useState(false);
     const [uploadingOptionImage, setUploadingOptionImage] = useState(false);
-    const [uploadFolderName, setUploadFolderName] = useState("paper-images");
-    const [uploadFolderDraft, setUploadFolderDraft] = useState("paper-images");
+    const [uploadFolderName, setUploadFolderName] = useState("paper-x");
+    const [uploadFolderDraft, setUploadFolderDraft] = useState("paper-x");
     const [uploadFolderSaved, setUploadFolderSaved] = useState(false);
     const [mode, setMode] = useState<"view" | "edit">("view");
+    const [editUiMode, setEditUiMode] = useState<"form" | "json">("form");
     const [editError, setEditError] = useState<string | null>(null);
     const [editSuccess, setEditSuccess] = useState<string | null>(null);
     const [editRaw, setEditRaw] = useState("");
@@ -183,8 +184,8 @@ export function AdminPaperViewerClient({
         }
     }, [editRaw]);
 
-    const activeUploadFolder = slugifyFolderName(uploadFolderName) || "paper-images";
-    const draftUploadFolder = slugifyFolderName(uploadFolderDraft) || "paper-images";
+    const activeUploadFolder = slugifyFolderName(uploadFolderName) || "paper-x";
+    const draftUploadFolder = slugifyFolderName(uploadFolderDraft) || "paper-x";
     const isUploadFolderDirty = draftUploadFolder !== activeUploadFolder;
 
     useEffect(() => {
@@ -193,12 +194,55 @@ export function AdminPaperViewerClient({
             setEditError(null);
             setEditSuccess(null);
             setEditRaw("");
+            setEditUiMode("form");
         }
     }, [mode]);
 
     function saveUploadFolder() {
         setUploadFolderName(uploadFolderDraft);
         setUploadFolderSaved(true);
+    }
+
+    function updateEditPayload(mutator: (payload: Record<string, unknown>) => void) {
+        let payload: Record<string, unknown>;
+        try {
+            payload = JSON.parse(editRaw) as Record<string, unknown>;
+        } catch {
+            setEditError("Invalid JSON. Switch to Raw JSON mode and fix it first.");
+            return;
+        }
+
+        mutator(payload);
+        setEditRaw(JSON.stringify(payload, null, 2));
+        setEditError(null);
+    }
+
+    function updateEditOptionField(optionKey: string, patch: { text?: string; imageUrl?: string | null }) {
+        updateEditPayload((payload) => {
+            const nextOptions = coerceOptions(payload.options);
+            const existingIndex = nextOptions.findIndex((opt) => opt.key === optionKey);
+
+            if (existingIndex >= 0) {
+                const prev = nextOptions[existingIndex];
+                nextOptions[existingIndex] = {
+                    ...prev,
+                    text: patch.text !== undefined ? patch.text : prev.text,
+                    imageUrl: patch.imageUrl !== undefined ? patch.imageUrl : prev.imageUrl,
+                };
+            } else {
+                nextOptions.push({
+                    key: optionKey,
+                    text: patch.text ?? "",
+                    imageUrl: patch.imageUrl ?? null,
+                });
+            }
+
+            const asObject: Record<string, { text: string; imageUrl: string | null }> = {};
+            for (const opt of nextOptions) {
+                asObject[opt.key] = { text: opt.text, imageUrl: opt.imageUrl };
+            }
+            payload.options = asObject;
+        });
     }
 
     async function loadQuestionIssues(questionId: string) {
@@ -237,12 +281,13 @@ export function AdminPaperViewerClient({
 
     async function openEdit(questionId: string) {
         setEditOpenForQuestionId(questionId);
+        setEditUiMode("form");
         setEditError(null);
         setEditSuccess(null);
         setEditRaw("");
         setLoadingEdit(true);
         if (!uploadFolderName.trim()) {
-            setUploadFolderName(slugifyFolderName(testTitle) || "paper-images");
+            setUploadFolderName(slugifyFolderName(testTitle) || "paper-x");
         }
 
         try {
@@ -342,6 +387,7 @@ export function AdminPaperViewerClient({
             setEditError(null);
             setEditSuccess(null);
             setEditRaw("");
+            setEditUiMode("form");
         } catch (e) {
             setEditError(e instanceof Error ? e.message : "Failed to save question");
         } finally {
@@ -408,7 +454,7 @@ export function AdminPaperViewerClient({
     async function uploadImageFile(file: File): Promise<string> {
         const fd = new FormData();
         fd.append("file", file);
-        fd.append("folderName", slugifyFolderName(uploadFolderName) || "paper-images");
+        fd.append("folderName", slugifyFolderName(uploadFolderName) || "paper-x");
 
         const res = await fetch("/api/admin/uploads/image", {
             method: "POST",
@@ -594,7 +640,7 @@ export function AdminPaperViewerClient({
                 >
                     <div className="max-w-5xl mx-auto px-4 py-2">
                         <div className="rounded-2xl border px-3 py-2" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
-                            <div className="flex flex-wrap items-center gap-2 sm:gap-3 sm:flex-nowrap sm:overflow-x-auto sm:whitespace-nowrap [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden lg:w-full lg:justify-between">
+                            <div className="flex flex-nowrap items-center gap-2 sm:gap-3 overflow-x-auto whitespace-nowrap [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
                                 <div className="inline-flex items-center gap-2 shrink-0">
                                     <div
                                         className="inline-flex h-8 w-8 items-center justify-center rounded-full border text-xs font-semibold"
@@ -604,55 +650,6 @@ export function AdminPaperViewerClient({
                                     </div>
                                     <span className="text-sm sm:text-base font-semibold whitespace-nowrap">Admin panel</span>
                                 </div>
-
-                                <span
-                                    className="inline-flex h-9 min-w-0 max-w-full sm:shrink-0 sm:min-w-[12rem] sm:max-w-[20rem] items-center rounded-full border px-3 text-xs sm:text-sm whitespace-nowrap overflow-hidden text-ellipsis"
-                                    style={{ borderColor: "var(--border)", background: "var(--muted)" }}
-                                    title={testTitle}
-                                >
-                                    {testTitle}
-                                </span>
-
-                                {mode === "edit" ? (
-                                    <>
-                                        <div
-                                            className="order-5 w-full h-9 inline-flex items-center rounded-full border px-3 sm:order-none sm:w-auto sm:shrink-0 sm:min-w-[12rem] sm:max-w-[16rem]"
-                                            style={uploadFolderSaved
-                                                ? {
-                                                    borderColor: "rgba(34, 197, 94, 0.65)",
-                                                    background: "rgba(20, 83, 45, 0.12)",
-                                                }
-                                                : {
-                                                    borderColor: "rgba(239, 68, 68, 0.6)",
-                                                    background: "rgba(127, 29, 29, 0.1)",
-                                                }}
-                                        >
-                                            <span className="text-xs opacity-70 shrink-0">testseries/</span>
-                                            <input
-                                                className="ml-1 min-w-0 w-full bg-transparent text-xs outline-none"
-                                                value={uploadFolderDraft}
-                                                onChange={(e) => {
-                                                    setUploadFolderDraft(e.target.value);
-                                                    setUploadFolderSaved(false);
-                                                }}
-                                                placeholder="xyz"
-                                            />
-                                        </div>
-
-                                        <button
-                                            type="button"
-                                            className="inline-flex shrink-0 items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
-                                            style={{
-                                                borderColor: uploadFolderSaved ? "rgba(34, 197, 94, 0.75)" : "rgba(239, 68, 68, 0.75)",
-                                                background: uploadFolderSaved ? "rgba(20, 83, 45, 0.35)" : "rgba(127, 29, 29, 0.28)",
-                                                color: uploadFolderSaved ? "#bbf7d0" : "#fecaca",
-                                            }}
-                                            onClick={saveUploadFolder}
-                                        >
-                                            {uploadFolderSaved ? "Saved" : "Save folder"}
-                                        </button>
-                                    </>
-                                ) : null}
 
                                 <button
                                     type="button"
@@ -676,15 +673,68 @@ export function AdminPaperViewerClient({
                                 >
                                     Papers
                                 </Link>
+
+                                {mode === "edit" ? (
+                                    <>
+                                        <div
+                                            className="h-9 inline-flex items-center rounded-full border px-3 w-[10.5rem] sm:w-[12rem] md:w-[13rem] shrink-0"
+                                            style={uploadFolderSaved
+                                                ? {
+                                                    borderColor: "rgba(34, 197, 94, 0.65)",
+                                                    background: "rgba(20, 83, 45, 0.12)",
+                                                }
+                                                : {
+                                                    borderColor: "rgba(239, 68, 68, 0.6)",
+                                                    background: "rgba(127, 29, 29, 0.1)",
+                                                }}
+                                        >
+                                            <span className="text-xs opacity-70 shrink-0">testseries/</span>
+                                            <input
+                                                className="ml-1 min-w-0 w-full bg-transparent text-[11px] sm:text-xs outline-none"
+                                                value={uploadFolderDraft}
+                                                onChange={(e) => {
+                                                    setUploadFolderDraft(e.target.value);
+                                                    setUploadFolderSaved(false);
+                                                }}
+                                                placeholder="paper-x"
+                                            />
+                                        </div>
+
+                                        <button
+                                            type="button"
+                                            className="inline-flex shrink-0 items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
+                                            style={{
+                                                borderColor: uploadFolderSaved ? "rgba(34, 197, 94, 0.75)" : "rgba(239, 68, 68, 0.75)",
+                                                background: uploadFolderSaved ? "rgba(20, 83, 45, 0.35)" : "rgba(127, 29, 29, 0.28)",
+                                                color: uploadFolderSaved ? "#bbf7d0" : "#fecaca",
+                                            }}
+                                            onClick={saveUploadFolder}
+                                        >
+                                            {uploadFolderSaved ? "Saved" : "Save folder"}
+                                        </button>
+                                    </>
+                                ) : null}
                             </div>
                         </div>
                     </div>
                 </header>
 
                 <main className="max-w-5xl mx-auto w-full px-4 py-8">
+                    <div
+                        className="mb-4 rounded-lg border px-4 py-3 text-sm sm:text-base font-semibold"
+                        style={{ borderColor: "var(--border)", background: "var(--card)" }}
+                        title={testTitle}
+                    >
+                        {testTitle}
+                    </div>
                     <div className="grid gap-4">
                         {viewerQuestions.map((q) => {
                             const isEditing = editOpenForQuestionId === q.id;
+                            const editPayload = isEditing ? parsedEditRaw : null;
+                            const editOptions = editPayload ? coerceOptions(editPayload.options) : [];
+                            const isNumericalEditQuestion = editPayload
+                                ? editPayload.markingSchemeType === "MAINS_NUMERICAL" || editPayload.markingSchemeType === "ADV_NAT"
+                                : false;
                             const preview = previewByQuestionId[q.id] ?? null;
                             const display = preview
                                 ? {
@@ -885,35 +935,195 @@ export function AdminPaperViewerClient({
                                     </div>
 
                                     {isEditing && mode === "edit" ? (
-                                        <div className="mt-4 rounded-lg border p-4" style={{ borderColor: "var(--border)", background: "var(--muted)" }}>
+                                        <div className="mt-3 rounded-lg border p-3" style={{ borderColor: "var(--border)", background: "var(--muted)" }}>
                                             <div className="text-base font-semibold">Edit question</div>
-                                            <div className="mt-1 text-sm opacity-70">
-                                                Update any field (options, answers, text, images, scheme) and save to DB.
+                                            <div className="mt-0.5 text-xs opacity-75">
+                                                Use Form editor for easy updates. Raw JSON remains available for advanced edits.
                                             </div>
 
-                                            <textarea
-                                                className="mt-3 w-full min-h-[340px] rounded border px-3 py-2 bg-transparent ui-field font-mono text-xs"
-                                                style={{ borderColor: "var(--border)", background: "var(--card)" }}
-                                                value={editRaw}
-                                                onChange={(e) => setEditRaw(e.target.value)}
-                                                disabled={loadingEdit || savingEdit}
-                                                placeholder={loadingEdit ? "Loading question..." : "Raw question JSON"}
-                                            />
+                                            <div className="mt-2 inline-flex rounded-full border p-1" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
+                                                <button
+                                                    type="button"
+                                                    className="inline-flex items-center justify-center h-7 rounded-full px-3 text-xs font-medium ui-click"
+                                                    style={{
+                                                        border: "1px solid transparent",
+                                                        background: editUiMode === "form" ? "linear-gradient(135deg, rgba(37,99,235,0.95), rgba(14,165,233,0.9))" : "transparent",
+                                                        color: editUiMode === "form" ? "#e0f2fe" : "inherit",
+                                                    }}
+                                                    onClick={() => setEditUiMode("form")}
+                                                    disabled={loadingEdit || savingEdit}
+                                                >
+                                                    Form editor
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    className="inline-flex items-center justify-center h-7 rounded-full px-3 text-xs font-medium ui-click"
+                                                    style={{
+                                                        border: "1px solid transparent",
+                                                        background: editUiMode === "json" ? "linear-gradient(135deg, rgba(37,99,235,0.95), rgba(14,165,233,0.9))" : "transparent",
+                                                        color: editUiMode === "json" ? "#e0f2fe" : "inherit",
+                                                    }}
+                                                    onClick={() => setEditUiMode("json")}
+                                                    disabled={loadingEdit || savingEdit}
+                                                >
+                                                    Raw JSON
+                                                </button>
+                                            </div>
 
-                                            <div className="mt-3 grid gap-3 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5">
+                                            {editUiMode === "form" ? (
+                                                editPayload ? (
+                                                    <div className="mt-2 grid gap-2">
+                                                        <div className="grid gap-2 sm:grid-cols-2">
+                                                            <label className="block">
+                                                                <div className="text-xs opacity-70">Topic</div>
+                                                                <input
+                                                                    className="mt-1 w-full rounded border px-2.5 py-1.5 bg-transparent ui-field text-sm"
+                                                                    style={{ borderColor: "var(--border)", background: "var(--card)" }}
+                                                                    value={typeof editPayload.topicName === "string" ? editPayload.topicName : ""}
+                                                                    onChange={(e) => updateEditPayload((payload) => { payload.topicName = e.target.value; })}
+                                                                    disabled={loadingEdit || savingEdit}
+                                                                />
+                                                            </label>
+                                                            <label className="block">
+                                                                <div className="text-xs opacity-70">Marking scheme</div>
+                                                                <select
+                                                                    className="mt-1 w-full rounded border px-2.5 py-1.5 bg-transparent ui-field text-sm"
+                                                                    style={{ borderColor: "var(--border)", background: "var(--card)" }}
+                                                                    value={typeof editPayload.markingSchemeType === "string" ? editPayload.markingSchemeType : "MAINS_SINGLE"}
+                                                                    onChange={(e) => updateEditPayload((payload) => { payload.markingSchemeType = e.target.value; })}
+                                                                    disabled={loadingEdit || savingEdit}
+                                                                >
+                                                                    <option value="MAINS_SINGLE">MAINS_SINGLE</option>
+                                                                    <option value="MAINS_NUMERICAL">MAINS_NUMERICAL</option>
+                                                                    <option value="ADV_MULTI_CORRECT">ADV_MULTI_CORRECT</option>
+                                                                    <option value="ADV_NAT">ADV_NAT</option>
+                                                                </select>
+                                                            </label>
+                                                        </div>
+
+                                                        <label className="block">
+                                                            <div className="text-xs opacity-70">Question text (supports LaTeX)</div>
+                                                            <textarea
+                                                                className="mt-1 w-full min-h-[96px] rounded border px-2.5 py-2 bg-transparent ui-field text-sm"
+                                                                style={{ borderColor: "var(--border)", background: "var(--card)" }}
+                                                                value={typeof editPayload.questionText === "string" ? editPayload.questionText : ""}
+                                                                onChange={(e) => updateEditPayload((payload) => { payload.questionText = e.target.value; })}
+                                                                disabled={loadingEdit || savingEdit}
+                                                            />
+                                                        </label>
+
+                                                        <div className="rounded border px-2.5 py-2 text-xs" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
+                                                            <div className="mb-1 opacity-70">Question LaTeX preview</div>
+                                                            <div className="text-sm leading-relaxed">
+                                                                <MathJax dynamic>{typeof editPayload.questionText === "string" ? editPayload.questionText : ""}</MathJax>
+                                                            </div>
+                                                        </div>
+
+                                                        <label className="block">
+                                                            <div className="text-xs opacity-70">Correct answer</div>
+                                                            <input
+                                                                className="mt-1 w-full rounded border px-2.5 py-1.5 bg-transparent ui-field text-sm"
+                                                                style={{ borderColor: "var(--border)", background: "var(--card)" }}
+                                                                value={Array.isArray(editPayload.correctAnswer)
+                                                                    ? editPayload.correctAnswer.map(String).join(", ")
+                                                                    : editPayload.correctAnswer == null
+                                                                        ? ""
+                                                                        : String(editPayload.correctAnswer)}
+                                                                onChange={(e) => {
+                                                                    const raw = e.target.value;
+                                                                    updateEditPayload((payload) => {
+                                                                        const scheme = String(payload.markingSchemeType ?? "");
+                                                                        if (scheme === "ADV_MULTI_CORRECT") {
+                                                                            payload.correctAnswer = raw
+                                                                                .split(",")
+                                                                                .map((v) => v.trim())
+                                                                                .filter(Boolean)
+                                                                                .map((v) => v.toUpperCase());
+                                                                            return;
+                                                                        }
+                                                                        payload.correctAnswer = raw.trim();
+                                                                    });
+                                                                }}
+                                                                placeholder={String(editPayload.markingSchemeType) === "ADV_MULTI_CORRECT" ? "A, C" : "e.g. B or 42"}
+                                                                disabled={loadingEdit || savingEdit}
+                                                            />
+                                                        </label>
+
+                                                        <label className="block">
+                                                            <div className="text-xs opacity-70">Question image URLs (one per line)</div>
+                                                            <textarea
+                                                                className="mt-1 w-full min-h-[72px] rounded border px-2.5 py-1.5 bg-transparent ui-field text-xs"
+                                                                style={{ borderColor: "var(--border)", background: "var(--card)" }}
+                                                                value={asStringArray(editPayload.imageUrls).join("\n")}
+                                                                onChange={(e) => updateEditPayload((payload) => { payload.imageUrls = splitUrlList(e.target.value); })}
+                                                                disabled={loadingEdit || savingEdit}
+                                                                placeholder="https://..."
+                                                            />
+                                                        </label>
+
+                                                        {!isNumericalEditQuestion ? (
+                                                            <div className="grid grid-cols-2 gap-1.5">
+                                                                {(["A", "B", "C", "D"] as const).map((key) => {
+                                                                    const option = editOptions.find((opt) => opt.key === key) ?? { key, text: "", imageUrl: null };
+                                                                    return (
+                                                                        <div key={`option-editor-${key}`} className="rounded border p-2" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
+                                                                            <div className="text-xs font-medium">Option {key}</div>
+                                                                            <textarea
+                                                                                className="mt-1 w-full min-h-[44px] rounded border px-2 py-1.5 bg-transparent ui-field text-sm"
+                                                                                style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                                                                                value={option.text}
+                                                                                onChange={(e) => updateEditOptionField(key, { text: e.target.value })}
+                                                                                disabled={loadingEdit || savingEdit}
+                                                                                placeholder={`Option ${key} text`}
+                                                                            />
+                                                                            <div className="mt-1 rounded border px-2 py-1 text-xs" style={{ borderColor: "var(--border)", background: "var(--muted)" }}>
+                                                                                <div className="mb-1 opacity-70">Preview</div>
+                                                                                <div className="text-sm leading-relaxed">
+                                                                                    <MathJax dynamic>{option.text}</MathJax>
+                                                                                </div>
+                                                                            </div>
+                                                                            <input
+                                                                                className="mt-1 w-full rounded border px-2 py-1.5 bg-transparent ui-field text-xs"
+                                                                                style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                                                                                value={option.imageUrl ?? ""}
+                                                                                onChange={(e) => updateEditOptionField(key, { imageUrl: e.target.value.trim() || null })}
+                                                                                disabled={loadingEdit || savingEdit}
+                                                                                placeholder={`Option ${key} image URL (optional)`}
+                                                                            />
+                                                                        </div>
+                                                                    );
+                                                                })}
+                                                            </div>
+                                                        ) : null}
+                                                    </div>
+                                                ) : (
+                                                    <div className="mt-3 rounded border p-3 text-sm text-red-500" style={{ borderColor: "rgba(239, 68, 68, 0.5)", background: "rgba(127, 29, 29, 0.1)" }}>
+                                                        Form editor is unavailable because JSON is invalid. Switch to Raw JSON mode and fix syntax first.
+                                                    </div>
+                                                )
+                                            ) : (
+                                                <textarea
+                                                    className="mt-2 w-full min-h-[260px] rounded border px-2.5 py-2 bg-transparent ui-field font-mono text-xs"
+                                                    style={{ borderColor: "var(--border)", background: "var(--card)" }}
+                                                    value={editRaw}
+                                                    onChange={(e) => setEditRaw(e.target.value)}
+                                                    disabled={loadingEdit || savingEdit}
+                                                    placeholder={loadingEdit ? "Loading question..." : "Raw question JSON"}
+                                                />
+                                            )}
+
+                                            <div className="mt-2 grid grid-cols-2 gap-1.5">
                                                 <div
-                                                    className="w-full rounded border p-3"
+                                                    className="w-full rounded border p-1.5"
                                                     style={{ borderColor: "var(--border)", background: "var(--card)" }}
                                                     onDragOver={(e) => e.preventDefault()}
                                                     onDrop={onQuestionDrop}
                                                 >
-                                                    <div className="text-xs font-medium">Question images</div>
-                                                    <div className="mt-1 text-xs opacity-70">Drag and drop image(s) here or pick files.</div>
                                                     <label
-                                                        className="mt-2 inline-flex items-center justify-center h-9 text-xs rounded-full border px-3 whitespace-nowrap ui-click cursor-pointer"
+                                                        className="inline-flex items-center justify-center h-7 w-full text-[11px] rounded-full border px-2 whitespace-nowrap ui-click cursor-pointer"
                                                         style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                                                     >
-                                                        {uploadingQuestionImage ? "Uploading..." : "Upload question image"}
+                                                        {uploadingQuestionImage ? "Uploading..." : "Question images"}
                                                         <input
                                                             type="file"
                                                             accept="image/*"
@@ -927,23 +1137,22 @@ export function AdminPaperViewerClient({
                                                             }}
                                                         />
                                                     </label>
+                                                    <div className="mt-1 text-[10px] opacity-70 text-center">Drag/drop or upload</div>
                                                 </div>
 
-                                                {(["A", "B", "C", "D"] as const).map((key) => (
+                                                {!isNumericalEditQuestion ? (["A", "B", "C", "D"] as const).map((key) => (
                                                     <div
                                                         key={key}
-                                                        className="w-full rounded border p-3"
+                                                        className="w-full rounded border p-1.5"
                                                         style={{ borderColor: "var(--border)", background: "var(--card)" }}
                                                         onDragOver={(e) => e.preventDefault()}
                                                         onDrop={(e) => onOptionDrop(key, e)}
                                                     >
-                                                        <div className="text-xs font-medium">Option {key} image</div>
-                                                        <div className="mt-1 text-xs opacity-70">Drag and drop one image here for option {key}.</div>
                                                         <label
-                                                            className="mt-2 inline-flex items-center justify-center h-9 text-xs rounded-full border px-3 whitespace-nowrap ui-click cursor-pointer"
+                                                            className="inline-flex items-center justify-center h-7 w-full text-[11px] rounded-full border px-2 whitespace-nowrap ui-click cursor-pointer"
                                                             style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                                                         >
-                                                            {uploadingOptionImage ? "Uploading..." : `Upload Option ${key}`}
+                                                            {uploadingOptionImage ? "Uploading..." : `Option ${key} image`}
                                                             <input
                                                                 type="file"
                                                                 accept="image/*"
@@ -956,8 +1165,9 @@ export function AdminPaperViewerClient({
                                                                 }}
                                                             />
                                                         </label>
+                                                        <div className="mt-1 text-[10px] opacity-70 text-center">Drag/drop or upload</div>
                                                     </div>
-                                                ))}
+                                                )) : null}
                                             </div>
 
                                             {editError ? (
@@ -967,10 +1177,10 @@ export function AdminPaperViewerClient({
                                                 <div className="mt-2 text-sm text-emerald-500">{editSuccess}</div>
                                             ) : null}
 
-                                            <div className="mt-4 flex flex-wrap items-center justify-start sm:justify-end gap-2">
+                                            <div className="mt-2 flex flex-wrap items-center justify-start sm:justify-end gap-1.5">
                                                 <button
                                                     type="button"
-                                                    className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
+                                                    className="inline-flex items-center justify-center h-8 rounded-full border px-2.5 text-[11px] whitespace-nowrap ui-click"
                                                     style={{ borderColor: "var(--border)", background: "var(--card)" }}
                                                     onClick={previewEdit}
                                                     disabled={loadingEdit || savingEdit || uploadingQuestionImage || uploadingOptionImage || !editRaw.trim()}
@@ -979,7 +1189,7 @@ export function AdminPaperViewerClient({
                                                 </button>
                                                 <button
                                                     type="button"
-                                                    className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
+                                                    className="inline-flex items-center justify-center h-8 rounded-full border px-2.5 text-[11px] whitespace-nowrap ui-click"
                                                     style={{ borderColor: "var(--border)", background: "var(--card)" }}
                                                     onClick={() => void copyEditJson()}
                                                     disabled={loadingEdit || savingEdit || uploadingQuestionImage || uploadingOptionImage || copyingEdit || !editRaw.trim()}
@@ -988,13 +1198,14 @@ export function AdminPaperViewerClient({
                                                 </button>
                                                 <button
                                                     type="button"
-                                                    className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
+                                                    className="inline-flex items-center justify-center h-8 rounded-full border px-2.5 text-[11px] whitespace-nowrap ui-click"
                                                     style={{ borderColor: "var(--border)", background: "var(--card)" }}
                                                     onClick={() => {
                                                         setEditOpenForQuestionId(null);
                                                         setEditError(null);
                                                         setEditSuccess(null);
                                                         setEditRaw("");
+                                                        setEditUiMode("form");
                                                         setPreviewByQuestionId((prev) => {
                                                             const { [q.id]: _removed, ...rest } = prev;
                                                             return rest;
@@ -1006,7 +1217,7 @@ export function AdminPaperViewerClient({
                                                 </button>
                                                 <button
                                                     type="button"
-                                                    className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs font-medium whitespace-nowrap ui-click"
+                                                    className="inline-flex items-center justify-center h-8 rounded-full border px-2.5 text-[11px] font-medium whitespace-nowrap ui-click"
                                                     style={{ borderColor: "var(--border)", background: "var(--card)" }}
                                                     onClick={() => void saveEdit()}
                                                     disabled={loadingEdit || savingEdit || uploadingQuestionImage || uploadingOptionImage || !editRaw.trim()}

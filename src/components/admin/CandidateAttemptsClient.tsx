@@ -92,14 +92,17 @@ export function CandidateAttemptsClient({
                 {attempts.map((a) => (
                     <div
                         key={a.id}
-                        className="rounded-lg border p-4"
+                        className="rounded-2xl border p-4 shadow-sm"
                         style={{ borderColor: "var(--border)", background: "var(--card)" }}
                     >
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                             <div className="min-w-0">
-                                <div className="text-sm font-medium">Attempt {a.id.slice(0, 8)}</div>
-                                <div className="mt-1 text-xs opacity-70">
-                                    {a.status} · Score {a.overallScore ?? "—"}
+                                <div className="text-base font-semibold">Attempt {a.id.slice(0, 8)}</div>
+                                <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px]">
+                                    <span className="inline-flex items-center justify-center h-7 rounded-full border px-2.5 whitespace-nowrap" style={{ borderColor: "var(--border)", background: "var(--muted)" }}>
+                                        {a.status}
+                                    </span>
+                                    <span className="opacity-60">Score {a.overallScore ?? "—"}</span>
                                 </div>
                                 <div className="mt-1 text-xs opacity-60">
                                     Start {fmtDate(a.startTimestamp)} · End {fmtDate(a.endTimestamp)}
@@ -114,7 +117,11 @@ export function CandidateAttemptsClient({
                                 <Link
                                     href={`/attempt/${a.id}/report`}
                                     className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
-                                    style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                                    style={{
+                                        borderColor: "rgba(59, 130, 246, 0.5)",
+                                        background: "linear-gradient(135deg, rgba(37,99,235,0.95), rgba(14,165,233,0.9))",
+                                        color: "#e0f2fe",
+                                    }}
                                 >
                                     View report
                                 </Link>
@@ -135,7 +142,9 @@ export function CandidateAttemptsClient({
                 ))}
 
                 {attempts.length === 0 ? (
-                    <div className="text-sm opacity-70">No attempts found for this paper.</div>
+                    <div className="rounded-xl border p-4 text-sm opacity-70" style={{ borderColor: "var(--border)", background: "var(--muted)" }}>
+                        No attempts found for this paper.
+                    </div>
                 ) : null}
             </div>
 

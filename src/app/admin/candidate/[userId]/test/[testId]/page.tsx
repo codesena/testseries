@@ -40,23 +40,30 @@ export default async function AdminCandidateTestPage(
         return (
             <div className="min-h-screen flex flex-col">
                 <header
-                    className="sticky top-0 z-50 border-b"
-                    style={{ borderColor: "var(--border)", background: "var(--background)" }}
+                    className="sticky top-0 z-50 border-b backdrop-blur-md"
+                    style={{
+                        borderColor: "var(--border)",
+                        background: "color-mix(in srgb, var(--background) 88%, transparent)",
+                    }}
                 >
-                    <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
-                        <Link
-                            href="/"
-                            className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
-                            style={{ borderColor: "var(--border)", background: "var(--muted)" }}
-                        >
-                            Home
-                        </Link>
-                        <div className="text-sm opacity-70">Admin</div>
+                    <div className="max-w-5xl mx-auto px-4 py-2">
+                        <div className="rounded-2xl border px-3 py-2" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
+                            <div className="flex items-center justify-between gap-2">
+                                <Link
+                                    href="/"
+                                    className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
+                                    style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                                >
+                                    Home
+                                </Link>
+                                <div className="text-sm opacity-70">Admin</div>
+                            </div>
+                        </div>
                     </div>
                 </header>
 
                 <main className="max-w-5xl mx-auto w-full px-4 py-8">
-                    <div className="rounded-lg border p-4" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
+                    <div className="rounded-2xl border p-4" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
                         <div className="text-sm font-medium">Access denied</div>
                         <div className="mt-1 text-sm opacity-70">Your account is not allowed to view admin reports.</div>
                     </div>
@@ -122,40 +129,49 @@ export default async function AdminCandidateTestPage(
     return (
         <div className="min-h-screen flex flex-col">
             <header
-                className="sticky top-0 z-50 border-b"
-                style={{ borderColor: "var(--border)", background: "var(--background)" }}
+                className="sticky top-0 z-50 border-b backdrop-blur-md"
+                style={{
+                    borderColor: "var(--border)",
+                    background: "color-mix(in srgb, var(--background) 88%, transparent)",
+                }}
             >
-                <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
-                    <div className="flex min-w-0 items-center gap-2 overflow-x-auto whitespace-nowrap [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-                        <Link
-                            href={`/admin/candidate/${userId}`}
-                            className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
-                            style={{ borderColor: "var(--border)", background: "var(--muted)" }}
-                        >
-                            Papers
-                        </Link>
-                        <Link
-                            href="/admin"
-                            className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
-                            style={{ borderColor: "var(--border)", background: "var(--muted)" }}
-                        >
-                            Admin
-                        </Link>
+                <div className="max-w-5xl mx-auto px-4 py-2">
+                    <div className="rounded-2xl border px-3 py-2" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
+                        <div className="flex flex-nowrap items-center gap-3 overflow-x-auto whitespace-nowrap [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+                            <div className="flex min-w-0 items-center gap-2 shrink-0">
+                                <Link
+                                    href={`/admin/candidate/${userId}`}
+                                    className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
+                                    style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                                >
+                                    Papers
+                                </Link>
+                                <Link
+                                    href="/admin"
+                                    className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
+                                    style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                                >
+                                    Admin
+                                </Link>
+                            </div>
+                            <div className="text-sm opacity-70 truncate shrink-0 ml-auto">Attempts</div>
+                        </div>
                     </div>
-                    <div className="text-sm opacity-70 truncate">Attempts</div>
                 </div>
             </header>
 
             <main className="max-w-5xl mx-auto w-full px-4 py-8">
-                <h1 className="text-2xl font-semibold">Attempts</h1>
-                <div className="mt-2 text-sm opacity-70">{candidateLabel}</div>
-                <div className="mt-1 text-sm opacity-70">{testTitle}</div>
+                <section className="rounded-2xl border p-5 sm:p-6" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
+                    <h1 className="text-2xl font-semibold">Attempts</h1>
+                    <div className="mt-2 text-sm opacity-70">{candidateLabel}</div>
+                    <div className="mt-1 text-sm opacity-70">{testTitle}</div>
 
-                <CandidateAttemptsClient
-                    initialAttempts={attemptRows}
-                    candidateLabel={candidateLabel}
-                    testTitle={testTitle}
-                />
+                    <CandidateAttemptsClient
+                        initialAttempts={attemptRows}
+                        candidateLabel={candidateLabel}
+                        testTitle={testTitle}
+                    />
+                </section>
             </main>
         </div>
     );

@@ -89,8 +89,8 @@ export default async function TestAttemptHistoryPage({
             >
                 <div className="max-w-5xl mx-auto px-4 py-2">
                     <div className="rounded-2xl border px-3 py-2" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
-                        <div className="flex flex-wrap items-center justify-between gap-2">
-                            <div className="flex items-center gap-2 min-w-0">
+                        <div className="flex flex-nowrap items-center gap-2 overflow-x-auto whitespace-nowrap [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+                            <div className="flex items-center gap-2 min-w-0 shrink-0">
                                 <div
                                     className="inline-flex h-8 w-8 items-center justify-center rounded-full border text-xs font-semibold shrink-0"
                                     style={{ borderColor: "var(--border)", background: "var(--muted)" }}
@@ -99,13 +99,20 @@ export default async function TestAttemptHistoryPage({
                                 </div>
                                 <div className="text-sm font-medium">JEE Test Series</div>
                             </div>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 shrink-0 ml-auto">
                                 <Link
                                     href="/"
                                     className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
                                     style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                                 >
-                                    Dashboard
+                                    Home
+                                </Link>
+                                <Link
+                                    href="/#tests"
+                                    className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
+                                    style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                                >
+                                    Available tests
                                 </Link>
                                 <span
                                     className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap"
@@ -123,7 +130,7 @@ export default async function TestAttemptHistoryPage({
                 </div>
             </header>
 
-            <main className="max-w-5xl mx-auto w-full px-4 pt-8 pb-16">
+            <main className="max-w-5xl mx-auto w-full px-4 pt-7 pb-14">
                 <section className="rounded-2xl border p-5 sm:p-6" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
                     <h1 className="text-2xl font-semibold">{test.title}</h1>
                     <div className="mt-2 text-sm opacity-70">
@@ -149,7 +156,7 @@ export default async function TestAttemptHistoryPage({
                     </div>
                 </section>
 
-                <div className="mt-6 grid gap-3">
+                <div className="mt-5 grid gap-3">
                     {attempts.map((a) => {
                         const totalQuestions = Array.isArray(a.questionOrder)
                             ? a.questionOrder.length
@@ -173,13 +180,18 @@ export default async function TestAttemptHistoryPage({
                                 className="rounded-2xl border p-3 sm:p-4 ui-click"
                                 style={{ borderColor: "var(--border)", background: "var(--card)" }}
                             >
-                                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                                <div className="grid gap-3 lg:grid-cols-[1fr_auto] lg:items-center">
                                     <div className="min-w-0">
-                                        <div className="font-medium">
-                                            Attempt {attemptNo}/{attemptCount}
-                                        </div>
-                                        <div className="mt-1 text-sm opacity-70">
-                                            Status {a.status}
+                                        <div className="flex flex-wrap items-center gap-2">
+                                            <div className="font-semibold text-base">
+                                                Attempt {attemptNo}/{attemptCount}
+                                            </div>
+                                            <span
+                                                className="inline-flex items-center justify-center h-7 rounded-full border px-2.5 text-[11px] whitespace-nowrap"
+                                                style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                                            >
+                                                {a.status}
+                                            </span>
                                         </div>
                                         <div className="text-xs opacity-60">
                                             Started {fmtDate(a.startTimestamp)}
@@ -187,14 +199,35 @@ export default async function TestAttemptHistoryPage({
                                                 ? ` · Ended ${fmtDate(a.endTimestamp)}`
                                                 : ""}
                                         </div>
-                                        <div className="mt-2 text-sm opacity-80">
-                                            Score: {a.overallScore ?? "—"} · Attempted: {attempted}/
-                                            {totalQuestions || "—"} · Time: {fmtTime(totalTimeSeconds)}
+
+                                        <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px]">
+                                            <span
+                                                className="inline-flex items-center justify-center h-7 rounded-full border px-2.5 whitespace-nowrap"
+                                                style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                                            >
+                                                Score {a.overallScore ?? "—"}
+                                            </span>
+                                            <span
+                                                className="inline-flex items-center justify-center h-7 rounded-full border px-2.5 whitespace-nowrap"
+                                                style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                                            >
+                                                Attempted {attempted}/{totalQuestions || "—"}
+                                            </span>
+                                            <span
+                                                className="inline-flex items-center justify-center h-7 rounded-full border px-2.5 whitespace-nowrap"
+                                                style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                                            >
+                                                Time {fmtTime(totalTimeSeconds)}
+                                            </span>
                                         </div>
                                     </div>
                                     <span
-                                        className="inline-flex items-center justify-center h-9 text-xs font-medium rounded-full border px-3 whitespace-nowrap self-start sm:self-auto"
-                                        style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                                        className="inline-flex items-center justify-center h-9 text-xs font-medium rounded-full border px-3 whitespace-nowrap self-start lg:self-center"
+                                        style={{
+                                            borderColor: "rgba(59, 130, 246, 0.5)",
+                                            background: "linear-gradient(135deg, rgba(37,99,235,0.95), rgba(14,165,233,0.9))",
+                                            color: "#e0f2fe",
+                                        }}
                                     >
                                         View report
                                     </span>

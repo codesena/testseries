@@ -109,25 +109,26 @@ export const QuestionView = memo(function QuestionView({
             className="rounded-xl border p-4 shadow-sm"
             style={{ borderColor: "var(--border)", background: "var(--card)" }}
         >
-            <div className="flex items-start justify-between gap-4">
-                <div>
-                    <div className="text-[11px] uppercase tracking-wide opacity-60">
-                        {question.subject.name} · {question.topicName}
-                    </div>
-                    <div className="mt-2 flex items-center gap-2">
-                        <div className="text-xs opacity-65">Status</div>
-                        <span
-                            className={`inline-flex items-center rounded-full h-7 px-2.5 text-xs font-medium ${statusBadgeClass(
-                                paletteStatus,
-                            )}`}
-                        >
-                            Q{questionNumber ?? "?"} · {statusLabel(paletteStatus)}
-                        </span>
-                    </div>
+            <div>
+                <div className="text-[11px] uppercase tracking-wide opacity-60">
+                    {question.topicName}
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="mt-2 grid grid-cols-3 gap-2">
+                    <span
+                        className="inline-flex items-center justify-center rounded-full h-7 px-1.5 text-[11px] font-medium whitespace-nowrap"
+                        style={{ borderColor: "var(--border)", background: "var(--muted)", borderWidth: 1 }}
+                    >
+                        Q{questionNumber ?? "?"}
+                    </span>
+                    <span
+                        className={`inline-flex items-center justify-center rounded-full h-7 px-1.5 text-[11px] font-medium whitespace-nowrap ${statusBadgeClass(
+                            paletteStatus,
+                        )}`}
+                    >
+                        {statusLabel(paletteStatus)}
+                    </span>
                     <button
-                        className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
+                        className="inline-flex items-center justify-center h-7 rounded-full border px-1.5 text-[11px] whitespace-nowrap ui-click"
                         style={{ borderColor: "var(--border)", background: "transparent" }}
                         onClick={() => {
                             setIssueOpen(true);

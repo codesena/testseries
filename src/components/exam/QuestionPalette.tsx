@@ -43,7 +43,7 @@ export function QuestionPalette({
     onPick: (questionId: string) => void;
 }) {
     return (
-        <div className="grid grid-cols-5 sm:grid-cols-6 gap-2">
+        <div className="grid grid-cols-5 gap-2">
             {questions.map((q, idx) => {
                 const status = paletteByQid[q.id] ?? "NOT_VISITED";
                 const active = q.id === activeQuestionId;
@@ -70,7 +70,7 @@ export function QuestionPalette({
                 );
             })}
 
-            <div className="col-span-5 sm:col-span-6 mt-4 text-xs opacity-75">
+            <div className="col-span-5 mt-4 text-xs opacity-75">
                 <div className="grid grid-cols-2 gap-2">
                     <div className="inline-flex items-center gap-2 rounded-full border px-2.5 py-1" style={{ borderColor: "var(--border)", background: "var(--muted)" }}>
                         <span

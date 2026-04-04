@@ -4,6 +4,12 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 type Theme = "light" | "dark" | "system";
 
+type ThemeToggleProps = {
+    className?: string;
+    buttonClassName?: string;
+    compact?: boolean;
+};
+
 function applyTheme(theme: Theme) {
     const root = document.documentElement;
     if (theme === "system") {
@@ -16,7 +22,7 @@ function applyTheme(theme: Theme) {
     localStorage.setItem("theme", theme);
 }
 
-export function ThemeToggle() {
+export function ThemeToggle({ className, buttonClassName, compact = false }: ThemeToggleProps) {
     const [theme, setTheme] = useState<Theme>("system");
     const [open, setOpen] = useState(false);
     const popoverRef = useRef<HTMLDivElement | null>(null);
@@ -65,12 +71,12 @@ export function ThemeToggle() {
     }
 
     return (
-        <label className="text-xs sm:text-sm flex items-center gap-2 whitespace-nowrap">
+        <label className={`text-xs sm:text-sm flex items-center gap-2 whitespace-nowrap ${className ?? ""}`}>
             <span className="opacity-70 hidden sm:inline">Theme</span>
-            <div className="relative z-50" ref={popoverRef}>
+            <div className="relative z-50 min-w-0" ref={popoverRef}>
                 <button
                     type="button"
-                    className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
+                    className={`inline-flex items-center justify-center rounded-full border whitespace-nowrap ui-click ${compact ? "h-9 px-2 text-[11px]" : "h-9 px-3 text-xs"} ${buttonClassName ?? ""}`}
                     style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                     aria-haspopup="menu"
                     aria-expanded={open}

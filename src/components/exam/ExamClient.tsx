@@ -546,7 +546,7 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
             // Keyboard shortcuts
             if (e.altKey && key === "n") {
                 e.preventDefault();
-                goNext();
+                nextWithAutoSave();
             }
             if (e.altKey && key === "v") {
                 e.preventDefault();
@@ -769,6 +769,54 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
         const list = activeSubjectId ? questionsInActiveSubject : questions;
         const prev = list[idx - 1];
         if (prev) goToQuestion(prev.id);
+    }
+
+    function nextWithAutoSave() {
+        if (!activeQuestionId) {
+            goNext();
+            return;
+        }
+
+        const answer = answersByQid[activeQuestionId] ?? null;
+        const hasAnswer =
+            Array.isArray(answer)
+                ? answer.length > 0
+                : answer != null && !(typeof answer === "string" && answer.trim() === "");
+
+        if (hasAnswer) {
+            const local = timeByQid[activeQuestionId] ?? 0;
+            const synced = syncedTimeByQidRef.current[activeQuestionId] ?? 0;
+            const delta = Math.max(0, local - synced);
+            syncedTimeByQidRef.current[activeQuestionId] = local;
+
+            const paletteStatus: PaletteStatus = "ANSWERED_SAVED";
+            setPaletteByQid((prev) => ({ ...prev, [activeQuestionId]: paletteStatus }));
+
+            void safePost(
+                `/api/attempts/${attemptId}/responses`,
+                {
+                    questionId: activeQuestionId,
+                    selectedAnswer: answer,
+                    paletteStatus,
+                    timeDeltaSeconds: delta,
+                    action: "SAVE_NEXT",
+                },
+                {
+                    attemptId,
+                    kind: "response",
+                    payload: {
+                        questionId: activeQuestionId,
+                        selectedAnswer: answer,
+                        paletteStatus,
+                        timeDeltaSeconds: delta,
+                        action: "SAVE_NEXT",
+                    },
+                },
+            );
+        }
+
+        setSaveNextNotice(null);
+        goNext();
     }
 
     function saveAndNext() {
@@ -1025,8 +1073,38 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
                         <div className="rounded-2xl border px-3 py-2" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
                             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                                 <div className="min-w-0 sm:flex-1">
-                                    <div className="text-lg font-semibold truncate">{testTitle}</div>
-                                    <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px]">
+                                    <div className="flex items-center gap-2 min-w-0">
+                                        <div className="text-lg font-semibold truncate">{testTitle}</div>
+                                    </div>
+                                    <div className="mt-2 flex sm:hidden items-center gap-1.5">
+                                        <span className="inline-flex min-w-0 flex-[1.12] items-center justify-center h-9 rounded-full border px-2 text-xs whitespace-nowrap" style={{ borderColor: "var(--border)", background: "var(--muted)" }}>
+                                            Answered {answeredCount}/{totalQuestions || "-"}
+                                        </span>
+                                        <div
+                                            className="inline-flex min-w-0 flex-1 items-center justify-center h-9 rounded-full border px-2 text-xs font-mono whitespace-nowrap"
+                                            style={{
+                                                borderColor: timeLeftSeconds <= 10 * 60 ? "rgba(239,68,68,0.6)" : "var(--border)",
+                                                background: timeLeftSeconds <= 10 * 60 ? "rgba(127,29,29,0.35)" : "var(--muted)",
+                                                color: timeLeftSeconds <= 10 * 60 ? "#fecaca" : undefined,
+                                            }}
+                                        >
+                                            {formatTime(timeLeftSeconds)}
+                                        </div>
+                                        <ThemeToggle className="flex-1 min-w-0" buttonClassName="w-full min-w-0" compact />
+                                        <button
+                                            className="inline-flex min-w-0 flex-[0.88] items-center justify-center h-9 rounded-full border px-0.5 text-xs font-medium ui-click whitespace-nowrap"
+                                            style={{
+                                                borderColor: "rgba(245, 158, 11, 0.55)",
+                                                background: "rgba(146, 64, 14, 0.22)",
+                                                color: "#fde68a",
+                                            }}
+                                            onClick={() => setSubmitConfirmOpen(true)}
+                                            disabled={submitting || submitConfirmOpen}
+                                        >
+                                            Submit
+                                        </button>
+                                    </div>
+                                    <div className="mt-1 hidden sm:flex flex-wrap items-center gap-2 text-[11px]">
                                         <span className="inline-flex items-center justify-center h-6 rounded-full border px-2.5" style={{ borderColor: "var(--border)", background: "var(--muted)" }}>
                                             Attempt {attemptId.slice(0, 8)}
                                         </span>
@@ -1037,7 +1115,7 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
                                     </div>
                                 </div>
 
-                                <div className="flex items-center flex-wrap justify-end gap-2 sm:gap-3 self-start sm:self-auto shrink-0 max-w-full">
+                                <div className="hidden sm:flex items-center flex-wrap justify-end gap-2 sm:gap-3 self-start sm:self-auto shrink-0 max-w-full">
                                     <div
                                         className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs sm:text-sm font-mono shrink-0 whitespace-nowrap"
                                         style={{
@@ -1108,7 +1186,53 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
 
                                 <div className="mt-4 rounded-xl border p-3" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
                                     <div className="text-xs font-medium opacity-75 mb-2">Actions</div>
-                                    <div className="flex flex-wrap gap-2">
+                                    <div className="sm:hidden flex flex-col gap-2">
+                                        <div className="flex items-center gap-2">
+                                            <button
+                                                className="inline-flex min-w-0 flex-1 items-center justify-center h-10 rounded-full border px-2 text-xs whitespace-nowrap ui-click"
+                                                style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                                                onClick={goPrev}
+                                            >
+                                                Previous
+                                            </button>
+                                            <button
+                                                className="inline-flex min-w-0 flex-1 items-center justify-center h-10 rounded-full border px-2 text-xs font-semibold whitespace-nowrap ui-click"
+                                                style={{
+                                                    borderColor: "rgba(59, 130, 246, 0.5)",
+                                                    background: "linear-gradient(135deg, rgba(37,99,235,0.95), rgba(14,165,233,0.9))",
+                                                    color: "#e0f2fe",
+                                                }}
+                                                onClick={saveAndNext}
+                                            >
+                                                Save & Next
+                                            </button>
+                                            <button
+                                                className="inline-flex min-w-0 flex-1 items-center justify-center h-10 rounded-full border px-2 text-xs whitespace-nowrap ui-click"
+                                                style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                                                onClick={nextWithAutoSave}
+                                            >
+                                                Next
+                                            </button>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <button
+                                                className="inline-flex min-w-0 flex-[1.6] items-center justify-center h-10 rounded-full border px-2 text-xs whitespace-nowrap ui-click"
+                                                style={{ borderColor: "rgba(245, 158, 11, 0.5)", background: "rgba(146, 64, 14, 0.18)", color: "#fde68a" }}
+                                                onClick={markForReviewAndNext}
+                                            >
+                                                Mark for Review & Next
+                                            </button>
+                                            <button
+                                                className="inline-flex min-w-0 flex-1 items-center justify-center h-10 rounded-full border px-2 text-xs whitespace-nowrap ui-click"
+                                                style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                                                onClick={clearResponse}
+                                            >
+                                                Clear Response
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div className="hidden sm:flex flex-wrap gap-2">
                                         <button
                                             className="inline-flex items-center justify-center h-10 rounded-full border px-4 text-sm whitespace-nowrap ui-click"
                                             style={{ borderColor: "var(--border)", background: "var(--muted)" }}
@@ -1140,6 +1264,13 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
                                             onClick={clearResponse}
                                         >
                                             Clear Response
+                                        </button>
+                                        <button
+                                            className="inline-flex items-center justify-center h-10 rounded-full border px-4 text-sm whitespace-nowrap ui-click"
+                                            style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                                            onClick={nextWithAutoSave}
+                                        >
+                                            Next
                                         </button>
                                     </div>
                                 </div>
@@ -1173,7 +1304,7 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
                                     </div>
                                 </div>
 
-                                <div className="mt-3 flex flex-wrap gap-2">
+                                <div className="mt-3 grid grid-cols-3 gap-2">
                                     {subjects.map((s) => (
                                         (() => {
                                             const active = activeSubjectId === s.id;
@@ -1186,7 +1317,7 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
                                             return (
                                                 <button
                                                     key={s.id}
-                                                    className={`inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click transition-colors ${active
+                                                    className={`inline-flex w-full items-center justify-center h-9 rounded-full border px-2 text-xs whitespace-nowrap ui-click transition-colors ${active
                                                         ? `font-semibold ring-2 ring-white/35 ${activeTone}`
                                                         : "opacity-85 bg-[var(--muted)] text-[var(--foreground)] hover:opacity-100"
                                                         }`}

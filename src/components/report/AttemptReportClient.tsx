@@ -28,7 +28,7 @@ type ReportPayload = {
         score: number | null;
         startTimestamp: string;
         endTimestamp: string | null;
-        test: { title: string; totalDurationMinutes: number };
+        test: { id: string; title: string; totalDurationMinutes: number };
     };
     analytics: {
         subjectSummary: Record<
@@ -308,10 +308,17 @@ export function AttemptReportClient({ attemptId }: { attemptId: string }) {
                         background: "color-mix(in srgb, var(--background) 88%, transparent)",
                     }}
                 >
-                    <div className="max-w-4xl xl:max-w-6xl 2xl:max-w-7xl mx-auto px-4 py-2">
+                    <div className="max-w-5xl mx-auto px-4 py-2">
                         <div className="rounded-2xl border px-3 py-2" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
-                            <div className="flex flex-wrap items-center justify-between gap-2">
-                                <div className="flex items-center gap-2">
+                            <div className="flex flex-nowrap items-center gap-2 overflow-x-auto whitespace-nowrap [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+                                <div className="flex items-center gap-2 shrink-0">
+                                    <Link
+                                        href={`/test/${data.attempt.test.id}/history`}
+                                        className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
+                                        style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                                    >
+                                        History
+                                    </Link>
                                     <Link
                                         href="/"
                                         className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
@@ -322,20 +329,33 @@ export function AttemptReportClient({ attemptId }: { attemptId: string }) {
                                     <button
                                         type="button"
                                         className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
-                                        style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                                        style={{
+                                            borderColor: "rgba(59, 130, 246, 0.5)",
+                                            background: "linear-gradient(135deg, rgba(37,99,235,0.95), rgba(14,165,233,0.9))",
+                                            color: "#e0f2fe",
+                                        }}
                                         onClick={exportReportPdf}
                                         disabled={exporting}
                                     >
                                         {exporting ? "Preparing PDF..." : "Export PDF"}
                                     </button>
                                 </div>
-                                <div className="text-sm opacity-70">Attempt Report</div>
+                                <div
+                                    className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap"
+                                    style={{
+                                        borderColor: "rgba(59, 130, 246, 0.5)",
+                                        background: "linear-gradient(135deg, rgba(37,99,235,0.95), rgba(14,165,233,0.9))",
+                                        color: "#e0f2fe",
+                                    }}
+                                >
+                                    Attempt Report
+                                </div>
                             </div>
                         </div>
                     </div>
                 </header>
 
-                <main className="max-w-4xl xl:max-w-6xl 2xl:max-w-7xl mx-auto w-full px-4 pt-8 pb-16">
+                <main className="max-w-5xl mx-auto w-full px-4 pt-8 pb-16">
                     <section className="rounded-2xl border p-5 sm:p-6" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
                         <h1 className="text-xl sm:text-2xl font-semibold break-words">{data.attempt.test.title}</h1>
                         <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
