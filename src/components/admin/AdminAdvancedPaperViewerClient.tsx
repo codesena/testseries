@@ -4,6 +4,7 @@ import Link from "next/link";
 import { MathJax, MathJaxContext } from "better-react-mathjax";
 import { type DragEvent, useMemo, useState } from "react";
 import { InstructionRichText } from "@/components/common/InstructionRichText";
+import { RichStemContent } from "@/components/common/RichStemContent";
 import { optimizeImageDelivery } from "@/lib/image-delivery";
 import { composeInstructionSections, splitInstructionSections } from "@/lib/instructions";
 
@@ -208,6 +209,76 @@ function slugifyFolderName(input: string): string {
         .slice(0, 80);
 }
 
+function buildPipeTableTemplate(rowCount: number, columnCount: number): string {
+    const cols = Math.max(2, Math.min(8, Math.floor(columnCount)));
+    const rows = Math.max(1, Math.min(20, Math.floor(rowCount)));
+
+    const header = `| ${Array.from({ length: cols }, (_, i) => `Col ${i + 1}`).join(" | ")} |`;
+    const sep = `| ${Array.from({ length: cols }, () => "---").join(" | ")} |`;
+    const body = Array.from({ length: rows }, () => `| ${Array.from({ length: cols }, () => "").join(" | ")} |`).join("\n");
+
+    return `${header}\n${sep}\n${body}`;
+}
+
+function parseTableRow(line: string): string[] | null {
+    if (!line.includes("|")) return null;
+    const raw = line.trim();
+    if (!raw) return null;
+    const trimmed = raw.replace(/^\|/, "").replace(/\|$/, "");
+    const cells = trimmed.split("|").map((c) => c.trim());
+    return cells.length ? cells : null;
+}
+
+function isTableSeparatorRow(cells: string[]): boolean {
+    return cells.length > 0 && cells.every((cell) => /^:?-{3,}:?$/.test(cell.replace(/\s+/g, "")));
+}
+
+type FirstPipeTable = {
+    startLine: number;
+    endLineExclusive: number;
+};
+
+function findFirstPipeTable(lines: string[]): FirstPipeTable | null {
+    for (let i = 0; i < lines.length - 1; i += 1) {
+        const head = parseTableRow(lines[i]);
+        const sep = parseTableRow(lines[i + 1]);
+        if (!head || !sep) continue;
+        if (head.length !== sep.length || !isTableSeparatorRow(sep)) continue;
+
+        let j = i + 2;
+        while (j < lines.length) {
+            const row = parseTableRow(lines[j]);
+            if (!row) break;
+            j += 1;
+        }
+
+        return {
+            startLine: i,
+            endLineExclusive: j,
+        };
+    }
+
+    return null;
+}
+
+function replaceFirstPipeTableBlock(questionText: string, newTable: string): string {
+    const lines = questionText.split(/\r?\n/);
+    const found = findFirstPipeTable(lines);
+    const nextTableLines = newTable.split(/\r?\n/);
+
+    if (!found) {
+        return questionText.trim() ? `${questionText.trim()}\n\n${newTable}` : newTable;
+    }
+
+    const out = [
+        ...lines.slice(0, found.startLine),
+        ...nextTableLines,
+        ...lines.slice(found.endLineExclusive),
+    ];
+
+    return out.join("\n");
+}
+
 function toEditPayload(q: AdvancedPaperQuestion): EditPayload {
     return {
         questionType: q.questionType,
@@ -301,6 +372,8 @@ export function AdminAdvancedPaperViewerClient({
     const [copyingEdit, setCopyingEdit] = useState(false);
     const [uploadingQuestionImage, setUploadingQuestionImage] = useState(false);
     const [uploadingOptionImage, setUploadingOptionImage] = useState(false);
+    const [tableRowsDraft, setTableRowsDraft] = useState(4);
+    const [tableColsDraft, setTableColsDraft] = useState(4);
     const [editError, setEditError] = useState<string | null>(null);
     const [editSuccess, setEditSuccess] = useState<string | null>(null);
     const [previewByQuestionId, setPreviewByQuestionId] = useState<Record<string, AdvancedPaperQuestion>>({});
@@ -522,6 +595,15 @@ export function AdminAdvancedPaperViewerClient({
 
             payload.options = options;
         });
+    }
+
+    function replaceTableTemplateInQuestion() {
+        const template = buildPipeTableTemplate(tableRowsDraft, tableColsDraft);
+        updateEditPayload((payload) => {
+            const current = String(payload.questionText ?? "");
+            payload.questionText = replaceFirstPipeTableBlock(current, template);
+        });
+        setEditSuccess("Table inserted. Existing table replaced if present.");
     }
 
     async function copyEditJson() {
@@ -1280,7 +1362,7 @@ export function AdminAdvancedPaperViewerClient({
                                                 ) : null}
                                             </div>
                                         ) : (
-                                            <MathJax dynamic>{display.questionText}</MathJax>
+                                            <RichStemContent text={display.questionText} />
                                         )}
                                     </div>
 
@@ -1375,6 +1457,53 @@ export function AdminAdvancedPaperViewerClient({
                                                             />
                                                         </label>
 
+                                                        <div className="rounded border p-2" style={{ borderColor: "var(--border)", background: "var(--muted)" }}>
+                                                            <div className="text-xs font-medium">Table builder</div>
+                                                            <div className="mt-1 text-[11px] opacity-75">
+                                                                Insert editable markdown table template. Adding a new template replaces the existing table block. Use ![alt](https://...) inside cells for images.
+                                                            </div>
+                                                            <div className="mt-2 grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-1.5">
+                                                                <label className="text-xs">
+                                                                    <div className="opacity-70 mb-1">Rows</div>
+                                                                    <input
+                                                                        type="number"
+                                                                        min={1}
+                                                                        max={20}
+                                                                        className="w-full rounded border px-2 py-1.5 bg-transparent ui-field"
+                                                                        style={{ borderColor: "var(--border)", background: "var(--card)" }}
+                                                                        value={tableRowsDraft}
+                                                                        onChange={(e) => setTableRowsDraft(Math.max(1, Number.parseInt(e.target.value || "1", 10) || 1))}
+                                                                        disabled={loadingEdit || savingEdit}
+                                                                    />
+                                                                </label>
+                                                                <label className="text-xs">
+                                                                    <div className="opacity-70 mb-1">Columns</div>
+                                                                    <input
+                                                                        type="number"
+                                                                        min={2}
+                                                                        max={8}
+                                                                        className="w-full rounded border px-2 py-1.5 bg-transparent ui-field"
+                                                                        style={{ borderColor: "var(--border)", background: "var(--card)" }}
+                                                                        value={tableColsDraft}
+                                                                        onChange={(e) => setTableColsDraft(Math.max(2, Number.parseInt(e.target.value || "2", 10) || 2))}
+                                                                        disabled={loadingEdit || savingEdit}
+                                                                    />
+                                                                </label>
+                                                                <div className="self-end">
+                                                                    <button
+                                                                        type="button"
+                                                                        className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
+                                                                        style={{ borderColor: "var(--border)", background: "var(--card)" }}
+                                                                        onClick={replaceTableTemplateInQuestion}
+                                                                        disabled={loadingEdit || savingEdit}
+                                                                    >
+                                                                        Insert / Replace Table
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+
+                                                        </div>
+
                                                         <div className="rounded border px-2.5 py-2 text-xs" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
                                                             <div className="mb-1 opacity-70">Question LaTeX preview</div>
                                                             <div className="text-sm leading-relaxed">
@@ -1424,7 +1553,7 @@ export function AdminAdvancedPaperViewerClient({
                                                                         ) : null}
                                                                     </div>
                                                                 ) : (
-                                                                    <MathJax dynamic>{editPayload.questionText}</MathJax>
+                                                                    <RichStemContent text={editPayload.questionText} />
                                                                 )}
                                                             </div>
                                                         </div>

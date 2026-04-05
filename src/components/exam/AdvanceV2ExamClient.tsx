@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { MathJax, MathJaxContext } from "better-react-mathjax";
 import { apiGet, apiPost } from "@/lib/api";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { RichStemContent } from "@/components/common/RichStemContent";
 
 type V2Question = {
     questionId: string;
@@ -852,7 +853,7 @@ export function AdvanceV2ExamClient({ attemptId }: { attemptId: string }) {
                                                 ))}
                                             </div>
                                         ) : (
-                                            <MathJax dynamic>{sanitizeRenderableText(activeQuestion.stemRich)}</MathJax>
+                                            <RichStemContent text={activeQuestion.stemRich} />
                                         )}
                                     </div>
 

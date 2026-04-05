@@ -7,6 +7,7 @@ import { apiGet } from "@/lib/api";
 import { optimizeImageDelivery } from "@/lib/image-delivery";
 import { formatDateTimeIST } from "@/lib/time";
 import { ImageCarousel } from "@/components/common/ImageCarousel";
+import { RichStemContent } from "@/components/common/RichStemContent";
 
 const mathjaxConfig = {
     loader: { load: ["[tex]/mhchem"] },
@@ -668,7 +669,7 @@ export function AdvanceV2ReportClient({ attemptId }: { attemptId: string }) {
                                                     ))}
                                                 </div>
                                             ) : (
-                                                <MathJax dynamic>{sanitizeRenderableText(q.stemRich)}</MathJax>
+                                                <RichStemContent text={q.stemRich} />
                                             )}
                                         </div>
 
