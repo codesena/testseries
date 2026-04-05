@@ -30,7 +30,13 @@ const UpdateSchema = z.object({
         imageUrls: z.array(z.string().trim().min(1)).default([]),
     })).default([]),
     correctAnswerText: z.string().trim().optional(),
-    markingSchemeName: z.string().trim().min(1).optional(),
+    markingSchemeName: z.preprocess(
+        (value) => {
+            if (typeof value !== "string") return value;
+            return value.trim() === "" ? undefined : value;
+        },
+        z.string().trim().min(1).optional(),
+    ),
 });
 
 function parseCorrectAnswer(
