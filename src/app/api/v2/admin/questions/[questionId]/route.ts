@@ -126,7 +126,7 @@ export async function GET(
             stemRich: true,
             stemAssets: true,
             payload: true,
-            marksScheme: { select: { name: true } },
+            marksScheme: { select: { name: true, questionType: true } },
             options: {
                 orderBy: { sortOrder: "asc" },
                 select: {
@@ -154,7 +154,9 @@ export async function GET(
         questionType: question.questionType,
         questionText: question.stemRich,
         questionImageUrls: parseAssetsToUrls(question.stemAssets),
-        markingSchemeName: question.marksScheme?.name ?? "",
+        markingSchemeName: question.marksScheme?.questionType === question.questionType
+            ? question.marksScheme.name
+            : "",
         options: question.options.map((o) => ({
             optionKey: o.optionKey,
             labelRich: o.labelRich,
@@ -216,9 +218,15 @@ export async function PUT(
             return json({ error: `Unknown marking scheme: ${requestedSchemeName}` }, { status: 400 });
         }
         if (scheme.questionType !== body.data.questionType) {
-            return json({ error: "Marking scheme type does not match question type" }, { status: 400 });
+            // Legacy data may carry an old mismatched scheme name; treat unchanged value as clear.
+            if (requestedSchemeName === existing.marksScheme?.name) {
+                nextMarkingSchemeId = null;
+            } else {
+                return json({ error: "Marking scheme type does not match question type" }, { status: 400 });
+            }
+        } else {
+            nextMarkingSchemeId = scheme.id;
         }
-        nextMarkingSchemeId = scheme.id;
     }
 
     const parsedCorrect = parseCorrectAnswer(body.data.questionType, body.data.correctAnswerText);
