@@ -9,6 +9,7 @@ Next.js + PostgreSQL (Prisma) mock-test platform that implements a JEE-style CBT
 - Offline-first queue (IndexedDB outbox) + heartbeat sync
 
 See the architecture blueprint in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+Advanced paper authoring schema is documented in [docs/advanced-paper/README.md](docs/advanced-paper/README.md).
 
 ## Prerequisites
 

@@ -65,6 +65,26 @@ export default async function Home(props: {
         },
     });
 
+    const advancedExams = await prisma.examV2.findMany({
+        where: { isActive: true },
+        orderBy: { createdAt: "desc" },
+        select: {
+            id: true,
+            code: true,
+            title: true,
+            durationMinutes: true,
+            createdAt: true,
+            _count: { select: { subjects: true } },
+        },
+    });
+
+    const v2AttemptRows = await prisma.examV2Attempt.groupBy({
+        by: ["examId"],
+        where: { userId },
+        _count: { _all: true },
+    });
+    const v2AttemptCountByExamId = new Map(v2AttemptRows.map((r) => [r.examId, r._count._all] as const));
+
     // Attempt history (per candidate)
     const allAttemptIds = await prisma.studentAttempt.findMany({
         where: { studentId: userId },
@@ -99,6 +119,7 @@ export default async function Home(props: {
                     id: true,
                     title: true,
                     totalDurationMinutes: true,
+                    isAdvancedFormat: true,
                 },
             },
         },
@@ -132,6 +153,25 @@ export default async function Home(props: {
         return matchesQuery && matchesStatus && matchesFormat;
     });
 
+    const filteredAdvancedExams = advancedExams.filter((e) => {
+        const matchesQuery =
+            searchQuery.length === 0 ||
+            e.title.toLowerCase().includes(searchQuery) ||
+            e.code.toLowerCase().includes(searchQuery);
+
+        const count = v2AttemptCountByExamId.get(e.id) ?? 0;
+        const matchesStatus =
+            rawStatus === "all" ||
+            (rawStatus === "attempted" && count > 0) ||
+            (rawStatus === "unattempted" && count === 0);
+
+        const matchesFormat = rawFormat === "all" || rawFormat === "advanced";
+        return matchesQuery && matchesStatus && matchesFormat;
+    });
+
+    const availableTotal = tests.length + advancedExams.length;
+    const availableFiltered = filteredTests.length + filteredAdvancedExams.length;
+
     return (
         <div className="min-h-screen flex flex-col">
             <HomeHeader isAdmin={isAdmin} userInitial={userInitial} userName={user?.name ?? "User"} />
@@ -161,7 +201,7 @@ export default async function Home(props: {
                     <h1 className="text-2xl font-semibold">Available Tests</h1>
                     <TestsFilterForm rawQ={rawQ} rawStatus={rawStatus} rawFormat={rawFormat} />
                     <div className="mt-2 text-xs opacity-60">
-                        Showing {filteredTests.length} of {tests.length} tests
+                        Showing {availableFiltered} of {availableTotal} tests
                     </div>
                     <div className="mt-6 grid gap-3">
                         {filteredTests.map((t) => (
@@ -246,7 +286,80 @@ export default async function Home(props: {
                                 })()}
                             </div>
                         ))}
-                        {tests.length === 0 ? (
+
+                        {filteredAdvancedExams.map((exam) => {
+                            const attemptCount = v2AttemptCountByExamId.get(exam.id) ?? 0;
+                            const hasAttempts = attemptCount > 0;
+
+                            return (
+                                <div
+                                    key={`v2-${exam.id}`}
+                                    className="rounded-2xl border p-4 shadow-sm"
+                                    style={{ borderColor: "var(--border)", background: "var(--card)" }}
+                                >
+                                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                                        <div className="min-w-0">
+                                            <div className="text-lg font-semibold leading-snug">{exam.title}</div>
+                                            <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px]">
+                                                <span
+                                                    className="inline-flex items-center justify-center h-7 rounded-full border px-2.5 whitespace-nowrap"
+                                                    style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                                                >
+                                                    JEE Advanced
+                                                </span>
+                                                <span className="opacity-60">{exam.code}</span>
+                                                <span className="opacity-60">{exam._count.subjects} subjects</span>
+                                                <span className="opacity-60">⏱ {exam.durationMinutes} mins</span>
+                                                <span className="opacity-60">Created {fmtDate(exam.createdAt)}</span>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex flex-wrap items-center gap-2 sm:justify-end">
+                                            <span
+                                                className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap"
+                                                style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                                            >
+                                                {hasAttempts ? `Attempted ${attemptCount}x` : "Unattempted"}
+                                            </span>
+                                            <Link
+                                                href={`/advance/test/${exam.id}/history`}
+                                                className={`inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click ${hasAttempts ? "font-semibold" : ""
+                                                    }`}
+                                                style={
+                                                    hasAttempts
+                                                        ? {
+                                                            borderColor: "rgba(59, 130, 246, 0.5)",
+                                                            background: "linear-gradient(135deg, rgba(37,99,235,0.95), rgba(14,165,233,0.9))",
+                                                            color: "#e0f2fe",
+                                                        }
+                                                        : { borderColor: "var(--border)", background: "transparent" }
+                                                }
+                                            >
+                                                View history
+                                            </Link>
+                                            <Link
+                                                href={`/advance/test/${exam.id}`}
+                                                className={`inline-flex items-center justify-center h-9 rounded-full border px-4 text-xs whitespace-nowrap ui-click ${hasAttempts ? "font-medium" : "font-semibold"
+                                                    }`}
+                                                style={
+                                                    hasAttempts
+                                                        ? { borderColor: "var(--border)", background: "transparent" }
+                                                        : {
+                                                            borderColor: "rgba(59, 130, 246, 0.5)",
+                                                            background: "linear-gradient(135deg, rgba(37,99,235,0.95), rgba(14,165,233,0.9))",
+                                                            color: "#e0f2fe",
+                                                        }
+                                                }
+                                            >
+                                                {hasAttempts ? "Retake Test" : "Start Test"}
+                                            </Link>
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })}
+
+                        {availableTotal === 0 ? (
                             <div
                                 className="rounded-xl border p-6 text-center"
                                 style={{ borderColor: "var(--border)", background: "var(--card)" }}
@@ -257,7 +370,7 @@ export default async function Home(props: {
                                     New papers will appear here after sync/seed.
                                 </div>
                             </div>
-                        ) : filteredTests.length === 0 ? (
+                        ) : availableFiltered === 0 ? (
                             <div
                                 className="rounded-xl border p-6 text-center"
                                 style={{ borderColor: "var(--border)", background: "var(--card)" }}
@@ -296,7 +409,7 @@ export default async function Home(props: {
                             return (
                                 <Link
                                     key={a.id}
-                                    href={`/attempt/${a.id}/report`}
+                                    href={a.test.isAdvancedFormat ? `/advance/${a.id}/report` : `/attempt/${a.id}/report`}
                                     className="rounded-lg border p-3 sm:p-4 ui-click"
                                     style={{ borderColor: "var(--border)", background: "var(--card)" }}
                                 >

@@ -92,7 +92,7 @@ export default async function TestStartPage({
                     </div>
 
                     <div className="mt-6 flex flex-wrap items-center gap-3">
-                        <StartAttemptButton testId={test.id} />
+                        <StartAttemptButton testId={test.id} isAdvancedFormat={test.isAdvancedFormat} />
                         <Link
                             href="/"
                             className="inline-flex items-center justify-center h-10 rounded-full border px-4 text-sm whitespace-nowrap ui-click"

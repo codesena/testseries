@@ -38,6 +38,9 @@ type QuestionIssueItem = {
     reporterUsername: string | null;
 };
 
+const MAINS_UPLOAD_PREFIX = "jeemains/mains";
+const DEFAULT_UPLOAD_FOLDER = "paper-x";
+
 const mathjaxConfig = {
     loader: { load: ["[tex]/mhchem"] },
     tex: {
@@ -146,8 +149,8 @@ export function AdminPaperViewerClient({
     const [copyingEdit, setCopyingEdit] = useState(false);
     const [uploadingQuestionImage, setUploadingQuestionImage] = useState(false);
     const [uploadingOptionImage, setUploadingOptionImage] = useState(false);
-    const [uploadFolderName, setUploadFolderName] = useState("paper-x");
-    const [uploadFolderDraft, setUploadFolderDraft] = useState("paper-x");
+    const [uploadFolderName, setUploadFolderName] = useState(DEFAULT_UPLOAD_FOLDER);
+    const [uploadFolderDraft, setUploadFolderDraft] = useState(DEFAULT_UPLOAD_FOLDER);
     const [uploadFolderSaved, setUploadFolderSaved] = useState(false);
     const [mode, setMode] = useState<"view" | "edit">("view");
     const [editUiMode, setEditUiMode] = useState<"form" | "json">("form");
@@ -184,8 +187,8 @@ export function AdminPaperViewerClient({
         }
     }, [editRaw]);
 
-    const activeUploadFolder = slugifyFolderName(uploadFolderName) || "paper-x";
-    const draftUploadFolder = slugifyFolderName(uploadFolderDraft) || "paper-x";
+    const activeUploadFolder = slugifyFolderName(uploadFolderName) || DEFAULT_UPLOAD_FOLDER;
+    const draftUploadFolder = slugifyFolderName(uploadFolderDraft) || DEFAULT_UPLOAD_FOLDER;
     const isUploadFolderDirty = draftUploadFolder !== activeUploadFolder;
 
     useEffect(() => {
@@ -287,7 +290,7 @@ export function AdminPaperViewerClient({
         setEditRaw("");
         setLoadingEdit(true);
         if (!uploadFolderName.trim()) {
-            setUploadFolderName(slugifyFolderName(testTitle) || "paper-x");
+            setUploadFolderName(slugifyFolderName(testTitle) || DEFAULT_UPLOAD_FOLDER);
         }
 
         try {
@@ -379,8 +382,9 @@ export function AdminPaperViewerClient({
 
             setPreviewByQuestionId((prev) => {
                 if (!editOpenForQuestionId) return prev;
-                const { [editOpenForQuestionId]: _removed, ...rest } = prev;
-                return rest;
+                const next = { ...prev };
+                delete next[editOpenForQuestionId];
+                return next;
             });
 
             setEditOpenForQuestionId(null);
@@ -454,7 +458,7 @@ export function AdminPaperViewerClient({
     async function uploadImageFile(file: File): Promise<string> {
         const fd = new FormData();
         fd.append("file", file);
-        fd.append("folderName", slugifyFolderName(uploadFolderName) || "paper-x");
+        fd.append("folderName", `${MAINS_UPLOAD_PREFIX}/${slugifyFolderName(uploadFolderName) || DEFAULT_UPLOAD_FOLDER}`);
 
         const res = await fetch("/api/admin/uploads/image", {
             method: "POST",
@@ -688,7 +692,7 @@ export function AdminPaperViewerClient({
                                                     background: "rgba(127, 29, 29, 0.1)",
                                                 }}
                                         >
-                                            <span className="text-xs opacity-70 shrink-0">testseries/</span>
+                                            <span className="text-xs opacity-70 shrink-0">{MAINS_UPLOAD_PREFIX}/</span>
                                             <input
                                                 className="ml-1 min-w-0 w-full bg-transparent text-[11px] sm:text-xs outline-none"
                                                 value={uploadFolderDraft}
@@ -696,7 +700,7 @@ export function AdminPaperViewerClient({
                                                     setUploadFolderDraft(e.target.value);
                                                     setUploadFolderSaved(false);
                                                 }}
-                                                placeholder="paper-x"
+                                                placeholder={DEFAULT_UPLOAD_FOLDER}
                                             />
                                         </div>
 
@@ -1051,18 +1055,46 @@ export function AdminPaperViewerClient({
 
                                                         <label className="block">
                                                             <div className="text-xs opacity-70">Question image URLs (one per line)</div>
-                                                            <textarea
-                                                                className="mt-1 w-full min-h-[72px] rounded border px-2.5 py-1.5 bg-transparent ui-field text-xs"
+                                                            <div
+                                                                className="mt-1 rounded border p-1.5"
                                                                 style={{ borderColor: "var(--border)", background: "var(--card)" }}
-                                                                value={asStringArray(editPayload.imageUrls).join("\n")}
-                                                                onChange={(e) => updateEditPayload((payload) => { payload.imageUrls = splitUrlList(e.target.value); })}
-                                                                disabled={loadingEdit || savingEdit}
-                                                                placeholder="https://..."
-                                                            />
+                                                                onDragOver={(e) => e.preventDefault()}
+                                                                onDrop={onQuestionDrop}
+                                                            >
+                                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                                                                    <textarea
+                                                                        className="w-full min-h-[72px] rounded border px-2.5 py-1.5 bg-transparent ui-field text-xs"
+                                                                        style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                                                                        value={asStringArray(editPayload.imageUrls).join("\n")}
+                                                                        onChange={(e) => updateEditPayload((payload) => { payload.imageUrls = splitUrlList(e.target.value); })}
+                                                                        disabled={loadingEdit || savingEdit}
+                                                                        placeholder="Question image URL(s), one per line"
+                                                                    />
+
+                                                                    <label
+                                                                        className="inline-flex items-center justify-center min-h-[72px] rounded border px-2 text-[11px] text-center ui-click cursor-pointer"
+                                                                        style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                                                                    >
+                                                                        {uploadingQuestionImage ? "Uploading..." : "Drag/drop or upload question image"}
+                                                                        <input
+                                                                            type="file"
+                                                                            accept="image/*"
+                                                                            multiple
+                                                                            className="hidden"
+                                                                            disabled={uploadingQuestionImage}
+                                                                            onChange={(e) => {
+                                                                                const files = Array.from(e.target.files ?? []);
+                                                                                void uploadQuestionImages(files);
+                                                                                e.currentTarget.value = "";
+                                                                            }}
+                                                                        />
+                                                                    </label>
+                                                                </div>
+                                                            </div>
                                                         </label>
 
                                                         {!isNumericalEditQuestion ? (
-                                                            <div className="grid grid-cols-2 gap-1.5">
+                                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-1.5">
                                                                 {(["A", "B", "C", "D"] as const).map((key) => {
                                                                     const option = editOptions.find((opt) => opt.key === key) ?? { key, text: "", imageUrl: null };
                                                                     return (
@@ -1082,14 +1114,39 @@ export function AdminPaperViewerClient({
                                                                                     <MathJax dynamic>{option.text}</MathJax>
                                                                                 </div>
                                                                             </div>
-                                                                            <input
-                                                                                className="mt-1 w-full rounded border px-2 py-1.5 bg-transparent ui-field text-xs"
+                                                                            <div
+                                                                                className="mt-1 grid grid-cols-1 sm:grid-cols-2 gap-1.5 rounded border p-1.5"
                                                                                 style={{ borderColor: "var(--border)", background: "var(--muted)" }}
-                                                                                value={option.imageUrl ?? ""}
-                                                                                onChange={(e) => updateEditOptionField(key, { imageUrl: e.target.value.trim() || null })}
-                                                                                disabled={loadingEdit || savingEdit}
-                                                                                placeholder={`Option ${key} image URL (optional)`}
-                                                                            />
+                                                                                onDragOver={(e) => e.preventDefault()}
+                                                                                onDrop={(e) => onOptionDrop(key, e)}
+                                                                            >
+                                                                                <input
+                                                                                    className="w-full rounded border px-2 py-1.5 bg-transparent ui-field text-xs"
+                                                                                    style={{ borderColor: "var(--border)", background: "var(--card)" }}
+                                                                                    value={option.imageUrl ?? ""}
+                                                                                    onChange={(e) => updateEditOptionField(key, { imageUrl: e.target.value.trim() || null })}
+                                                                                    disabled={loadingEdit || savingEdit}
+                                                                                    placeholder={`Option ${key} image URL(s)`}
+                                                                                />
+
+                                                                                <label
+                                                                                    className="inline-flex items-center justify-center h-8 w-full text-[11px] rounded-full border px-2 whitespace-nowrap ui-click cursor-pointer"
+                                                                                    style={{ borderColor: "var(--border)", background: "var(--card)" }}
+                                                                                >
+                                                                                    {uploadingOptionImage ? "Uploading..." : `Drag/drop or upload option ${key} image`}
+                                                                                    <input
+                                                                                        type="file"
+                                                                                        accept="image/*"
+                                                                                        className="hidden"
+                                                                                        disabled={uploadingOptionImage}
+                                                                                        onChange={(e) => {
+                                                                                            const file = e.target.files?.[0];
+                                                                                            if (file) void uploadOptionImage(file, key);
+                                                                                            e.currentTarget.value = "";
+                                                                                        }}
+                                                                                    />
+                                                                                </label>
+                                                                            </div>
                                                                         </div>
                                                                     );
                                                                 })}
@@ -1111,64 +1168,6 @@ export function AdminPaperViewerClient({
                                                     placeholder={loadingEdit ? "Loading question..." : "Raw question JSON"}
                                                 />
                                             )}
-
-                                            <div className="mt-2 grid grid-cols-2 gap-1.5">
-                                                <div
-                                                    className="w-full rounded border p-1.5"
-                                                    style={{ borderColor: "var(--border)", background: "var(--card)" }}
-                                                    onDragOver={(e) => e.preventDefault()}
-                                                    onDrop={onQuestionDrop}
-                                                >
-                                                    <label
-                                                        className="inline-flex items-center justify-center h-7 w-full text-[11px] rounded-full border px-2 whitespace-nowrap ui-click cursor-pointer"
-                                                        style={{ borderColor: "var(--border)", background: "var(--muted)" }}
-                                                    >
-                                                        {uploadingQuestionImage ? "Uploading..." : "Question images"}
-                                                        <input
-                                                            type="file"
-                                                            accept="image/*"
-                                                            multiple
-                                                            className="hidden"
-                                                            disabled={uploadingQuestionImage}
-                                                            onChange={(e) => {
-                                                                const files = Array.from(e.target.files ?? []);
-                                                                void uploadQuestionImages(files);
-                                                                e.currentTarget.value = "";
-                                                            }}
-                                                        />
-                                                    </label>
-                                                    <div className="mt-1 text-[10px] opacity-70 text-center">Drag/drop or upload</div>
-                                                </div>
-
-                                                {!isNumericalEditQuestion ? (["A", "B", "C", "D"] as const).map((key) => (
-                                                    <div
-                                                        key={key}
-                                                        className="w-full rounded border p-1.5"
-                                                        style={{ borderColor: "var(--border)", background: "var(--card)" }}
-                                                        onDragOver={(e) => e.preventDefault()}
-                                                        onDrop={(e) => onOptionDrop(key, e)}
-                                                    >
-                                                        <label
-                                                            className="inline-flex items-center justify-center h-7 w-full text-[11px] rounded-full border px-2 whitespace-nowrap ui-click cursor-pointer"
-                                                            style={{ borderColor: "var(--border)", background: "var(--muted)" }}
-                                                        >
-                                                            {uploadingOptionImage ? "Uploading..." : `Option ${key} image`}
-                                                            <input
-                                                                type="file"
-                                                                accept="image/*"
-                                                                className="hidden"
-                                                                disabled={uploadingOptionImage}
-                                                                onChange={(e) => {
-                                                                    const file = e.target.files?.[0];
-                                                                    if (file) void uploadOptionImage(file, key);
-                                                                    e.currentTarget.value = "";
-                                                                }}
-                                                            />
-                                                        </label>
-                                                        <div className="mt-1 text-[10px] opacity-70 text-center">Drag/drop or upload</div>
-                                                    </div>
-                                                )) : null}
-                                            </div>
 
                                             {editError ? (
                                                 <div className="mt-2 text-sm text-red-600">{editError}</div>
@@ -1207,8 +1206,9 @@ export function AdminPaperViewerClient({
                                                         setEditRaw("");
                                                         setEditUiMode("form");
                                                         setPreviewByQuestionId((prev) => {
-                                                            const { [q.id]: _removed, ...rest } = prev;
-                                                            return rest;
+                                                            const next = { ...prev };
+                                                            delete next[q.id];
+                                                            return next;
                                                         });
                                                     }}
                                                     disabled={savingEdit || uploadingQuestionImage || uploadingOptionImage}

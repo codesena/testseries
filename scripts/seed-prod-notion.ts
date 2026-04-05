@@ -1,9 +1,8 @@
 import "dotenv/config";
 
-function requireEnv(name: string): string {
-    const v = process.env[name];
-    if (!v) throw new Error(`${name} is required`);
-    return v;
+function normalizeYes(value: string | undefined): boolean {
+    const v = String(value ?? "").trim().toLowerCase();
+    return v === "yes" || v === "y" || v === "true" || v === "1";
 }
 
 async function main() {
@@ -16,7 +15,7 @@ async function main() {
     }
 
     const confirm = process.env.CONFIRM_PROD_SEED;
-    if (confirm !== "yes") {
+    if (!normalizeYes(confirm)) {
         throw new Error(
             "Refusing to seed production without explicit confirmation.\n" +
             "Set CONFIRM_PROD_SEED=yes and re-run.",

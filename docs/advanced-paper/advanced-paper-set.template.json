@@ -1,0 +1,285 @@
+{
+    "papers": [
+        {
+            "code": "ADVANCE-PAPER-1",
+            "title": "JEE Advanced 2026 Paper 1",
+            "durationMinutes": 180,
+            "instructionsRichText": "Read all instructions carefully before starting.",
+            "isActive": true,
+            "subjects": [
+                {
+                    "subject": "PHYSICS",
+                    "sections": [
+                        {
+                            "sectionCode": "PHY-A",
+                            "title": "Section A - Single Correct",
+                            "instructionsRich": "Choose exactly one correct option.",
+                            "config": {
+                                "mode": "single"
+                            },
+                            "blocks": [
+                                {
+                                    "blockType": "QUESTION",
+                                    "questions": [
+                                        {
+                                            "questionType": "SINGLE_CORRECT",
+                                            "stemRich": "Sample Physics single-correct question.",
+                                            "payload": {
+                                                "correctAnswer": "B"
+                                            },
+                                            "markingSchemeName": "V2_MAINS_SINGLE_4N1",
+                                            "options": [
+                                                {
+                                                    "optionKey": "A",
+                                                    "labelRich": "Option A",
+                                                    "isCorrect": false
+                                                },
+                                                {
+                                                    "optionKey": "B",
+                                                    "labelRich": "Option B",
+                                                    "isCorrect": true
+                                                },
+                                                {
+                                                    "optionKey": "C",
+                                                    "labelRich": "Option C",
+                                                    "isCorrect": false
+                                                },
+                                                {
+                                                    "optionKey": "D",
+                                                    "labelRich": "Option D",
+                                                    "isCorrect": false
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "sectionCode": "PHY-B",
+                            "title": "Section B - Multi Correct",
+                            "instructionsRich": "Choose one or more correct options.",
+                            "config": {
+                                "mode": "multi"
+                            },
+                            "blocks": [
+                                {
+                                    "blockType": "QUESTION",
+                                    "questions": [
+                                        {
+                                            "questionType": "MULTI_CORRECT",
+                                            "stemRich": "Sample Physics multi-correct question.",
+                                            "payload": {
+                                                "correctAnswer": [
+                                                    "A",
+                                                    "C"
+                                                ]
+                                            },
+                                            "markingSchemeName": "V2_ADV_MULTI_PARTIAL",
+                                            "options": [
+                                                {
+                                                    "optionKey": "A",
+                                                    "labelRich": "Option A",
+                                                    "isCorrect": true
+                                                },
+                                                {
+                                                    "optionKey": "B",
+                                                    "labelRich": "Option B",
+                                                    "isCorrect": false
+                                                },
+                                                {
+                                                    "optionKey": "C",
+                                                    "labelRich": "Option C",
+                                                    "isCorrect": true
+                                                },
+                                                {
+                                                    "optionKey": "D",
+                                                    "labelRich": "Option D",
+                                                    "isCorrect": false
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "sectionCode": "PHY-C",
+                            "title": "Section C - Matching List",
+                            "instructionsRich": "Match items correctly.",
+                            "config": {
+                                "mode": "matching"
+                            },
+                            "blocks": [
+                                {
+                                    "blockType": "QUESTION",
+                                    "questions": [
+                                        {
+                                            "questionType": "MATCHING_LIST",
+                                            "stemRich": "Sample Physics matching-list question.",
+                                            "payload": {
+                                                "correctAnswer": "A"
+                                            },
+                                            "options": [
+                                                {
+                                                    "optionKey": "A",
+                                                    "labelRich": "Correct match"
+                                                },
+                                                {
+                                                    "optionKey": "B",
+                                                    "labelRich": "Incorrect match"
+                                                },
+                                                {
+                                                    "optionKey": "C",
+                                                    "labelRich": "Incorrect match"
+                                                },
+                                                {
+                                                    "optionKey": "D",
+                                                    "labelRich": "Incorrect match"
+                                                }
+                                            ],
+                                            "matchItems": [
+                                                {
+                                                    "listName": "L1",
+                                                    "itemKey": "1",
+                                                    "labelRich": "Item 1"
+                                                },
+                                                {
+                                                    "listName": "L1",
+                                                    "itemKey": "2",
+                                                    "labelRich": "Item 2"
+                                                },
+                                                {
+                                                    "listName": "L2",
+                                                    "itemKey": "A",
+                                                    "labelRich": "Pair A"
+                                                },
+                                                {
+                                                    "listName": "L2",
+                                                    "itemKey": "B",
+                                                    "labelRich": "Pair B"
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "sectionCode": "PHY-D",
+                            "title": "Section D - Numerical",
+                            "instructionsRich": "Enter numerical value as instructed.",
+                            "config": {
+                                "mode": "nat"
+                            },
+                            "blocks": [
+                                {
+                                    "blockType": "QUESTION",
+                                    "questions": [
+                                        {
+                                            "questionType": "NAT_DECIMAL",
+                                            "stemRich": "Sample Physics numerical question.",
+                                            "payload": {
+                                                "correctAnswer": 2.5
+                                            },
+                                            "markingSchemeName": "V2_NAT_STANDARD"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "subject": "CHEMISTRY",
+                    "sections": [
+                        {
+                            "sectionCode": "CHE-A",
+                            "title": "Section A - Single Correct",
+                            "instructionsRich": "Replace with your Chemistry sections.",
+                            "blocks": [
+                                {
+                                    "blockType": "QUESTION",
+                                    "questions": []
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "subject": "MATHEMATICS",
+                    "sections": [
+                        {
+                            "sectionCode": "MAT-A",
+                            "title": "Section A - Single Correct",
+                            "instructionsRich": "Replace with your Mathematics sections.",
+                            "blocks": [
+                                {
+                                    "blockType": "QUESTION",
+                                    "questions": []
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "code": "ADVANCE-PAPER-2",
+            "title": "JEE Advanced 2026 Paper 2",
+            "durationMinutes": 180,
+            "instructionsRichText": "Read all instructions carefully before starting.",
+            "isActive": true,
+            "subjects": [
+                {
+                    "subject": "PHYSICS",
+                    "sections": [
+                        {
+                            "sectionCode": "PHY-A",
+                            "title": "Section A - Single Correct",
+                            "instructionsRich": "Replace with Paper 2 Physics sections.",
+                            "blocks": [
+                                {
+                                    "blockType": "QUESTION",
+                                    "questions": []
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "subject": "CHEMISTRY",
+                    "sections": [
+                        {
+                            "sectionCode": "CHE-A",
+                            "title": "Section A - Single Correct",
+                            "instructionsRich": "Replace with Paper 2 Chemistry sections.",
+                            "blocks": [
+                                {
+                                    "blockType": "QUESTION",
+                                    "questions": []
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "subject": "MATHEMATICS",
+                    "sections": [
+                        {
+                            "sectionCode": "MAT-A",
+                            "title": "Section A - Single Correct",
+                            "instructionsRich": "Replace with Paper 2 Mathematics sections.",
+                            "blocks": [
+                                {
+                                    "blockType": "QUESTION",
+                                    "questions": []
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

@@ -1,7 +1,157 @@
 import "dotenv/config";
 import { prisma } from "../src/server/db";
 
+type SeedRule = {
+    ruleKind: "FULL" | "PARTIAL" | "NEGATIVE" | "ZERO";
+    priority: number;
+    score: number;
+    minCorrectSelected?: number;
+    maxCorrectSelected?: number;
+    minIncorrectSelected?: number;
+    maxIncorrectSelected?: number;
+    requireAllCorrect?: boolean;
+    requireZeroIncorrect?: boolean;
+    requireUnattempted?: boolean;
+};
+
+type SeedScheme = {
+    name: string;
+    questionType:
+    | "SINGLE_CORRECT"
+    | "MULTI_CORRECT"
+    | "MATCHING_LIST"
+    | "NAT_INTEGER"
+    | "NAT_DECIMAL";
+    unattemptedScore: number;
+    notes: string;
+    rules: SeedRule[];
+};
+
+async function seedExamV2MarkingSchemes() {
+    const schemes: SeedScheme[] = [
+        {
+            name: "V2_MAINS_SINGLE_4N1",
+            questionType: "SINGLE_CORRECT" as const,
+            unattemptedScore: 0,
+            notes: "+4 correct, -1 incorrect, 0 unattempted",
+            rules: [
+                {
+                    ruleKind: "FULL" as const,
+                    priority: 1,
+                    score: 4,
+                    requireAllCorrect: true,
+                    requireZeroIncorrect: true,
+                },
+                {
+                    ruleKind: "NEGATIVE" as const,
+                    priority: 2,
+                    score: -1,
+                    minIncorrectSelected: 1,
+                },
+                {
+                    ruleKind: "ZERO" as const,
+                    priority: 3,
+                    score: 0,
+                },
+            ],
+        },
+        {
+            name: "V2_ADV_MULTI_PARTIAL",
+            questionType: "MULTI_CORRECT" as const,
+            unattemptedScore: 0,
+            notes: "+4 all-correct, +1 partial (no wrong option), -2 any wrong option",
+            rules: [
+                {
+                    ruleKind: "FULL" as const,
+                    priority: 1,
+                    score: 4,
+                    requireAllCorrect: true,
+                    requireZeroIncorrect: true,
+                },
+                {
+                    ruleKind: "PARTIAL" as const,
+                    priority: 2,
+                    score: 1,
+                    minCorrectSelected: 1,
+                    requireZeroIncorrect: true,
+                },
+                {
+                    ruleKind: "NEGATIVE" as const,
+                    priority: 3,
+                    score: -2,
+                    minIncorrectSelected: 1,
+                },
+                {
+                    ruleKind: "ZERO" as const,
+                    priority: 4,
+                    score: 0,
+                },
+            ],
+        },
+        {
+            name: "V2_NAT_STANDARD",
+            questionType: "NAT_DECIMAL" as const,
+            unattemptedScore: 0,
+            notes: "+4 exact match, 0 otherwise",
+            rules: [
+                {
+                    ruleKind: "FULL" as const,
+                    priority: 1,
+                    score: 4,
+                    requireAllCorrect: true,
+                    requireZeroIncorrect: true,
+                },
+                {
+                    ruleKind: "ZERO" as const,
+                    priority: 2,
+                    score: 0,
+                },
+            ],
+        },
+    ];
+
+    for (const scheme of schemes) {
+        const upserted = await prisma.examV2MarkingScheme.upsert({
+            where: { name: scheme.name },
+            update: {
+                questionType: scheme.questionType,
+                unattemptedScore: scheme.unattemptedScore,
+                notes: scheme.notes,
+            },
+            create: {
+                name: scheme.name,
+                questionType: scheme.questionType,
+                unattemptedScore: scheme.unattemptedScore,
+                notes: scheme.notes,
+            },
+            select: { id: true },
+        });
+
+        await prisma.examV2MarkingRule.deleteMany({
+            where: { schemeId: upserted.id },
+        });
+
+        await prisma.examV2MarkingRule.createMany({
+            data: scheme.rules.map((rule) => ({
+                schemeId: upserted.id,
+                ruleKind: rule.ruleKind,
+                priority: rule.priority,
+                score: rule.score,
+                minCorrectSelected: rule.minCorrectSelected ?? null,
+                maxCorrectSelected: rule.maxCorrectSelected ?? null,
+                minIncorrectSelected: rule.minIncorrectSelected ?? null,
+                maxIncorrectSelected: rule.maxIncorrectSelected ?? null,
+                requireAllCorrect: rule.requireAllCorrect ?? false,
+                requireZeroIncorrect: rule.requireZeroIncorrect ?? false,
+                requireUnattempted: rule.requireUnattempted ?? false,
+            })),
+        });
+    }
+}
+
 async function main() {
+    await seedExamV2MarkingSchemes();
+
     await prisma.subjectCategory.upsert({
         where: { id: 1 },
         update: { name: "Physics" },
@@ -17,116 +167,6 @@ async function main() {
         update: { name: "Mathematics" },
         create: { id: 3, name: "Mathematics" },
     });
-
-    const existing = await prisma.testSeries.findFirst({
-        where: { title: "Sample JEE Main Mock (Mini)" },
-        select: { id: true },
-    });
-
-    if (existing) return;
-
-    const questionData = [
-        {
-            subjectId: 1,
-            topicName: "Kinematics",
-            questionText:
-                "A particle moves with constant acceleration $a=2\\,\\mathrm{m/s^2}$ starting from rest. What is its velocity after $t=3\\,\\mathrm{s}$?",
-            options: {
-                A: "$3\\,\\mathrm{m/s}$",
-                B: "$6\\,\\mathrm{m/s}$",
-                C: "$9\\,\\mathrm{m/s}$",
-                D: "$12\\,\\mathrm{m/s}$",
-            },
-            correctAnswer: "B",
-            markingSchemeType: "MAINS_SINGLE" as const,
-            difficultyRank: 1,
-        },
-        {
-            subjectId: 2,
-            topicName: "Mole Concept",
-            questionText:
-                "Number of moles in $11\\,\\mathrm{g}$ of $\\mathrm{CO_2}$ is:",
-            options: {
-                A: "$0.1$",
-                B: "$0.2$",
-                C: "$0.25$",
-                D: "$0.5$",
-            },
-            correctAnswer: "B",
-            markingSchemeType: "MAINS_SINGLE" as const,
-            difficultyRank: 2,
-        },
-        {
-            subjectId: 3,
-            topicName: "Integrals",
-            questionText: "Evaluate $\\int_0^1 2x\\,dx$.",
-            options: {
-                A: "$0$",
-                B: "$1$",
-                C: "$2$",
-                D: "$\\frac{1}{2}$",
-            },
-            correctAnswer: "B",
-            markingSchemeType: "MAINS_SINGLE" as const,
-            difficultyRank: 1,
-        },
-        {
-            subjectId: 1,
-            topicName: "Units",
-            questionText:
-                "A quantity has dimensions $[M^1 L^2 T^{-2}]$. Which of the following matches?",
-            options: {
-                A: "Force",
-                B: "Energy",
-                C: "Pressure",
-                D: "Power",
-            },
-            correctAnswer: "B",
-            markingSchemeType: "MAINS_SINGLE" as const,
-            difficultyRank: 2,
-        },
-        {
-            subjectId: 3,
-            topicName: "JEE Advanced Multi-correct",
-            questionText:
-                "Select all correct statements about the set $S=\\{1,2,3\\}$.",
-            options: {
-                A: "$|S|=3$",
-                B: "$0 \\in S$",
-                C: "$2 \\in S$",
-                D: "$S$ is empty",
-            },
-            correctAnswer: ["A", "C"],
-            markingSchemeType: "ADV_MULTI_CORRECT" as const,
-            difficultyRank: 1,
-        },
-    ];
-
-    const questions = [] as Array<{ id: string }>;
-    for (const data of questionData) {
-        const created = await prisma.question.create({
-            data,
-            select: { id: true },
-        });
-        questions.push(created);
-    }
-
-    const test = await prisma.testSeries.create({
-        data: {
-            title: "Sample JEE Main Mock (Mini)",
-            totalDurationMinutes: 30,
-            isAdvancedFormat: false,
-            questions: {
-                create: questions.map((q, idx) => ({
-                    questionId: q.id,
-                    orderIndex: idx,
-                })),
-            },
-        },
-        select: { id: true },
-    });
-
-    console.log(`Seeded test ${test.id} with ${questions.length} questions.`);
 }
 
 main()

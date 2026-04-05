@@ -34,6 +34,31 @@ export default async function AdminPapersPage() {
         },
     });
 
+    const advancedPapers = await prisma.examV2.findMany({
+        where: { isActive: true },
+        orderBy: { createdAt: "desc" },
+        select: {
+            id: true,
+            title: true,
+            code: true,
+            createdAt: true,
+            _count: { select: { subjects: true } },
+            subjects: {
+                select: {
+                    sections: {
+                        select: {
+                            blocks: {
+                                select: {
+                                    questions: { select: { id: true } },
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+        },
+    });
+
     return (
         <div className="min-h-screen flex flex-col">
             <header
@@ -167,10 +192,42 @@ export default async function AdminPapersPage() {
                             </div>
                         </div>
                     ))}
-                    {tests.length === 0 ? (
+                    {advancedPapers.map((p) => {
+                        const questionCount = p.subjects.reduce(
+                            (accSub, sub) =>
+                                accSub +
+                                sub.sections.reduce(
+                                    (accSec, sec) => accSec + sec.blocks.reduce((accBlk, blk) => accBlk + blk.questions.length, 0),
+                                    0,
+                                ),
+                            0,
+                        );
+
+                        return (
+                            <div key={`adv-${p.id}`} className="rounded-2xl border p-4" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
+                                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                                    <div className="min-w-0">
+                                        <div className="font-medium leading-snug break-words">{p.title}</div>
+                                        <div className="mt-1 text-xs opacity-60">
+                                            JEE Advanced · {p.code} · {questionCount} question{questionCount === 1 ? "" : "s"} · Created {fmtDate(p.createdAt)}
+                                        </div>
+                                    </div>
+                                    <Link
+                                        href={`/admin/paper/advance/${p.id}`}
+                                        className="inline-flex w-full sm:w-auto items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
+                                        style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                                    >
+                                        Open paper
+                                    </Link>
+                                </div>
+                            </div>
+                        );
+                    })}
+                    {tests.length === 0 && advancedPapers.length === 0 ? (
                         <div className="text-sm opacity-70">No papers found.</div>
                     ) : null}
                 </div>
+
             </main>
         </div>
     );

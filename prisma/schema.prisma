@@ -50,6 +50,47 @@ enum ActivityType {
   SUBMIT
 }
 
+enum ExamV2SubjectCode {
+  PHYSICS
+  CHEMISTRY
+  MATHEMATICS
+}
+
+enum ExamV2BlockType {
+  QUESTION
+  PARAGRAPH
+}
+
+enum ExamV2QuestionType {
+  SINGLE_CORRECT
+  MULTI_CORRECT
+  MATCHING_LIST
+  NAT_INTEGER
+  NAT_DECIMAL
+}
+
+enum ExamV2AttemptStatus {
+  IN_PROGRESS
+  SUBMITTED
+  AUTO_SUBMITTED
+  ABANDONED
+}
+
+enum ExamV2AnswerState {
+  NOT_VISITED
+  VISITED_NOT_ANSWERED
+  ANSWERED_SAVED
+  MARKED_FOR_REVIEW
+  ANSWERED_MARKED_FOR_REVIEW
+}
+
+enum ExamV2RuleKind {
+  FULL
+  PARTIAL
+  NEGATIVE
+  ZERO
+}
+
 model SubjectCategory {
   id        Int        @id
   name      String     @unique
@@ -117,8 +158,223 @@ model User {
 
   issueReports QuestionIssueReport[]
   adminIssueReports AdminQuestionIssueReport[]
+  examV2Attempts ExamV2Attempt[]
 
   @@map("Users")
+}
+
+model ExamV2 {
+  id                   String   @id @default(uuid()) @db.Uuid
+  code                 String   @unique
+  title                String
+  instructionsRichText String?
+  durationMinutes      Int
+  isActive             Boolean  @default(true)
+  createdAt            DateTime @default(now())
+
+  subjects ExamV2Subject[]
+  attempts ExamV2Attempt[]
+
+  @@index([isActive, createdAt])
+  @@map("ExamV2")
+}
+
+model ExamV2Subject {
+  id        String            @id @default(uuid()) @db.Uuid
+  examId    String            @db.Uuid
+  subject   ExamV2SubjectCode
+  sortOrder Int
+
+  exam     ExamV2       @relation(fields: [examId], references: [id], onDelete: Cascade)
+  sections ExamV2Section[]
+
+  @@unique([examId, subject])
+  @@unique([examId, sortOrder])
+  @@index([examId, sortOrder])
+  @@map("ExamV2Subjects")
+}
+
+model ExamV2Section {
+  id               String   @id @default(uuid()) @db.Uuid
+  examSubjectId    String   @db.Uuid
+  sectionCode      String
+  title            String
+  instructionsRich String?
+  sortOrder        Int
+  config           Json?
+
+  examSubject ExamV2Subject @relation(fields: [examSubjectId], references: [id], onDelete: Cascade)
+  blocks      ExamV2Block[]
+
+  @@unique([examSubjectId, sectionCode])
+  @@unique([examSubjectId, sortOrder])
+  @@index([examSubjectId, sortOrder])
+  @@map("ExamV2Sections")
+}
+
+model ExamV2Block {
+  id               String          @id @default(uuid()) @db.Uuid
+  sectionId        String          @db.Uuid
+  blockType        ExamV2BlockType
+  sortOrder        Int
+  paragraphRich    String?
+  paragraphAssets  Json?
+
+  section   ExamV2Section @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  questions ExamV2Question[]
+
+  @@unique([sectionId, sortOrder])
+  @@index([sectionId, sortOrder])
+  @@map("ExamV2Blocks")
+}
+
+model ExamV2MarkingScheme {
+  id               String             @id @default(uuid()) @db.Uuid
+  name             String             @unique
+  questionType     ExamV2QuestionType
+  unattemptedScore Float              @default(0)
+  notes            String?
+  createdAt        DateTime           @default(now())
+
+  rules     ExamV2MarkingRule[]
+  questions ExamV2Question[]
+
+  @@map("ExamV2MarkingSchemes")
+}
+
+model ExamV2MarkingRule {
+  id                    String         @id @default(uuid()) @db.Uuid
+  schemeId              String         @db.Uuid
+  ruleKind              ExamV2RuleKind
+  priority              Int
+  score                 Float
+  minCorrectSelected    Int?
+  maxCorrectSelected    Int?
+  minIncorrectSelected  Int?
+  maxIncorrectSelected  Int?
+  requireAllCorrect     Boolean        @default(false)
+  requireZeroIncorrect  Boolean        @default(false)
+  requireUnattempted    Boolean        @default(false)
+
+  scheme ExamV2MarkingScheme @relation(fields: [schemeId], references: [id], onDelete: Cascade)
+
+  @@unique([schemeId, priority])
+  @@index([schemeId, priority])
+  @@map("ExamV2MarkingRules")
+}
+
+model ExamV2Question {
+  id                String             @id @default(uuid()) @db.Uuid
+  blockId           String             @db.Uuid
+  questionType      ExamV2QuestionType
+  stemRich          String
+  stemAssets        Json?
+  payload           Json?
+  difficultyRank    Int?
+  marksSchemeId     String?            @db.Uuid
+  createdAt         DateTime           @default(now())
+
+  block        ExamV2Block          @relation(fields: [blockId], references: [id], onDelete: Cascade)
+  marksScheme  ExamV2MarkingScheme? @relation(fields: [marksSchemeId], references: [id], onDelete: SetNull)
+  options      ExamV2QuestionOption[]
+  matchItems   ExamV2QuestionMatchItem[]
+  responses    ExamV2Response[]
+  events       ExamV2AttemptEvent[]
+
+  @@index([blockId])
+  @@index([questionType])
+  @@map("ExamV2Questions")
+}
+
+model ExamV2QuestionOption {
+  id        String  @id @default(uuid()) @db.Uuid
+  questionId String @db.Uuid
+  optionKey String
+  labelRich String
+  assets    Json?
+  sortOrder Int
+  isCorrect Boolean?
+
+  question ExamV2Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@unique([questionId, optionKey])
+  @@unique([questionId, sortOrder])
+  @@index([questionId, sortOrder])
+  @@map("ExamV2QuestionOptions")
+}
+
+model ExamV2QuestionMatchItem {
+  id        String  @id @default(uuid()) @db.Uuid
+  questionId String @db.Uuid
+  listName  String
+  itemKey   String
+  labelRich String
+  sortOrder Int
+
+  question ExamV2Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@unique([questionId, listName, itemKey])
+  @@unique([questionId, listName, sortOrder])
+  @@index([questionId, listName, sortOrder])
+  @@map("ExamV2QuestionMatchItems")
+}
+
+model ExamV2Attempt {
+  id                String              @id @default(uuid()) @db.Uuid
+  userId            String              @db.Uuid
+  examId            String              @db.Uuid
+  status            ExamV2AttemptStatus @default(IN_PROGRESS)
+  startTimestamp    DateTime            @default(now())
+  scheduledEndAt    DateTime
+  submittedAt       DateTime?
+  totalScore        Float?
+  lastHeartbeatAt   DateTime?
+  clientOffsetMs    Int                 @default(0)
+
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  exam      ExamV2           @relation(fields: [examId], references: [id], onDelete: Cascade)
+  responses ExamV2Response[]
+  events    ExamV2AttemptEvent[]
+
+  @@index([userId, status])
+  @@index([examId, status])
+  @@map("ExamV2Attempts")
+}
+
+model ExamV2Response {
+  attemptId         String            @db.Uuid
+  questionId        String            @db.Uuid
+  responseJson      Json?
+  numericValue      Decimal?          @db.Decimal(12, 2)
+  answerState       ExamV2AnswerState @default(NOT_VISITED)
+  timeSpentSeconds  Int               @default(0)
+  marksAwarded      Float?
+  evaluatedAt       DateTime?
+  lastUpdated       DateTime          @default(now())
+
+  attempt  ExamV2Attempt  @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  question ExamV2Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@id([attemptId, questionId])
+  @@index([attemptId, lastUpdated])
+  @@map("ExamV2Responses")
+}
+
+model ExamV2AttemptEvent {
+  id            BigInt    @id @default(autoincrement())
+  attemptId     String    @db.Uuid
+  clientEventId String
+  questionId    String?   @db.Uuid
+  eventType     String
+  payload       Json?
+  createdAt     DateTime  @default(now())
+
+  attempt  ExamV2Attempt  @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  question ExamV2Question? @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@unique([attemptId, clientEventId])
+  @@index([attemptId, createdAt])
+  @@map("ExamV2AttemptEvents")
 }
 
 model StudentAttempt {

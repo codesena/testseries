@@ -3,13 +3,7 @@
 import { useRef, useState } from "react";
 import { apiPost } from "@/lib/api";
 
-export function StartAttemptButton({
-    testId,
-    isAdvancedFormat,
-}: {
-    testId: string;
-    isAdvancedFormat: boolean;
-}) {
+export function StartV2AttemptButton({ examId }: { examId: string }) {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const loadingRef = useRef(false);
@@ -30,13 +24,10 @@ export function StartAttemptButton({
                     setError(null);
                     setLoading(true);
                     try {
-                        const res = await apiPost<{ attemptId: string }>("/api/attempts", {
-                            testId,
+                        const res = await apiPost<{ attempt: { id: string } }>("/api/v2/attempts", {
+                            examId,
                         });
-                        const nextPath = isAdvancedFormat
-                            ? `/advance/${res.attemptId}`
-                            : `/attempt/${res.attemptId}`;
-                        window.location.assign(nextPath);
+                        window.location.assign(`/advance/${res.attempt.id}`);
                     } catch (e) {
                         const msg = e instanceof Error ? e.message : "Failed to start";
                         if (msg.startsWith("401")) {
