@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { MathJax, MathJaxContext } from "better-react-mathjax";
-import { type DragEvent, useMemo, useRef, useState } from "react";
+import { type DragEvent, useEffect, useMemo, useRef, useState } from "react";
 import { InstructionRichText } from "@/components/common/InstructionRichText";
 import { RichStemContent } from "@/components/common/RichStemContent";
 import { optimizeImageDelivery } from "@/lib/image-delivery";
@@ -450,10 +450,33 @@ export function AdminAdvancedPaperViewerClient({
     const activeUploadFolder = slugifyFolderName(uploadFolderName) || DEFAULT_UPLOAD_FOLDER;
     const draftUploadFolder = slugifyFolderName(uploadFolderDraft) || DEFAULT_UPLOAD_FOLDER;
     const isUploadFolderDirty = draftUploadFolder !== activeUploadFolder;
+    const uploadFolderStorageKey = `admin-adv-upload-folder:${examId}`;
+
+    useEffect(() => {
+        try {
+            const stored = localStorage.getItem(uploadFolderStorageKey);
+            const normalized = stored ? (slugifyFolderName(stored) || DEFAULT_UPLOAD_FOLDER) : "";
+            if (!normalized) return;
+            setUploadFolderName(normalized);
+            setUploadFolderDraft(normalized);
+        } catch {
+            // Ignore localStorage access issues (private mode, quota, etc.).
+        }
+    }, [uploadFolderStorageKey]);
+
+    useEffect(() => {
+        setUploadFolderSaved(!isUploadFolderDirty);
+    }, [isUploadFolderDirty]);
 
     function saveUploadFolder() {
-        setUploadFolderName(uploadFolderDraft);
-        setUploadFolderSaved(true);
+        const next = slugifyFolderName(uploadFolderDraft) || DEFAULT_UPLOAD_FOLDER;
+        setUploadFolderName(next);
+        setUploadFolderDraft(next);
+        try {
+            localStorage.setItem(uploadFolderStorageKey, next);
+        } catch {
+            // Ignore localStorage access issues (private mode, quota, etc.).
+        }
     }
 
     async function savePaperTitle() {
@@ -524,7 +547,14 @@ export function AdminAdvancedPaperViewerClient({
         setLoadingEdit(true);
 
         if (!uploadFolderName.trim()) {
-            setUploadFolderName(slugifyFolderName(paperTitle) || DEFAULT_UPLOAD_FOLDER);
+            const fallbackFolder = slugifyFolderName(paperTitle) || DEFAULT_UPLOAD_FOLDER;
+            setUploadFolderName(fallbackFolder);
+            setUploadFolderDraft(fallbackFolder);
+            try {
+                localStorage.setItem(uploadFolderStorageKey, fallbackFolder);
+            } catch {
+                // Ignore localStorage access issues (private mode, quota, etc.).
+            }
         }
 
         try {
@@ -1008,7 +1038,6 @@ export function AdminAdvancedPaperViewerClient({
                                                 value={uploadFolderDraft}
                                                 onChange={(e) => {
                                                     setUploadFolderDraft(e.target.value);
-                                                    setUploadFolderSaved(false);
                                                 }}
                                                 placeholder={DEFAULT_UPLOAD_FOLDER}
                                             />
