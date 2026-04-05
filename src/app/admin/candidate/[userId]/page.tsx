@@ -112,12 +112,57 @@ export default async function AdminCandidatePage(
         orderBy: { _max: { startTimestamp: "desc" } },
     });
 
+    const advancedAgg = await prisma.examV2Attempt.groupBy({
+        by: ["examId"],
+        where: { userId },
+        _count: { _all: true },
+        _max: { startTimestamp: true },
+        orderBy: { _max: { startTimestamp: "desc" } },
+    });
+
     const testIds = testAgg.map((t) => t.testId);
+    const examIds = advancedAgg.map((a) => a.examId);
+
     const tests = await prisma.testSeries.findMany({
         where: { id: { in: testIds } },
         select: { id: true, title: true },
     });
+    const advancedExams = await prisma.examV2.findMany({
+        where: { id: { in: examIds } },
+        select: { id: true, title: true, code: true },
+    });
+
     const testById = new Map(tests.map((t) => [t.id, t] as const));
+    const examById = new Map(advancedExams.map((e) => [e.id, e] as const));
+
+    const papers = [
+        ...testAgg.map((t) => {
+            const test = testById.get(t.testId);
+            return {
+                kind: "main" as const,
+                paperId: t.testId,
+                title: test?.title ?? t.testId,
+                attemptCount: t._count._all,
+                lastAttemptAt: t._max.startTimestamp,
+                href: `/admin/candidate/${candidate.id}/test/${t.testId}`,
+            };
+        }),
+        ...advancedAgg.map((a) => {
+            const exam = examById.get(a.examId);
+            return {
+                kind: "advanced" as const,
+                paperId: a.examId,
+                title: exam?.title ?? exam?.code ?? a.examId,
+                attemptCount: a._count._all,
+                lastAttemptAt: a._max.startTimestamp,
+                href: `/admin/candidate/${candidate.id}/advance/${a.examId}`,
+            };
+        }),
+    ].sort((x, y) => {
+        const aTs = x.lastAttemptAt ? new Date(x.lastAttemptAt).getTime() : 0;
+        const bTs = y.lastAttemptAt ? new Date(y.lastAttemptAt).getTime() : 0;
+        return bTs - aTs;
+    });
 
     return (
         <div className="min-h-screen flex flex-col">
@@ -152,27 +197,28 @@ export default async function AdminCandidatePage(
                     </div>
 
                     <div className="mt-6 grid gap-3">
-                        {testAgg.map((t) => {
-                            const test = testById.get(t.testId);
-                            const title = test?.title ?? t.testId;
+                        {papers.map((paper) => {
                             return (
                                 <div
-                                    key={t.testId}
+                                    key={`${paper.kind}:${paper.paperId}`}
                                     className="rounded-2xl border p-4"
                                     style={{ borderColor: "var(--border)", background: "var(--card)" }}
                                 >
                                     <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                                         <div className="min-w-0">
-                                            <div className="font-medium truncate">{title}</div>
+                                            <div className="font-medium truncate">{paper.title}</div>
                                             <div className="mt-1 text-xs opacity-60">
-                                                {t._count._all} attempt{t._count._all === 1 ? "" : "s"}
-                                                {t._max.startTimestamp ? ` · Last ${fmtDate(t._max.startTimestamp)}` : ""}
+                                                <span className="inline-flex items-center rounded-full border px-2 py-0.5 mr-2" style={{ borderColor: "var(--border)", background: "var(--muted)" }}>
+                                                    {paper.kind === "advanced" ? "Advanced" : "Main"}
+                                                </span>
+                                                {paper.attemptCount} attempt{paper.attemptCount === 1 ? "" : "s"}
+                                                {paper.lastAttemptAt ? ` · Last ${fmtDate(paper.lastAttemptAt)}` : ""}
                                             </div>
                                         </div>
 
                                         <div className="shrink-0">
                                             <Link
-                                                href={`/admin/candidate/${candidate.id}/test/${t.testId}`}
+                                                href={paper.href}
                                                 className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
                                                 style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                                             >
@@ -184,7 +230,7 @@ export default async function AdminCandidatePage(
                             );
                         })}
 
-                        {testAgg.length === 0 ? (
+                        {papers.length === 0 ? (
                             <div className="text-sm opacity-70">No papers found for this candidate.</div>
                         ) : null}
                     </div>
