@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { MathJax, MathJaxContext } from "better-react-mathjax";
-import { type DragEvent, useMemo, useState } from "react";
+import { type DragEvent, useMemo, useRef, useState } from "react";
 import { InstructionRichText } from "@/components/common/InstructionRichText";
 import { RichStemContent } from "@/components/common/RichStemContent";
 import { optimizeImageDelivery } from "@/lib/image-delivery";
@@ -389,6 +389,15 @@ export function AdminAdvancedPaperViewerClient({
     const [issuesErrorForQuestionId, setIssuesErrorForQuestionId] = useState<Record<string, string | null>>({});
     const [issuesByQuestionId, setIssuesByQuestionId] = useState<Record<string, QuestionIssueItem[]>>({});
     const [issueCountByQuestionId, setIssueCountByQuestionId] = useState<Record<string, number>>({});
+    const questionCardRefs = useRef<Record<string, HTMLElement | null>>({});
+
+    function scrollToQuestionCard(questionId: string) {
+        const target = questionCardRefs.current[questionId];
+        if (!target) return;
+        target.scrollIntoView({ behavior: "smooth", block: "start" });
+        // Keep keyboard context on the edited question card after save.
+        target.focus({ preventScroll: true });
+    }
 
     const parsedEditRaw = useMemo(() => {
         if (!editRaw.trim()) return null;
@@ -659,6 +668,7 @@ export function AdminAdvancedPaperViewerClient({
 
     async function saveEdit(sourceQuestion: AdvancedPaperQuestion) {
         if (!editOpenForQuestionId || savingEdit) return;
+        const savedQuestionId = editOpenForQuestionId;
 
         if (isUploadFolderDirty) {
             setEditError("Please click Save folder first. Upload folder changes are not saved yet.");
@@ -735,6 +745,9 @@ export function AdminAdvancedPaperViewerClient({
             setEditSuccess(null);
             setEditRaw("");
             setEditUiMode("form");
+            window.setTimeout(() => {
+                scrollToQuestionCard(savedQuestionId);
+            }, 0);
         } catch (e) {
             setEditError(e instanceof Error ? e.message : "Failed to save question");
         } finally {
@@ -1192,7 +1205,16 @@ export function AdminAdvancedPaperViewerClient({
                                 : null;
 
                             return (
-                                <article key={q.id} className="rounded-2xl border p-4" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
+                                <article
+                                    key={q.id}
+                                    id={`question-card-${q.id}`}
+                                    ref={(node) => {
+                                        questionCardRefs.current[q.id] = node;
+                                    }}
+                                    tabIndex={-1}
+                                    className="rounded-2xl border p-4"
+                                    style={{ borderColor: "var(--border)", background: "var(--card)" }}
+                                >
                                     <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] opacity-70">
                                         <div className="flex flex-wrap items-center gap-2">
                                             <span className="inline-flex h-7 items-center rounded-full border px-2" style={{ borderColor: "var(--border)", background: "var(--muted)" }}>Q{q.index}</span>
