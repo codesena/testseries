@@ -86,6 +86,31 @@ Full Notion setup + schema reference: [docs/NOTION.md](docs/NOTION.md).
 
 `npm run db:seed:notion`
 
+### Production Seed (Advanced Papers via Notion)
+
+Use this flow to seed the production database with Advanced paper set data from one or more Notion database IDs.
+
+Required env vars:
+
+- `DATABASE_URL_PROD` (or `PROD_DATABASE_URL`)
+- `NOTION_TOKEN`
+- `CONFIRM_PROD_SEED=yes`
+- `ADV_NOTION_DATABASE_IDS` (comma-separated Notion DB IDs)
+
+Command:
+
+`CONFIRM_PROD_SEED=yes ADV_NOTION_DATABASE_IDS=<id1>,<id2> npm run db:seed:prod:v2-paper12`
+
+Example:
+
+`CONFIRM_PROD_SEED=yes ADV_NOTION_DATABASE_IDS=338a562359c28098916cf99a73e378a5,339a562359c28040b74dca2fe1e69c2b npm run db:seed:prod:v2-paper12`
+
+What this command does:
+
+- Points Prisma to production DB using `DATABASE_URL_PROD`.
+- Runs base seed first (required entities like marking schemes/subjects).
+- Runs Advanced v2 seed for each Notion DB ID in `ADV_NOTION_DATABASE_IDS`.
+
 Notes:
 
 - If you imported the table via CSV, Notion may create many columns as plain text (`rich_text`). The importer supports that too (it will parse numbers/booleans from text), but using proper Notion property types (Select/Number/Checkbox) is more reliable.

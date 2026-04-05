@@ -69,6 +69,93 @@ function extractTopicNameFromPayload(payload: unknown): string | null {
     return next.length ? next : null;
 }
 
+function fallbackSchemeForQuestionType(questionType: "SINGLE_CORRECT" | "MULTI_CORRECT" | "MATCHING_LIST" | "NAT_INTEGER" | "NAT_DECIMAL") {
+    if (questionType === "SINGLE_CORRECT" || questionType === "MATCHING_LIST") {
+        return {
+            name: "V2_ADV_SINGLE_3N1",
+            questionType,
+            unattemptedScore: 0,
+            rules: [
+                {
+                    ruleKind: "FULL" as const,
+                    priority: 1,
+                    score: 3,
+                    requireAllCorrect: true,
+                    requireZeroIncorrect: true,
+                    requireUnattempted: false,
+                    minCorrectSelected: null,
+                    maxCorrectSelected: null,
+                    minIncorrectSelected: null,
+                    maxIncorrectSelected: null,
+                },
+                {
+                    ruleKind: "NEGATIVE" as const,
+                    priority: 2,
+                    score: -1,
+                    minIncorrectSelected: 1,
+                    maxIncorrectSelected: null,
+                    minCorrectSelected: null,
+                    maxCorrectSelected: null,
+                    requireAllCorrect: false,
+                    requireZeroIncorrect: false,
+                    requireUnattempted: false,
+                },
+            ],
+        };
+    }
+
+    if (questionType === "MULTI_CORRECT") {
+        return {
+            name: "V2_ADV_MULTI_4_3_2_1_N2",
+            questionType,
+            unattemptedScore: 0,
+            rules: [],
+        };
+    }
+
+    if (questionType === "NAT_DECIMAL") {
+        return {
+            name: "V2_ADV_NAT_DECIMAL_3N0",
+            questionType,
+            unattemptedScore: 0,
+            rules: [
+                {
+                    ruleKind: "FULL" as const,
+                    priority: 1,
+                    score: 3,
+                    requireAllCorrect: true,
+                    requireZeroIncorrect: true,
+                    requireUnattempted: false,
+                    minCorrectSelected: null,
+                    maxCorrectSelected: null,
+                    minIncorrectSelected: null,
+                    maxIncorrectSelected: null,
+                },
+            ],
+        };
+    }
+
+    return {
+        name: "V2_ADV_NAT_INTEGER_4N0",
+        questionType,
+        unattemptedScore: 0,
+        rules: [
+            {
+                ruleKind: "FULL" as const,
+                priority: 1,
+                score: 4,
+                requireAllCorrect: true,
+                requireZeroIncorrect: true,
+                requireUnattempted: false,
+                minCorrectSelected: null,
+                maxCorrectSelected: null,
+                minIncorrectSelected: null,
+                maxIncorrectSelected: null,
+            },
+        ],
+    };
+}
+
 export async function GET(
     _req: Request,
     ctx: { params: Promise<{ attemptId: string }> },
@@ -254,20 +341,21 @@ export async function GET(
                     options: question.options,
                 });
 
-                const computedMarks = question.marksScheme
-                    ? evaluateWithDynamicScheme({
-                        questionType: question.questionType,
-                        userAnswer,
-                        correctAnswer,
-                        scheme: {
-                            questionType: question.marksScheme.questionType,
-                            unattemptedScore: question.marksScheme.unattemptedScore,
-                            rules: question.marksScheme.rules,
-                        },
-                    })
-                    : 0;
+                const scoringScheme = question.marksScheme
+                    ? {
+                        name: question.marksScheme.name,
+                        questionType: question.marksScheme.questionType,
+                        unattemptedScore: question.marksScheme.unattemptedScore,
+                        rules: question.marksScheme.rules,
+                    }
+                    : fallbackSchemeForQuestionType(question.questionType);
 
-                const marks = response?.marksAwarded ?? computedMarks;
+                const marks = evaluateWithDynamicScheme({
+                    questionType: question.questionType,
+                    userAnswer,
+                    correctAnswer,
+                    scheme: scoringScheme,
+                });
                 const attempted = response
                     ? response.answerState === "ANSWERED_SAVED" ||
                     response.answerState === "MARKED_FOR_REVIEW" ||

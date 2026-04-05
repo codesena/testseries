@@ -76,6 +76,7 @@ export async function POST(req: Request) {
         userAnswer: parsed.data.userAnswer,
         correctAnswer: parsed.data.correctAnswer,
         scheme: {
+            name: parsed.data.schemeName,
             questionType: scheme.questionType,
             unattemptedScore: scheme.unattemptedScore,
             rules: scheme.rules,

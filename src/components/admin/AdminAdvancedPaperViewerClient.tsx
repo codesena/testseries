@@ -21,14 +21,17 @@ type AdvancedPaperQuestion = {
     imageUrls: string[];
     options: Array<{ key: string; text: string; imageUrl: string | null }>;
     correctAnswer: unknown;
+    markingSchemeName: string | null;
 };
 
 type EditPayload = {
     questionType: QuestionType;
     questionText: string;
     questionImageUrls: string[];
+    markingSchemeName?: string;
     options: Array<{ optionKey: string; labelRich: string; imageUrls: string[] }>;
     correctAnswerText: string;
+    availableMarkingSchemes?: string[];
 };
 
 type QuestionIssueItem = {
@@ -215,6 +218,7 @@ function toEditPayload(q: AdvancedPaperQuestion): EditPayload {
             labelRich: o.text,
             imageUrls: o.imageUrl ? splitUrlList(o.imageUrl) : [],
         })),
+        markingSchemeName: q.markingSchemeName ?? "",
         correctAnswerText: formatAnswer(q.correctAnswer),
     };
 }
@@ -246,8 +250,12 @@ function coerceEditPayload(value: unknown): EditPayload | null {
         questionType,
         questionText: String(obj.questionText ?? ""),
         questionImageUrls: asStringArray(obj.questionImageUrls),
+        markingSchemeName: String(obj.markingSchemeName ?? "").trim(),
         options,
         correctAnswerText: String(obj.correctAnswerText ?? ""),
+        availableMarkingSchemes: Array.isArray(obj.availableMarkingSchemes)
+            ? obj.availableMarkingSchemes.map(String).map((s) => s.trim()).filter(Boolean)
+            : undefined,
     };
 }
 
@@ -296,6 +304,7 @@ export function AdminAdvancedPaperViewerClient({
     const [editError, setEditError] = useState<string | null>(null);
     const [editSuccess, setEditSuccess] = useState<string | null>(null);
     const [previewByQuestionId, setPreviewByQuestionId] = useState<Record<string, AdvancedPaperQuestion>>({});
+    const [availableSchemesByQuestionId, setAvailableSchemesByQuestionId] = useState<Record<string, string[]>>({});
     const [issueOpenForQuestionId, setIssueOpenForQuestionId] = useState<string | null>(null);
     const [issue, setIssue] = useState("Wrong answer");
     const [details, setDetails] = useState("");
@@ -444,10 +453,20 @@ export function AdminAdvancedPaperViewerClient({
             }
 
             const data = (await res.json()) as { question?: EditPayload };
-            if (!data.question) {
+            const loadedQuestion = data.question;
+            if (!loadedQuestion) {
                 throw new Error("Invalid question payload");
             }
-            setEditRaw(JSON.stringify(data.question, null, 2));
+            setEditRaw(JSON.stringify(loadedQuestion, null, 2));
+            if (Array.isArray(loadedQuestion.availableMarkingSchemes)) {
+                const options = loadedQuestion.availableMarkingSchemes
+                    .map((name) => String(name).trim())
+                    .filter(Boolean);
+                setAvailableSchemesByQuestionId((prev) => ({
+                    ...prev,
+                    [questionId]: options,
+                }));
+            }
         } catch (e) {
             const fallback = viewerQuestions.find((q) => q.id === questionId);
             if (fallback) {
@@ -544,6 +563,7 @@ export function AdminAdvancedPaperViewerClient({
             questionType: payload.questionType,
             questionText: payload.questionText,
             imageUrls: payload.questionImageUrls,
+            markingSchemeName: payload.markingSchemeName?.trim() || source.markingSchemeName,
             options: payload.options.map((o) => ({
                 key: o.optionKey,
                 text: o.labelRich,
@@ -594,6 +614,7 @@ export function AdminAdvancedPaperViewerClient({
                     stemRich: string;
                     stemAssets: unknown;
                     payload: unknown;
+                    marksScheme?: { name: string } | null;
                     options: Array<{ optionKey: string; labelRich: string; assets: unknown }>;
                 };
             };
@@ -611,6 +632,7 @@ export function AdminAdvancedPaperViewerClient({
                 questionType: data.question.questionType,
                 questionText: data.question.stemRich,
                 imageUrls: parseAssetsToUrls(data.question.stemAssets),
+                markingSchemeName: data.question.marksScheme?.name ?? (payload.markingSchemeName?.trim() || null),
                 options: data.question.options.map((o) => ({
                     key: o.optionKey,
                     text: o.labelRich,
@@ -1417,6 +1439,32 @@ export function AdminAdvancedPaperViewerClient({
                                                                 placeholder={editPayload.questionType === "MULTI_CORRECT" ? "A, C" : "e.g. B or 42"}
                                                                 disabled={loadingEdit || savingEdit}
                                                             />
+                                                        </label>
+
+                                                        <label className="block">
+                                                            <div className="text-xs opacity-70">Marking scheme name</div>
+                                                            {availableSchemesByQuestionId[q.id]?.length ? (
+                                                                <select
+                                                                    className="mt-1 w-full rounded border px-2.5 py-1.5 bg-transparent ui-field text-sm"
+                                                                    style={{ borderColor: "var(--border)", background: "var(--card)" }}
+                                                                    value={editPayload.markingSchemeName ?? ""}
+                                                                    onChange={(e) => updateEditPayload((payload) => { payload.markingSchemeName = e.target.value; })}
+                                                                    disabled={loadingEdit || savingEdit}
+                                                                >
+                                                                    {availableSchemesByQuestionId[q.id].map((schemeName) => (
+                                                                        <option key={schemeName} value={schemeName}>{schemeName}</option>
+                                                                    ))}
+                                                                </select>
+                                                            ) : (
+                                                                <input
+                                                                    className="mt-1 w-full rounded border px-2.5 py-1.5 bg-transparent ui-field text-sm"
+                                                                    style={{ borderColor: "var(--border)", background: "var(--card)" }}
+                                                                    value={editPayload.markingSchemeName ?? ""}
+                                                                    onChange={(e) => updateEditPayload((payload) => { payload.markingSchemeName = e.target.value; })}
+                                                                    placeholder="e.g. V2_ADV_MULTI_4_3_2_1_N2"
+                                                                    disabled={loadingEdit || savingEdit}
+                                                                />
+                                                            )}
                                                         </label>
 
                                                         <label className="block">

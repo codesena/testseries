@@ -224,11 +224,11 @@ function buildQuestionFromRow(row: NotionQuestionRow): QuestionInput {
     };
 
     if (!base.markingSchemeName) {
-        if (row.questionType === "SINGLE_CORRECT") base.markingSchemeName = "V2_MAINS_SINGLE_4N1";
-        if (row.questionType === "MULTI_CORRECT") base.markingSchemeName = "V2_ADV_MULTI_PARTIAL";
-        if (row.questionType === "NAT_INTEGER" || row.questionType === "NAT_DECIMAL") {
-            base.markingSchemeName = "V2_NAT_STANDARD";
-        }
+        if (row.questionType === "SINGLE_CORRECT") base.markingSchemeName = "V2_ADV_SINGLE_3N1";
+        if (row.questionType === "MATCHING_LIST") base.markingSchemeName = "V2_ADV_MATCH_3N1";
+        if (row.questionType === "MULTI_CORRECT") base.markingSchemeName = "V2_ADV_MULTI_4_3_2_1_N2";
+        if (row.questionType === "NAT_INTEGER") base.markingSchemeName = "V2_ADV_NAT_INTEGER_4N0";
+        if (row.questionType === "NAT_DECIMAL") base.markingSchemeName = "V2_ADV_NAT_DECIMAL_3N0";
     }
 
     return base;

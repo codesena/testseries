@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { MathJax, MathJaxContext } from "better-react-mathjax";
 import { apiGet, apiPost } from "@/lib/api";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -13,6 +13,8 @@ type V2Question = {
     options: Array<{ optionKey: string; labelRich: string }>;
     responseJson: unknown;
     numericValue: number | null;
+    answerState?: QuestionStatus;
+    timeSpentSeconds?: number;
 };
 
 type V2AttemptPayload = {
@@ -210,6 +212,8 @@ export function AdvanceV2ExamClient({ attemptId }: { attemptId: string }) {
     const [submitConfirmOpen, setSubmitConfirmOpen] = useState(false);
     const [mobilePanelOpen, setMobilePanelOpen] = useState(false);
     const [saveNextNotice, setSaveNextNotice] = useState<string | null>(null);
+    const [baseTimeByQid, setBaseTimeByQid] = useState<Record<string, number>>({});
+    const activeEnteredAtRef = useRef<number | null>(null);
 
     const load = async () => {
         const res = await apiGet<V2AttemptPayload>(`/api/v2/attempts/${attemptId}/report`);
@@ -278,6 +282,7 @@ export function AdvanceV2ExamClient({ attemptId }: { attemptId: string }) {
 
         const nextAnswers: Record<string, unknown> = {};
         const nextStatus: Record<string, QuestionStatus> = {};
+        const nextTime: Record<string, number> = {};
 
         for (const subject of data.subjectBreakdown) {
             for (const section of subject.sections) {
@@ -285,20 +290,48 @@ export function AdvanceV2ExamClient({ attemptId }: { attemptId: string }) {
                     nextAnswers[q.questionId] = q.questionType === "NAT_INTEGER" || q.questionType === "NAT_DECIMAL"
                         ? (q.numericValue != null ? String(q.numericValue) : q.responseJson)
                         : q.responseJson;
-                    nextStatus[q.questionId] = q.responseJson == null && q.numericValue == null
-                        ? "NOT_VISITED"
-                        : "ANSWERED_SAVED";
+                    nextStatus[q.questionId] = q.answerState ?? "NOT_VISITED";
+                    nextTime[q.questionId] = Number.isFinite(q.timeSpentSeconds) ? Number(q.timeSpentSeconds) : 0;
                 }
             }
         }
 
         setAnswersByQid(nextAnswers);
         setStatusByQid(nextStatus);
+        setBaseTimeByQid(nextTime);
 
         const firstQuestion = questions[0]?.questionId ?? null;
         setActiveQuestionId((prev) => prev && nextAnswers[prev] !== undefined ? prev : firstQuestion);
         setActiveSubject((prev) => prev && subjects.includes(prev) ? prev : subjects[0] ?? null);
     }, [data, questions, subjects]);
+
+    useEffect(() => {
+        if (!activeQuestionId) return;
+        activeEnteredAtRef.current = Date.now();
+    }, [activeQuestionId]);
+
+    function currentElapsedSecondsForActiveQuestion() {
+        if (!activeQuestionId) return 0;
+        if (activeEnteredAtRef.current == null) return 0;
+        const elapsed = Math.floor((Date.now() - activeEnteredAtRef.current) / 1000);
+        return Math.max(0, elapsed);
+    }
+
+    function computeAndSealTimeForQuestion(questionId: string): number {
+        const base = baseTimeByQid[questionId] ?? 0;
+        if (questionId !== activeQuestionId) return base;
+
+        const elapsed = currentElapsedSecondsForActiveQuestion();
+        const total = base + elapsed;
+        setBaseTimeByQid((prev) => ({ ...prev, [questionId]: total }));
+        activeEnteredAtRef.current = Date.now();
+        return total;
+    }
+
+    function commitCurrentQuestionTime() {
+        if (!activeQuestionId) return;
+        void computeAndSealTimeForQuestion(activeQuestionId);
+    }
 
     const filteredQuestions = useMemo(() => {
         if (!activeSubject) return questions;
@@ -421,8 +454,8 @@ export function AdvanceV2ExamClient({ attemptId }: { attemptId: string }) {
         markVisitedIfNeeded();
     };
 
-    const pushResponse = async (questionId: string, status: QuestionStatus) => {
-        const value = answersByQid[questionId];
+    const pushResponse = async (questionId: string, status: QuestionStatus, explicitValue?: unknown) => {
+        const value = explicitValue !== undefined ? explicitValue : answersByQid[questionId];
         const question = questions.find((q) => q.questionId === questionId);
         if (!question) return;
 
@@ -446,16 +479,19 @@ export function AdvanceV2ExamClient({ attemptId }: { attemptId: string }) {
             }
         }
 
+        const timeSpentSeconds = computeAndSealTimeForQuestion(questionId);
+
         await apiPost(`/api/v2/attempts/${attemptId}/responses`, {
             questionId,
             responseJson,
             numericValue: numericPayload,
             answerState: status,
-            timeSpentSeconds: 0,
+            timeSpentSeconds,
         });
     };
 
     const goToQuestion = (questionId: string) => {
+        commitCurrentQuestionTime();
         setActiveQuestionId(questionId);
         setStatusByQid((prev) => ({
             ...prev,
@@ -537,13 +573,10 @@ export function AdvanceV2ExamClient({ attemptId }: { attemptId: string }) {
         if (!activeQuestionId) return;
         setSaving(true);
         try {
-            setAnswersByQid((prev) => ({ ...prev, [activeQuestionId]: "" }));
+            const clearedValue = "";
+            setAnswersByQid((prev) => ({ ...prev, [activeQuestionId]: clearedValue }));
             const nextStatus: QuestionStatus = "VISITED_NOT_ANSWERED";
-            await apiPost(`/api/v2/attempts/${attemptId}/responses`, {
-                questionId: activeQuestionId,
-                answerState: nextStatus,
-                timeSpentSeconds: 0,
-            });
+            await pushResponse(activeQuestionId, nextStatus, clearedValue);
             setStatusByQid((prev) => ({ ...prev, [activeQuestionId]: nextStatus }));
         } finally {
             setSaving(false);
@@ -1040,6 +1073,10 @@ export function AdvanceV2ExamClient({ attemptId }: { attemptId: string }) {
                                         if (submitting) return;
                                         setSubmitting(true);
                                         try {
+                                            if (activeQuestionId) {
+                                                const currentStatus = statusByQid[activeQuestionId] ?? "VISITED_NOT_ANSWERED";
+                                                await pushResponse(activeQuestionId, currentStatus);
+                                            }
                                             await apiPost(`/api/v2/attempts/${attemptId}/submit`, {});
                                             window.location.assign(`/advance/${attemptId}/report`);
                                         } finally {

@@ -25,10 +25,12 @@ const UpdateSchema = z.object({
     questionImageUrls: z.array(z.string().trim().min(1)).default([]),
     options: z.array(z.object({
         optionKey: z.string().trim().min(1).max(16),
-        labelRich: z.string().trim().min(1),
+        // Allow empty option text so admins can keep placeholders while editing.
+        labelRich: z.string().trim(),
         imageUrls: z.array(z.string().trim().min(1)).default([]),
     })).default([]),
     correctAnswerText: z.string().trim().optional(),
+    markingSchemeName: z.string().trim().min(1).optional(),
 });
 
 function parseCorrectAnswer(
@@ -118,6 +120,7 @@ export async function GET(
             stemRich: true,
             stemAssets: true,
             payload: true,
+            marksScheme: { select: { name: true } },
             options: {
                 orderBy: { sortOrder: "asc" },
                 select: {
@@ -135,16 +138,24 @@ export async function GET(
         ? (question.payload as Record<string, unknown>)
         : null;
 
+    const availableMarkingSchemes = await prisma.examV2MarkingScheme.findMany({
+        where: { questionType: question.questionType },
+        orderBy: { name: "asc" },
+        select: { name: true },
+    });
+
     const response = {
         questionType: question.questionType,
         questionText: question.stemRich,
         questionImageUrls: parseAssetsToUrls(question.stemAssets),
+        markingSchemeName: question.marksScheme?.name ?? "",
         options: question.options.map((o) => ({
             optionKey: o.optionKey,
             labelRich: o.labelRich,
             imageUrls: parseAssetsToUrls(o.assets),
         })),
         correctAnswerText: toCorrectAnswerText(question.questionType, payloadObj?.correctAnswer),
+        availableMarkingSchemes: availableMarkingSchemes.map((s) => s.name),
     };
 
     return json({ ok: true, question: response });
@@ -171,6 +182,7 @@ export async function PUT(
             id: true,
             questionType: true,
             payload: true,
+            marksScheme: { select: { id: true, name: true, questionType: true } },
             options: {
                 select: { id: true, optionKey: true },
             },
@@ -187,6 +199,22 @@ export async function PUT(
         ? { ...(existing.payload as Record<string, unknown>) }
         : {};
 
+    let nextMarkingSchemeId: string | null = existing.marksScheme?.id ?? null;
+    const requestedSchemeName = body.data.markingSchemeName?.trim();
+    if (requestedSchemeName) {
+        const scheme = await prisma.examV2MarkingScheme.findUnique({
+            where: { name: requestedSchemeName },
+            select: { id: true, questionType: true },
+        });
+        if (!scheme) {
+            return json({ error: `Unknown marking scheme: ${requestedSchemeName}` }, { status: 400 });
+        }
+        if (scheme.questionType !== body.data.questionType) {
+            return json({ error: "Marking scheme type does not match question type" }, { status: 400 });
+        }
+        nextMarkingSchemeId = scheme.id;
+    }
+
     const parsedCorrect = parseCorrectAnswer(body.data.questionType, body.data.correctAnswerText);
     payloadBase.correctAnswer = parsedCorrect;
 
@@ -199,6 +227,7 @@ export async function PUT(
                 stemRich: body.data.questionText,
                 stemAssets: toAssetsValue(body.data.questionImageUrls),
                 payload: payloadBase as Prisma.InputJsonValue,
+                marksSchemeId: nextMarkingSchemeId,
             },
             select: { id: true },
         });
@@ -255,6 +284,7 @@ export async function PUT(
                 stemRich: true,
                 stemAssets: true,
                 payload: true,
+                marksScheme: { select: { name: true } },
                 options: {
                     orderBy: { sortOrder: "asc" },
                     select: {

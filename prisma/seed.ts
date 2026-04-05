@@ -59,7 +59,7 @@ async function seedExamV2MarkingSchemes() {
             name: "V2_ADV_MULTI_PARTIAL",
             questionType: "MULTI_CORRECT" as const,
             unattemptedScore: 0,
-            notes: "+4 all-correct, +1 partial (no wrong option), -2 any wrong option",
+            notes: "Advanced multi-correct scheme (+4/+3/+2/+1/-2) handled by evaluator using scheme name",
             rules: [
                 {
                     ruleKind: "FULL" as const,
@@ -84,6 +84,124 @@ async function seedExamV2MarkingSchemes() {
                 {
                     ruleKind: "ZERO" as const,
                     priority: 4,
+                    score: 0,
+                },
+            ],
+        },
+        {
+            name: "V2_ADV_MULTI_4_3_2_1_N2",
+            questionType: "MULTI_CORRECT" as const,
+            unattemptedScore: 0,
+            notes: "Advanced multi-correct (+4/+3/+2/+1/-2) with conditional partials",
+            rules: [
+                {
+                    ruleKind: "FULL" as const,
+                    priority: 1,
+                    score: 4,
+                    requireAllCorrect: true,
+                    requireZeroIncorrect: true,
+                },
+                {
+                    ruleKind: "NEGATIVE" as const,
+                    priority: 2,
+                    score: -2,
+                    minIncorrectSelected: 1,
+                },
+                {
+                    ruleKind: "ZERO" as const,
+                    priority: 3,
+                    score: 0,
+                },
+            ],
+        },
+        {
+            name: "V2_ADV_SINGLE_3N1",
+            questionType: "SINGLE_CORRECT" as const,
+            unattemptedScore: 0,
+            notes: "+3 correct, -1 incorrect, 0 unattempted",
+            rules: [
+                {
+                    ruleKind: "FULL" as const,
+                    priority: 1,
+                    score: 3,
+                    requireAllCorrect: true,
+                    requireZeroIncorrect: true,
+                },
+                {
+                    ruleKind: "NEGATIVE" as const,
+                    priority: 2,
+                    score: -1,
+                    minIncorrectSelected: 1,
+                },
+                {
+                    ruleKind: "ZERO" as const,
+                    priority: 3,
+                    score: 0,
+                },
+            ],
+        },
+        {
+            name: "V2_ADV_MATCH_3N1",
+            questionType: "MATCHING_LIST" as const,
+            unattemptedScore: 0,
+            notes: "+3 correct, -1 incorrect, 0 unattempted",
+            rules: [
+                {
+                    ruleKind: "FULL" as const,
+                    priority: 1,
+                    score: 3,
+                    requireAllCorrect: true,
+                    requireZeroIncorrect: true,
+                },
+                {
+                    ruleKind: "NEGATIVE" as const,
+                    priority: 2,
+                    score: -1,
+                    minIncorrectSelected: 1,
+                },
+                {
+                    ruleKind: "ZERO" as const,
+                    priority: 3,
+                    score: 0,
+                },
+            ],
+        },
+        {
+            name: "V2_ADV_NAT_INTEGER_4N0",
+            questionType: "NAT_INTEGER" as const,
+            unattemptedScore: 0,
+            notes: "+4 exact match, 0 otherwise",
+            rules: [
+                {
+                    ruleKind: "FULL" as const,
+                    priority: 1,
+                    score: 4,
+                    requireAllCorrect: true,
+                    requireZeroIncorrect: true,
+                },
+                {
+                    ruleKind: "ZERO" as const,
+                    priority: 2,
+                    score: 0,
+                },
+            ],
+        },
+        {
+            name: "V2_ADV_NAT_DECIMAL_3N0",
+            questionType: "NAT_DECIMAL" as const,
+            unattemptedScore: 0,
+            notes: "+3 exact match, 0 otherwise",
+            rules: [
+                {
+                    ruleKind: "FULL" as const,
+                    priority: 1,
+                    score: 3,
+                    requireAllCorrect: true,
+                    requireZeroIncorrect: true,
+                },
+                {
+                    ruleKind: "ZERO" as const,
+                    priority: 2,
                     score: 0,
                 },
             ],

@@ -113,6 +113,9 @@ export default async function AdminAdvancedPaperViewPage(
                                                     isCorrect: true,
                                                 },
                                             },
+                                            marksScheme: {
+                                                select: { name: true },
+                                            },
                                         },
                                     },
                                 },
@@ -161,6 +164,7 @@ export default async function AdminAdvancedPaperViewPage(
                             text: o.labelRich,
                             imageUrl: asStringArrayFromAsset(o.assets).join("\n") || null,
                         })),
+                        markingSchemeName: q.marksScheme?.name ?? null,
                         correctAnswer: extractCorrectAnswer({
                             questionType: q.questionType,
                             payload: q.payload,
