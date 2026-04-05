@@ -81,24 +81,75 @@ export default async function AdminPage() {
         );
     }
 
-    const attemptAgg = await prisma.studentAttempt.groupBy({
-        by: ["studentId"],
-        _count: { _all: true },
-        _max: { startTimestamp: true },
-        orderBy: { _max: { startTimestamp: "desc" } },
-    });
+    const [mainAttemptAgg, advancedAttemptAgg, mainPaperPairs, advancedPaperPairs] = await Promise.all([
+        prisma.studentAttempt.groupBy({
+            by: ["studentId"],
+            _count: { _all: true },
+            _max: { startTimestamp: true },
+        }),
+        prisma.examV2Attempt.groupBy({
+            by: ["userId"],
+            _count: { _all: true },
+            _max: { startTimestamp: true },
+        }),
+        prisma.studentAttempt.groupBy({
+            by: ["studentId", "testId"],
+            _count: { _all: true },
+        }),
+        prisma.examV2Attempt.groupBy({
+            by: ["userId", "examId"],
+            _count: { _all: true },
+        }),
+    ]);
 
-    const testPairs = await prisma.studentAttempt.groupBy({
-        by: ["studentId", "testId"],
-        _count: { _all: true },
-    });
+    const statsByStudentId = new Map<string, { attemptCount: number; paperCount: number; lastAttemptAt: Date | null }>();
 
-    const testCountByStudentId = new Map<string, number>();
-    for (const row of testPairs) {
-        testCountByStudentId.set(row.studentId, (testCountByStudentId.get(row.studentId) ?? 0) + 1);
+    for (const row of mainAttemptAgg) {
+        statsByStudentId.set(row.studentId, {
+            attemptCount: row._count._all,
+            paperCount: 0,
+            lastAttemptAt: row._max.startTimestamp,
+        });
     }
 
-    const studentIds = attemptAgg.map((a) => a.studentId);
+    for (const row of advancedAttemptAgg) {
+        const current = statsByStudentId.get(row.userId);
+        if (!current) {
+            statsByStudentId.set(row.userId, {
+                attemptCount: row._count._all,
+                paperCount: 0,
+                lastAttemptAt: row._max.startTimestamp,
+            });
+            continue;
+        }
+
+        const currentTs = current.lastAttemptAt ? current.lastAttemptAt.getTime() : 0;
+        const rowTs = row._max.startTimestamp ? row._max.startTimestamp.getTime() : 0;
+        current.attemptCount += row._count._all;
+        current.lastAttemptAt = rowTs > currentTs ? row._max.startTimestamp : current.lastAttemptAt;
+    }
+
+    for (const row of mainPaperPairs) {
+        const current = statsByStudentId.get(row.studentId);
+        if (!current) continue;
+        current.paperCount += 1;
+    }
+
+    for (const row of advancedPaperPairs) {
+        const current = statsByStudentId.get(row.userId);
+        if (!current) continue;
+        current.paperCount += 1;
+    }
+
+    const candidateRows = Array.from(statsByStudentId.entries())
+        .map(([studentId, stats]) => ({ studentId, ...stats }))
+        .sort((a, b) => {
+            const aTs = a.lastAttemptAt ? a.lastAttemptAt.getTime() : 0;
+            const bTs = b.lastAttemptAt ? b.lastAttemptAt.getTime() : 0;
+            return bTs - aTs;
+        });
+
+    const studentIds = candidateRows.map((a) => a.studentId);
     const students = await prisma.user.findMany({
         where: { id: { in: studentIds } },
         select: { id: true, name: true, username: true },
@@ -217,13 +268,13 @@ export default async function AdminPage() {
                 <div className="mt-2 text-sm opacity-70">Select a candidate to view papers and reports.</div>
 
                 <div className="mt-6 grid gap-3">
-                    {attemptAgg.map((a) => {
+                    {candidateRows.map((a) => {
                         const student = studentById.get(a.studentId);
                         const studentLabel = student
                             ? `${student.name} (${student.username})`
                             : a.studentId;
-                        const paperCount = testCountByStudentId.get(a.studentId) ?? 0;
-                        const lastAttemptAt = a._max.startTimestamp;
+                        const paperCount = a.paperCount;
+                        const lastAttemptAt = a.lastAttemptAt;
 
                         return (
                             <div
@@ -235,7 +286,7 @@ export default async function AdminPage() {
                                     <div className="min-w-0">
                                         <div className="font-medium leading-snug break-words">{studentLabel}</div>
                                         <div className="mt-1 text-xs opacity-60">
-                                            {paperCount} paper{paperCount === 1 ? "" : "s"} · {a._count._all} attempt{a._count._all === 1 ? "" : "s"}
+                                            {paperCount} paper{paperCount === 1 ? "" : "s"} · {a.attemptCount} attempt{a.attemptCount === 1 ? "" : "s"}
                                             {lastAttemptAt ? ` · Last ${fmtDate(lastAttemptAt)}` : ""}
                                         </div>
                                     </div>
@@ -254,7 +305,7 @@ export default async function AdminPage() {
                         );
                     })}
 
-                    {attemptAgg.length === 0 ? (
+                    {candidateRows.length === 0 ? (
                         <div className="text-sm opacity-70">No candidates found.</div>
                     ) : null}
                 </div>
