@@ -121,8 +121,17 @@ export function RichStemContent({ text }: { text: string }) {
         <div className="space-y-3">
             {blocks.map((block, idx) => (
                 block.kind === "text" ? (
-                    <div key={`stem-text-${idx}`}>
-                        <MathJax dynamic>{sanitizeRenderableText(block.text)}</MathJax>
+                    <div key={`stem-text-${idx}`} className="space-y-2">
+                        {parseCellSegments(block.text).map((segment, sIdx) => (
+                            segment.kind === "text" ? (
+                                <MathJax key={`stem-text-seg-${idx}-${sIdx}`} dynamic>{sanitizeRenderableText(segment.text)}</MathJax>
+                            ) : (
+                                <div key={`stem-img-seg-${idx}-${sIdx}`} className="rounded border p-1.5 inline-block" style={{ borderColor: "var(--border)", background: "var(--muted)" }}>
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                    <img src={optimizeImageDelivery(segment.url)} alt={segment.alt} className="max-h-56 w-auto object-contain" />
+                                </div>
+                            )
+                        ))}
                     </div>
                 ) : (
                     <div key={`stem-table-${idx}`} className="overflow-x-auto rounded-lg border" style={{ borderColor: "var(--border)" }}>

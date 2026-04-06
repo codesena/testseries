@@ -815,7 +815,7 @@ export function AdvanceV2ExamClient({ attemptId }: { attemptId: string }) {
                                             <div className="space-y-3">
                                                 {parsedMatchingStem.intro.map((line, idx) => (
                                                     <div key={`intro-${idx}`}>
-                                                        <MathJax dynamic>{sanitizeRenderableText(line)}</MathJax>
+                                                        <RichStemContent text={sanitizeRenderableText(line)} />
                                                     </div>
                                                 ))}
 
@@ -832,12 +832,12 @@ export function AdvanceV2ExamClient({ attemptId }: { attemptId: string }) {
                                                                 <tr key={`row-${idx}`}>
                                                                     <td className="align-top border px-3 py-2" style={{ borderColor: "var(--border)" }}>
                                                                         {parsedMatchingStem.listI[idx]
-                                                                            ? <MathJax dynamic>{sanitizeRenderableText(normalizeMatchingLineForMathJax(parsedMatchingStem.listI[idx]))}</MathJax>
+                                                                            ? <RichStemContent text={sanitizeRenderableText(normalizeMatchingLineForMathJax(parsedMatchingStem.listI[idx]))} />
                                                                             : null}
                                                                     </td>
                                                                     <td className="align-top border px-3 py-2" style={{ borderColor: "var(--border)" }}>
                                                                         {parsedMatchingStem.listII[idx]
-                                                                            ? <MathJax dynamic>{sanitizeRenderableText(normalizeMatchingLineForMathJax(parsedMatchingStem.listII[idx]))}</MathJax>
+                                                                            ? <RichStemContent text={sanitizeRenderableText(normalizeMatchingLineForMathJax(parsedMatchingStem.listII[idx]))} />
                                                                             : null}
                                                                     </td>
                                                                 </tr>
@@ -848,7 +848,7 @@ export function AdvanceV2ExamClient({ attemptId }: { attemptId: string }) {
 
                                                 {parsedMatchingStem.outro.map((line, idx) => (
                                                     <div key={`outro-${idx}`}>
-                                                        <MathJax dynamic>{sanitizeRenderableText(line)}</MathJax>
+                                                        <RichStemContent text={sanitizeRenderableText(line)} />
                                                     </div>
                                                 ))}
                                             </div>
