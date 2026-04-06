@@ -5,13 +5,15 @@ import { MathJax, MathJaxContext } from "better-react-mathjax";
 import { apiGet, apiPost } from "@/lib/api";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { RichStemContent } from "@/components/common/RichStemContent";
+import { optimizeImageDelivery } from "@/lib/image-delivery";
 
 type V2Question = {
     questionId: string;
     questionType: "SINGLE_CORRECT" | "MULTI_CORRECT" | "MATCHING_LIST" | "NAT_INTEGER" | "NAT_DECIMAL";
     stemRich: string;
+    stemAssets?: unknown;
     topicName?: string | null;
-    options: Array<{ optionKey: string; labelRich: string }>;
+    options: Array<{ optionKey: string; labelRich: string; assets?: unknown }>;
     responseJson: unknown;
     numericValue: number | null;
     answerState?: QuestionStatus;
@@ -48,6 +50,7 @@ type FlatQuestion = {
     questionId: string;
     questionType: V2Question["questionType"];
     stemRich: string;
+    stemAssets?: unknown;
     topicName: string | null;
     options: V2Question["options"];
     subject: string;
@@ -190,6 +193,29 @@ function sanitizeRenderableText(input: string): string {
     return input.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, "");
 }
 
+function asStringArrayFromAsset(value: unknown): string[] {
+    if (Array.isArray(value)) return value.map(String).map((v) => v.trim()).filter(Boolean);
+    if (typeof value === "string") {
+        return value.split(/\r?\n|,|;/g).map((s) => s.trim()).filter(Boolean);
+    }
+    if (value && typeof value === "object") {
+        const obj = value as Record<string, unknown>;
+        const candidates = [obj.urls, obj.imageUrls, obj.images, obj.url, obj.src];
+        const out: string[] = [];
+        for (const c of candidates) {
+            if (typeof c === "string" && c.trim()) out.push(c.trim());
+            if (Array.isArray(c)) {
+                for (const i of c) {
+                    const s = String(i).trim();
+                    if (s) out.push(s);
+                }
+            }
+        }
+        return Array.from(new Set(out));
+    }
+    return [];
+}
+
 function clearTextSelection() {
     if (typeof window === "undefined") return;
     const sel = window.getSelection?.();
@@ -257,6 +283,7 @@ export function AdvanceV2ExamClient({ attemptId }: { attemptId: string }) {
                     questionId: question.questionId,
                     questionType: question.questionType,
                     stemRich: question.stemRich,
+                    stemAssets: question.stemAssets,
                     topicName: question.topicName ?? null,
                     options: question.options,
                     subject: subject.subject,
@@ -429,6 +456,7 @@ export function AdvanceV2ExamClient({ attemptId }: { attemptId: string }) {
         : [];
     const selectedSingle = typeof answersByQid[activeQuestion.questionId] === "string" ? String(answersByQid[activeQuestion.questionId]) : "";
     const numericValue = typeof answersByQid[activeQuestion.questionId] === "string" ? String(answersByQid[activeQuestion.questionId]) : "";
+    const questionImageUrls = asStringArrayFromAsset(activeQuestion.stemAssets);
 
     const markVisitedIfNeeded = () => {
         setStatusByQid((prev) => ({
@@ -811,6 +839,17 @@ export function AdvanceV2ExamClient({ attemptId }: { attemptId: string }) {
                                     </div>
 
                                     <div className="mt-4 text-base whitespace-pre-wrap leading-relaxed">
+                                        {questionImageUrls.length ? (
+                                            <div className="mb-3 grid gap-2 sm:grid-cols-2">
+                                                {questionImageUrls.map((url) => (
+                                                    <div key={url} className="rounded border p-2 flex items-center justify-center min-h-28" style={{ borderColor: "var(--border)", background: "var(--muted)" }}>
+                                                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                        <img src={optimizeImageDelivery(url)} alt="Question" className="max-w-full max-h-72 object-contain" />
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ) : null}
+
                                         {activeQuestion.questionType === "MATCHING_LIST" && parsedMatchingStem ? (
                                             <div className="space-y-3">
                                                 {parsedMatchingStem.intro.map((line, idx) => (
@@ -881,6 +920,19 @@ export function AdvanceV2ExamClient({ attemptId }: { attemptId: string }) {
                                                             {opt.optionKey}. <MathJax inline dynamic>{sanitizeRenderableText(opt.labelRich)}</MathJax>
                                                         </span>
                                                     </div>
+                                                    {(() => {
+                                                        const optionImageUrls = asStringArrayFromAsset(opt.assets);
+                                                        return optionImageUrls.length ? (
+                                                            <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                                                                {optionImageUrls.map((url) => (
+                                                                    <div key={`${opt.optionKey}-${url}`} className="rounded border p-2 flex items-center justify-center min-h-20" style={{ borderColor: "var(--border)", background: "var(--muted)" }}>
+                                                                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                                        <img src={optimizeImageDelivery(url)} alt={`Option ${opt.optionKey}`} className="max-w-full max-h-56 object-contain" />
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        ) : null;
+                                                    })()}
                                                 </button>
                                             ))
                                             : null}
@@ -909,6 +961,19 @@ export function AdvanceV2ExamClient({ attemptId }: { attemptId: string }) {
                                                                 {opt.optionKey}. <MathJax inline dynamic>{sanitizeRenderableText(opt.labelRich)}</MathJax>
                                                             </span>
                                                         </div>
+                                                        {(() => {
+                                                            const optionImageUrls = asStringArrayFromAsset(opt.assets);
+                                                            return optionImageUrls.length ? (
+                                                                <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                                                                    {optionImageUrls.map((url) => (
+                                                                        <div key={`${opt.optionKey}-${url}`} className="rounded border p-2 flex items-center justify-center min-h-20" style={{ borderColor: "var(--border)", background: "var(--muted)" }}>
+                                                                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                                            <img src={optimizeImageDelivery(url)} alt={`Option ${opt.optionKey}`} className="max-w-full max-h-56 object-contain" />
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+                                                            ) : null;
+                                                        })()}
                                                     </button>
                                                 );
                                             })
