@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/server/db";
 import { getAuthUser } from "@/server/auth";
 import { isAdminUsername } from "@/server/admin";
+import { CandidateAttemptsClient } from "@/components/admin/CandidateAttemptsClient";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -13,31 +14,6 @@ function hasAnswer(value: unknown): boolean {
     if (Array.isArray(value)) return value.length > 0;
     if (typeof value === "object") return true;
     return true;
-}
-
-function fmtDate(d: Date | null) {
-    if (!d) return "—";
-    try {
-        return new Intl.DateTimeFormat("en-IN", {
-            year: "numeric",
-            month: "short",
-            day: "2-digit",
-            hour: "2-digit",
-            minute: "2-digit",
-            timeZone: "Asia/Kolkata",
-        }).format(d);
-    } catch {
-        return d.toISOString();
-    }
-}
-
-function fmtTime(seconds: number): string {
-    const clamped = Math.max(0, Math.floor(seconds));
-    const hh = Math.floor(clamped / 3600);
-    const mm = Math.floor((clamped % 3600) / 60);
-    const ss = clamped % 60;
-    const pad = (n: number) => String(n).padStart(2, "0");
-    return `${pad(hh)}:${pad(mm)}:${pad(ss)}`;
 }
 
 export default async function AdminCandidateAdvancedPage(
@@ -85,6 +61,24 @@ export default async function AdminCandidateAdvancedPage(
 
     const candidateLabel = candidate ? `${candidate.name} (${candidate.username})` : userId;
     const examTitle = exam?.title ?? exam?.code ?? examId;
+    const attemptRows = attempts.map((a) => {
+        const responseCount = a.responses.length;
+        const answeredCount = a.responses.reduce((acc, r) => acc + (hasAnswer(r.responseJson) ? 1 : 0), 0);
+        const totalTimeSeconds = a.responses.reduce((acc, r) => acc + (r.timeSpentSeconds ?? 0), 0);
+
+        return {
+            id: a.id,
+            status: a.status,
+            overallScore: a.totalScore,
+            startTimestamp: a.startTimestamp.toISOString(),
+            endTimestamp: (a.submittedAt ?? a.scheduledEndAt)?.toISOString() ?? null,
+            responseCount,
+            answeredCount,
+            totalTimeSeconds,
+            activityCount: a._count.events,
+            issueCount: 0,
+        };
+    });
 
     return (
         <div className="min-h-screen flex flex-col">
@@ -126,53 +120,14 @@ export default async function AdminCandidateAdvancedPage(
                     <div className="mt-2 text-sm opacity-70">{candidateLabel}</div>
                     <div className="mt-1 text-sm opacity-70">{examTitle}</div>
 
-                    <div className="mt-6 grid gap-3">
-                        {attempts.map((a) => {
-                            const responseCount = a.responses.length;
-                            const answeredCount = a.responses.reduce((acc, r) => acc + (hasAnswer(r.responseJson) ? 1 : 0), 0);
-                            const totalTimeSeconds = a.responses.reduce((acc, r) => acc + (r.timeSpentSeconds ?? 0), 0);
-
-                            return (
-                                <div
-                                    key={a.id}
-                                    className="rounded-2xl border p-4"
-                                    style={{ borderColor: "var(--border)", background: "var(--card)" }}
-                                >
-                                    <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                                        <div className="min-w-0">
-                                            <div className="font-medium truncate">Attempt {a.id.slice(0, 8)}</div>
-                                            <div className="mt-1 text-xs opacity-60">
-                                                <span className="inline-flex items-center rounded-full border px-2 py-0.5 mr-2" style={{ borderColor: "var(--border)", background: "var(--muted)" }}>
-                                                    {a.status}
-                                                </span>
-                                                Score {a.totalScore ?? "—"}
-                                            </div>
-                                            <div className="mt-1 text-xs opacity-60">
-                                                Start {fmtDate(a.startTimestamp)} · End {fmtDate(a.submittedAt ?? a.scheduledEndAt)}
-                                            </div>
-                                            <div className="mt-1 text-xs opacity-60">
-                                                Answered {answeredCount}/{responseCount} · Time {fmtTime(totalTimeSeconds)} · Events {a._count.events}
-                                            </div>
-                                        </div>
-
-                                        <div className="shrink-0">
-                                            <Link
-                                                href={`/admin/candidate/${userId}/advance/${examId}/attempt/${a.id}/report`}
-                                                className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
-                                                style={{ borderColor: "var(--border)", background: "var(--muted)" }}
-                                            >
-                                                View report
-                                            </Link>
-                                        </div>
-                                    </div>
-                                </div>
-                            );
-                        })}
-
-                        {attempts.length === 0 ? (
-                            <div className="text-sm opacity-70">No advanced attempts found for this paper.</div>
-                        ) : null}
-                    </div>
+                    <CandidateAttemptsClient
+                        initialAttempts={attemptRows}
+                        candidateLabel={candidateLabel}
+                        testTitle={examTitle}
+                        reportHrefTemplate={`/admin/candidate/${userId}/advance/${examId}/attempt/{attemptId}/report`}
+                        deleteEndpointTemplate="/api/admin/v2/attempts/{attemptId}"
+                        activityLabel="Events"
+                    />
                 </section>
             </main>
         </div>

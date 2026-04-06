@@ -45,10 +45,16 @@ export function CandidateAttemptsClient({
     initialAttempts,
     candidateLabel,
     testTitle,
+    reportHrefTemplate,
+    deleteEndpointTemplate,
+    activityLabel,
 }: {
     initialAttempts: AttemptItem[];
     candidateLabel: string;
     testTitle: string;
+    reportHrefTemplate?: string;
+    deleteEndpointTemplate?: string;
+    activityLabel?: string;
 }) {
     const [attempts, setAttempts] = useState(initialAttempts);
     const [selectedAttemptId, setSelectedAttemptId] = useState<string | null>(null);
@@ -66,7 +72,11 @@ export function CandidateAttemptsClient({
         setDeleting(true);
         setError(null);
         try {
-            const res = await fetch(`/api/admin/attempts/${selected.id}`, {
+            const deletePath = deleteEndpointTemplate
+                ? deleteEndpointTemplate.replace("{attemptId}", selected.id)
+                : `/api/admin/attempts/${selected.id}`;
+
+            const res = await fetch(deletePath, {
                 method: "DELETE",
                 headers: { "content-type": "application/json" },
             });
@@ -109,13 +119,15 @@ export function CandidateAttemptsClient({
                                 </div>
                                 <div className="mt-1 text-xs opacity-60">
                                     Answered {a.answeredCount}/{a.responseCount} · Time {fmtTime(a.totalTimeSeconds)} ·
-                                    Activities {a.activityCount} · Issues {a.issueCount}
+                                    {activityLabel ?? "Activities"} {a.activityCount} · Issues {a.issueCount}
                                 </div>
                             </div>
 
                             <div className="flex items-center gap-2 shrink-0">
                                 <Link
-                                    href={`/attempt/${a.id}/report`}
+                                    href={reportHrefTemplate
+                                        ? reportHrefTemplate.replace("{attemptId}", a.id)
+                                        : `/attempt/${a.id}/report`}
                                     className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
                                     style={{
                                         borderColor: "rgba(59, 130, 246, 0.5)",
@@ -178,7 +190,7 @@ export function CandidateAttemptsClient({
                             <div><span className="opacity-70">End:</span> {fmtDate(selected.endTimestamp)}</div>
                             <div><span className="opacity-70">Answered:</span> {selected.answeredCount}/{selected.responseCount}</div>
                             <div><span className="opacity-70">Total time:</span> {fmtTime(selected.totalTimeSeconds)}</div>
-                            <div><span className="opacity-70">Activity logs:</span> {selected.activityCount}</div>
+                            <div><span className="opacity-70">{activityLabel ?? "Activity logs"}:</span> {selected.activityCount}</div>
                             <div><span className="opacity-70">Issue reports:</span> {selected.issueCount}</div>
                         </div>
 
