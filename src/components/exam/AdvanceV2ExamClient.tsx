@@ -601,31 +601,25 @@ export function AdvanceV2ExamClient({ attemptId }: { attemptId: string }) {
             return;
         }
 
-        setSaving(true);
         setSaveNextNotice(null);
         const nextStatus: QuestionStatus = "ANSWERED_SAVED";
-        try {
-            await pushResponse(activeQuestionId, nextStatus);
-            setStatusByQid((prev) => ({ ...prev, [activeQuestionId]: nextStatus }));
-            goNext();
-        } finally {
-            setSaving(false);
-        }
+        const currentId = activeQuestionId;
+        const sealedTime = computeAndSealTimeForQuestion(currentId);
+        setStatusByQid((prev) => ({ ...prev, [currentId]: nextStatus }));
+        goNext();
+        void pushResponse(currentId, nextStatus, undefined, sealedTime);
     };
 
     const markForReviewAndNext = async () => {
         if (!activeQuestionId) return;
 
-        setSaving(true);
-        const answered = hasAnswer(answersByQid[activeQuestionId]);
+        const currentId = activeQuestionId;
+        const answered = hasAnswer(answersByQid[currentId]);
         const nextStatus: QuestionStatus = answered ? "ANSWERED_MARKED_FOR_REVIEW" : "MARKED_FOR_REVIEW";
-        try {
-            await pushResponse(activeQuestionId, nextStatus);
-            setStatusByQid((prev) => ({ ...prev, [activeQuestionId]: nextStatus }));
-            goNext();
-        } finally {
-            setSaving(false);
-        }
+        const sealedTime = computeAndSealTimeForQuestion(currentId);
+        setStatusByQid((prev) => ({ ...prev, [currentId]: nextStatus }));
+        goNext();
+        void pushResponse(currentId, nextStatus, undefined, sealedTime);
     };
 
     const clearResponse = async () => {
@@ -648,16 +642,13 @@ export function AdvanceV2ExamClient({ attemptId }: { attemptId: string }) {
             return;
         }
 
-        const answered = hasAnswer(answersByQid[activeQuestionId]);
+        const currentId = activeQuestionId;
+        const answered = hasAnswer(answersByQid[currentId]);
         if (answered) {
-            setSaving(true);
-            try {
-                const nextStatus: QuestionStatus = "ANSWERED_SAVED";
-                await pushResponse(activeQuestionId, nextStatus);
-                setStatusByQid((prev) => ({ ...prev, [activeQuestionId]: nextStatus }));
-            } finally {
-                setSaving(false);
-            }
+            const nextStatus: QuestionStatus = "ANSWERED_SAVED";
+            const sealedTime = computeAndSealTimeForQuestion(currentId);
+            setStatusByQid((prev) => ({ ...prev, [currentId]: nextStatus }));
+            void pushResponse(currentId, nextStatus, undefined, sealedTime);
         }
         setSaveNextNotice(null);
         goNext();
