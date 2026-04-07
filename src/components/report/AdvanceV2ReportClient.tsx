@@ -25,6 +25,14 @@ function formatSectionLabel(sectionCode: string) {
     return `Section-${suffix.toUpperCase()}`;
 }
 
+function questionTypeLabel(type: QuestionType) {
+    if (type === "SINGLE_CORRECT") return "Single Correct";
+    if (type === "MULTI_CORRECT") return "Multi Correct";
+    if (type === "MATCHING_LIST") return "Matching List";
+    if (type === "NAT_INTEGER") return "NAT Integer";
+    return "NAT Decimal";
+}
+
 type Payload = {
     attempt: {
         id: string;
@@ -606,7 +614,7 @@ export function AdvanceV2ReportClient({ attemptId }: { attemptId: string }) {
                                     <div key={q.questionId} className="rounded-xl border p-4 shadow-sm" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
                                         <div className="flex flex-wrap items-center justify-between gap-3">
                                             <div className="text-xs opacity-70 break-words">
-                                                Q{q.index} · {q.subject} · {formatSectionLabel(q.sectionCode)}
+                                                Q{q.index} · {q.subject} · {formatSectionLabel(q.sectionCode)} · {questionTypeLabel(q.questionType)}
                                                 {q.topicName ? ` · ${q.topicName}` : ""}
                                             </div>
                                             <div className="flex flex-wrap items-center justify-end gap-2 text-xs">
