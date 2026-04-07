@@ -27,7 +27,7 @@
                                             "payload": {
                                                 "correctAnswer": "B"
                                             },
-                                            "markingSchemeName": "V2_MAINS_SINGLE_4N1",
+                                            "markingSchemeName": "V2_ADV_SINGLE_3N1",
                                             "options": [
                                                 {
                                                     "optionKey": "A",
@@ -182,7 +182,7 @@
                                             "payload": {
                                                 "correctAnswer": 2.5
                                             },
-                                            "markingSchemeName": "V2_NAT_STANDARD"
+                                            "markingSchemeName": "V2_ADV_NAT_DECIMAL_3N0"
                                         }
                                     ]
                                 }

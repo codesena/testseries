@@ -78,7 +78,7 @@ function extractTopicNameFromPayload(payload: unknown): string | null {
 }
 
 function fallbackSchemeForQuestionType(questionType: "SINGLE_CORRECT" | "MULTI_CORRECT" | "MATCHING_LIST" | "NAT_INTEGER" | "NAT_DECIMAL") {
-    if (questionType === "SINGLE_CORRECT" || questionType === "MATCHING_LIST") {
+    if (questionType === "SINGLE_CORRECT") {
         return {
             name: "V2_ADV_SINGLE_3N1",
             questionType,
@@ -107,6 +107,28 @@ function fallbackSchemeForQuestionType(questionType: "SINGLE_CORRECT" | "MULTI_C
                     requireAllCorrect: false,
                     requireZeroIncorrect: false,
                     requireUnattempted: false,
+                },
+            ],
+        };
+    }
+
+    if (questionType === "MATCHING_LIST") {
+        return {
+            name: "V2_ADV_MATCH_3N0",
+            questionType,
+            unattemptedScore: 0,
+            rules: [
+                {
+                    ruleKind: "FULL" as const,
+                    priority: 1,
+                    score: 3,
+                    requireAllCorrect: true,
+                    requireZeroIncorrect: true,
+                    requireUnattempted: false,
+                    minCorrectSelected: null,
+                    maxCorrectSelected: null,
+                    minIncorrectSelected: null,
+                    maxIncorrectSelected: null,
                 },
             ],
         };

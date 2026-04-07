@@ -102,9 +102,11 @@ Set `markingSchemeName` to an existing scheme name from the database.
 
 Examples already used in this project:
 
-- V2_MAINS_SINGLE_4N1
+- V2_ADV_SINGLE_3N1
 - V2_ADV_MULTI_PARTIAL
-- V2_NAT_STANDARD
+- V2_ADV_MATCH_3N0
+- V2_ADV_NAT_DECIMAL_3N0
+- V2_ADV_NAT_INTEGER_4N0
 
 If a scheme name does not exist, upsert fails.
 

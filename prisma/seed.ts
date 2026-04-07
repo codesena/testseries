@@ -144,7 +144,7 @@ async function seedExamV2MarkingSchemes() {
             name: "V2_ADV_MATCH_3N1",
             questionType: "MATCHING_LIST" as const,
             unattemptedScore: 0,
-            notes: "+3 correct, -1 incorrect, 0 unattempted",
+            notes: "Legacy name kept for compatibility: +3 correct, 0 incorrect, 0 unattempted",
             rules: [
                 {
                     ruleKind: "FULL" as const,
@@ -154,14 +154,28 @@ async function seedExamV2MarkingSchemes() {
                     requireZeroIncorrect: true,
                 },
                 {
-                    ruleKind: "NEGATIVE" as const,
+                    ruleKind: "ZERO" as const,
                     priority: 2,
-                    score: -1,
-                    minIncorrectSelected: 1,
+                    score: 0,
+                },
+            ],
+        },
+        {
+            name: "V2_ADV_MATCH_3N0",
+            questionType: "MATCHING_LIST" as const,
+            unattemptedScore: 0,
+            notes: "+3 correct, 0 incorrect, 0 unattempted",
+            rules: [
+                {
+                    ruleKind: "FULL" as const,
+                    priority: 1,
+                    score: 3,
+                    requireAllCorrect: true,
+                    requireZeroIncorrect: true,
                 },
                 {
                     ruleKind: "ZERO" as const,
-                    priority: 3,
+                    priority: 2,
                     score: 0,
                 },
             ],
