@@ -17,6 +17,7 @@
     "db:seed:prod:notion": "tsx scripts/seed-prod-notion.ts",
     "db:seed:prod:v2-paper12": "tsx scripts/seed-prod-v2-paper12.ts",
     "db:seed:v2-paper12": "tsx scripts/seed-v2-paper1-paper2.ts",
+    "attempt:transfer": "tsx scripts/transfer-attempt-owner.ts",
     "db:export:questions": "tsx scripts/export-questions-template.ts",
     "db:studio": "prisma studio"
   },
