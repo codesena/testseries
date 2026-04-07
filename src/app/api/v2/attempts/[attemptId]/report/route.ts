@@ -410,7 +410,8 @@ export async function GET(
                     sectionUnattempted += 1;
                 }
 
-                const topicKey = `${subjectRow.subject} - ${sectionRow.sectionCode}: ${sectionRow.title}`;
+                const topicName = extractTopicNameFromPayload(question.payload) ?? "Unknown Topic";
+                const topicKey = `${subjectRow.subject}: ${topicName}`;
                 topicAgg[topicKey] ??= { correct: 0, total: 0 };
                 topicAgg[topicKey].total += 1;
                 if (attempted && marks > 0) topicAgg[topicKey].correct += 1;
@@ -437,7 +438,7 @@ export async function GET(
                     questionType: question.questionType,
                     stemRich: normalizeDisplayText(question.stemRich),
                     stemAssets: question.stemAssets,
-                    topicName: extractTopicNameFromPayload(question.payload),
+                    topicName,
                     options: question.options.map((opt) => ({
                         ...opt,
                         labelRich: normalizeMaybeText(opt.labelRich),
