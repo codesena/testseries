@@ -522,7 +522,7 @@ export function AdvanceV2ReportClient({ attemptId }: { attemptId: string }) {
                     <div className="mt-6 grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
                         <div className="rounded-xl border p-4" style={{ borderColor: "rgba(59, 130, 246, 0.5)", background: "rgba(37,99,235,0.16)" }}>
                             <div className="text-xs opacity-70">Score</div>
-                            <div className="text-2xl font-semibold">{(data.attempt.totalScore ?? data.summary.computedTotalScore).toFixed(2)}</div>
+                            <div className="text-2xl font-semibold">{data.summary.computedTotalScore.toFixed(2)}</div>
                         </div>
                         <div className="rounded-xl border p-4" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
                             <div className="text-xs opacity-70">Total Time Spent</div>

@@ -519,8 +519,37 @@ export function AdvanceV2ExamClient({ attemptId }: { attemptId: string }) {
         });
     };
 
-    const goToQuestion = (questionId: string) => {
-        commitCurrentQuestionTime();
+    const inferPersistStatus = (questionId: string): QuestionStatus => {
+        const currentStatus = statusByQid[questionId] ?? "VISITED_NOT_ANSWERED";
+        const answered = hasAnswer(answersByQid[questionId]);
+
+        if (currentStatus === "ANSWERED_MARKED_FOR_REVIEW" || currentStatus === "MARKED_FOR_REVIEW") {
+            return answered ? "ANSWERED_MARKED_FOR_REVIEW" : "MARKED_FOR_REVIEW";
+        }
+
+        return answered ? "ANSWERED_SAVED" : "VISITED_NOT_ANSWERED";
+    };
+
+    const persistQuestionIfNeeded = async (questionId: string) => {
+        const nextStatus = inferPersistStatus(questionId);
+        await pushResponse(questionId, nextStatus);
+        setStatusByQid((prev) => ({ ...prev, [questionId]: nextStatus }));
+    };
+
+    const goToQuestion = async (questionId: string, options?: { persistCurrent?: boolean }) => {
+        const shouldPersist = options?.persistCurrent ?? true;
+        const currentId = activeQuestionId;
+        if (shouldPersist && currentId && currentId !== questionId) {
+            try {
+                setSaving(true);
+                await persistQuestionIfNeeded(currentId);
+            } finally {
+                setSaving(false);
+            }
+        } else {
+            commitCurrentQuestionTime();
+        }
+
         setActiveQuestionId(questionId);
         setStatusByQid((prev) => ({
             ...prev,
@@ -535,7 +564,7 @@ export function AdvanceV2ExamClient({ attemptId }: { attemptId: string }) {
         const next = list[idx + 1];
         if (next) {
             setActiveQuestionType(next.questionType);
-            goToQuestion(next.questionId);
+            void goToQuestion(next.questionId, { persistCurrent: false });
             return;
         }
 
@@ -548,7 +577,7 @@ export function AdvanceV2ExamClient({ attemptId }: { attemptId: string }) {
         if (first) {
             setActiveSubject(nextSubject);
             setActiveQuestionType(first.questionType);
-            goToQuestion(first.questionId);
+            void goToQuestion(first.questionId, { persistCurrent: false });
         }
     };
 
@@ -558,7 +587,7 @@ export function AdvanceV2ExamClient({ attemptId }: { attemptId: string }) {
         const prev = list[idx - 1];
         if (prev) {
             setActiveQuestionType(prev.questionType);
-            goToQuestion(prev.questionId);
+            void goToQuestion(prev.questionId, { persistCurrent: false });
         }
     };
 
@@ -665,7 +694,7 @@ export function AdvanceV2ExamClient({ attemptId }: { attemptId: string }) {
                                 const first = questions.find((q) => q.subject === subject);
                                 if (first) {
                                     setActiveQuestionType(first.questionType);
-                                    goToQuestion(first.questionId);
+                                    void goToQuestion(first.questionId);
                                     setMobilePanelOpen(false);
                                 }
                             }}
@@ -691,7 +720,7 @@ export function AdvanceV2ExamClient({ attemptId }: { attemptId: string }) {
                                 setActiveQuestionType(type);
                                 const first = filteredQuestions.find((q) => q.questionType === type);
                                 if (first) {
-                                    goToQuestion(first.questionId);
+                                    void goToQuestion(first.questionId);
                                     setMobilePanelOpen(false);
                                 }
                             }}
@@ -712,7 +741,7 @@ export function AdvanceV2ExamClient({ attemptId }: { attemptId: string }) {
                             key={q.questionId}
                             type="button"
                             onClick={() => {
-                                goToQuestion(q.questionId);
+                                void goToQuestion(q.questionId);
                                 setMobilePanelOpen(false);
                             }}
                             className={`rounded-lg border aspect-square text-xs sm:text-sm flex items-center justify-center ui-click ${statusTone(status)} ${active ? "ring-2 ring-sky-500/75" : ""}`}
