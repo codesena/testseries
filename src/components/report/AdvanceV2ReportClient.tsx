@@ -595,11 +595,11 @@ export function AdvanceV2ReportClient({ attemptId }: { attemptId: string }) {
                                     : q.marksAwarded > 0
                                         ? "text-green-600"
                                         : "text-red-600";
-                                const timeClass = q.timeSpentSeconds > 240
+                                const timeClass = q.timeSpentSeconds > 300
                                     ? "text-red-500 font-medium"
-                                    : q.timeSpentSeconds > 180
+                                    : q.timeSpentSeconds > 240
                                         ? "text-amber-400 font-medium"
-                                        : "opacity-70";
+                                        : "text-green-500 font-medium";
 
                                 const questionImageUrls = asStringArrayFromAsset(q.stemAssets);
                                 const parsedMatching = q.questionType === "MATCHING_LIST" ? parseMatchingStem(q.stemRich) : null;
@@ -696,12 +696,12 @@ export function AdvanceV2ReportClient({ attemptId }: { attemptId: string }) {
                                                                 borderColor: correct
                                                                     ? "rgba(16,185,129,0.5)"
                                                                     : selected
-                                                                        ? "rgba(59,130,246,0.45)"
+                                                                        ? "rgba(239,68,68,0.45)"
                                                                         : "var(--border)",
                                                                 background: correct
                                                                     ? "rgba(16,185,129,0.12)"
                                                                     : selected
-                                                                        ? "rgba(59,130,246,0.1)"
+                                                                        ? "rgba(239,68,68,0.1)"
                                                                         : "var(--card)",
                                                             }}
                                                         >
