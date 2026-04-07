@@ -40,6 +40,14 @@ function normalizeMaybeText(value: unknown): string {
     return typeof value === "string" ? normalizeDisplayText(value) : "";
 }
 
+function hasAttemptValue(value: unknown): boolean {
+    if (value == null) return false;
+    if (Array.isArray(value)) return value.length > 0;
+    if (typeof value === "string") return value.trim().length > 0;
+    if (typeof value === "number") return Number.isFinite(value);
+    return true;
+}
+
 function extractCorrectAnswer(question: {
     questionType: "SINGLE_CORRECT" | "MULTI_CORRECT" | "MATCHING_LIST" | "NAT_INTEGER" | "NAT_DECIMAL";
     payload: unknown;
@@ -356,11 +364,7 @@ export async function GET(
                     correctAnswer,
                     scheme: scoringScheme,
                 });
-                const attempted = response
-                    ? response.answerState === "ANSWERED_SAVED" ||
-                    response.answerState === "MARKED_FOR_REVIEW" ||
-                    response.answerState === "ANSWERED_MARKED_FOR_REVIEW"
-                    : false;
+                const attempted = hasAttemptValue(userAnswer);
 
                 sectionScore += marks;
                 sectionTimeSpent += response?.timeSpentSeconds ?? 0;
