@@ -186,6 +186,16 @@ function fallbackSchemeForQuestionType(questionType: "SINGLE_CORRECT" | "MULTI_C
     };
 }
 
+function shouldUseAdvancedFallback(
+    questionType: "SINGLE_CORRECT" | "MULTI_CORRECT" | "MATCHING_LIST" | "NAT_INTEGER" | "NAT_DECIMAL",
+    schemeName: string,
+) {
+    if (questionType === "SINGLE_CORRECT" && schemeName === "V2_MAINS_SINGLE_4N1") return true;
+    if (questionType === "MATCHING_LIST" && schemeName === "V2_ADV_MATCH_3N1") return true;
+    if (questionType === "NAT_DECIMAL" && schemeName === "V2_NAT_STANDARD") return true;
+    return false;
+}
+
 export async function GET(
     _req: Request,
     ctx: { params: Promise<{ attemptId: string }> },
@@ -371,7 +381,8 @@ export async function GET(
                     options: question.options,
                 });
 
-                const scoringScheme = question.marksScheme
+                const scoringScheme = question.marksScheme &&
+                    !shouldUseAdvancedFallback(question.questionType, question.marksScheme.name)
                     ? {
                         name: question.marksScheme.name,
                         questionType: question.marksScheme.questionType,
