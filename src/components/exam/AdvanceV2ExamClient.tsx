@@ -483,7 +483,12 @@ export function AdvanceV2ExamClient({ attemptId }: { attemptId: string }) {
         markVisitedIfNeeded();
     };
 
-    const pushResponse = async (questionId: string, status: QuestionStatus, explicitValue?: unknown) => {
+    const pushResponse = async (
+        questionId: string,
+        status: QuestionStatus,
+        explicitValue?: unknown,
+        explicitTimeSpentSeconds?: number,
+    ) => {
         const value = explicitValue !== undefined ? explicitValue : answersByQid[questionId];
         const question = questions.find((q) => q.questionId === questionId);
         if (!question) return;
@@ -508,7 +513,7 @@ export function AdvanceV2ExamClient({ attemptId }: { attemptId: string }) {
             }
         }
 
-        const timeSpentSeconds = computeAndSealTimeForQuestion(questionId);
+        const timeSpentSeconds = explicitTimeSpentSeconds ?? computeAndSealTimeForQuestion(questionId);
 
         await apiPost(`/api/v2/attempts/${attemptId}/responses`, {
             questionId,
@@ -530,22 +535,18 @@ export function AdvanceV2ExamClient({ attemptId }: { attemptId: string }) {
         return answered ? "ANSWERED_SAVED" : "VISITED_NOT_ANSWERED";
     };
 
-    const persistQuestionIfNeeded = async (questionId: string) => {
+    const persistQuestionIfNeeded = async (questionId: string, explicitTimeSpentSeconds?: number) => {
         const nextStatus = inferPersistStatus(questionId);
-        await pushResponse(questionId, nextStatus);
+        await pushResponse(questionId, nextStatus, undefined, explicitTimeSpentSeconds);
         setStatusByQid((prev) => ({ ...prev, [questionId]: nextStatus }));
     };
 
-    const goToQuestion = async (questionId: string, options?: { persistCurrent?: boolean }) => {
+    const goToQuestion = (questionId: string, options?: { persistCurrent?: boolean }) => {
         const shouldPersist = options?.persistCurrent ?? true;
         const currentId = activeQuestionId;
         if (shouldPersist && currentId && currentId !== questionId) {
-            try {
-                setSaving(true);
-                await persistQuestionIfNeeded(currentId);
-            } finally {
-                setSaving(false);
-            }
+            const sealedTime = computeAndSealTimeForQuestion(currentId);
+            void persistQuestionIfNeeded(currentId, sealedTime);
         } else {
             commitCurrentQuestionTime();
         }
