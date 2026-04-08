@@ -1,7 +1,16 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { InstructionRichText } from "@/components/common/InstructionRichText";
+import {
+    SlimPageHeader,
+    getSlimHeaderPillStyle,
+    slimHeaderPillClassName,
+} from "@/components/common/SlimPageHeader";
 import { StartV2AttemptButton } from "@/components/StartV2AttemptButton";
+import {
+    getAssessmentHistoryPath,
+    getAssessmentLabel,
+} from "@/lib/assessment";
 import { splitInstructionSections } from "@/lib/instructions";
 import { getAuthUserId } from "@/server/auth";
 import { prisma } from "@/server/db";
@@ -164,19 +173,35 @@ export default async function AdvancedTestStartPage({
         };
     });
 
-    let globalOffset = 0;
-    const sectionRangesGlobal = sectionRangesBySubject.map((subject) => {
-        const sections = subject.sections.map((section) => ({
+    const sectionRangesGlobal = sectionRangesBySubject.reduce<{
+        offset: number;
+        subjects: Array<{
+            subject: string;
+            sections: Array<(typeof sectionRangesBySubject)[number]["sections"][number] & {
+                globalStart: number;
+                globalEnd: number;
+            }>;
+        }>;
+    }>((acc, subject) => {
+        const nextSections = subject.sections.map((section) => ({
             ...section,
-            globalStart: section.start + globalOffset,
-            globalEnd: section.end + globalOffset,
+            globalStart: section.start + acc.offset,
+            globalEnd: section.end + acc.offset,
         }));
-        globalOffset += subject.sections.reduce((acc, sec) => acc + sec.questionCount, 0);
+        const nextOffset =
+            acc.offset + subject.sections.reduce((count, section) => count + section.questionCount, 0);
+
         return {
-            subject: subject.subject,
-            sections,
+            offset: nextOffset,
+            subjects: [
+                ...acc.subjects,
+                {
+                    subject: subject.subject,
+                    sections: nextSections,
+                },
+            ],
         };
-    });
+    }, { offset: 0, subjects: [] }).subjects;
 
     const maxSectionSlots = Math.max(0, ...sectionRangesGlobal.map((subject) => subject.sections.length));
     const groupedSectionInstructions = Array.from({ length: maxSectionSlots }).map((_, slotIndex) => {
@@ -204,42 +229,29 @@ export default async function AdvancedTestStartPage({
 
     return (
         <div className="min-h-screen flex flex-col">
-            <header
-                className="sticky top-0 z-50 border-b backdrop-blur-md"
-                style={{
-                    borderColor: "var(--border)",
-                    background: "color-mix(in srgb, var(--background) 88%, transparent)",
-                }}
-            >
-                <div className="max-w-5xl mx-auto px-4 py-2">
-                    <div className="rounded-2xl border px-3 py-2" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
-                        <div className="flex flex-nowrap items-center gap-3 overflow-x-auto whitespace-nowrap [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-                            <div className="min-w-0 flex items-center gap-2 shrink-0">
-                                <div
-                                    className="inline-flex h-8 w-8 items-center justify-center rounded-full border text-xs font-semibold shrink-0"
-                                    style={{ borderColor: "var(--border)", background: "var(--muted)" }}
-                                >
-                                    A
-                                </div>
-                                <div className="min-w-0">
-                                    <div className="text-[1.22rem] sm:text-[clamp(1.35rem,2.6vw,1.7rem)] font-semibold leading-none">JEE Advanced Paper</div>
-                                    <div className="hidden sm:block text-[11px] leading-tight" style={{ color: "var(--foreground)", opacity: 0.8 }}>
-                                        Review subject-wise pattern and instructions, then start.
-                                    </div>
-                                </div>
-                            </div>
-
-                            <Link
-                                href="/"
-                                className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click ml-auto shrink-0"
-                                style={{ borderColor: "var(--border)", background: "var(--muted)" }}
-                            >
-                                Back
-                            </Link>
-                        </div>
-                    </div>
-                </div>
-            </header>
+            <SlimPageHeader
+                badgeLabel="A"
+                title="JEE Advanced"
+                subtitle="Review subject-wise pattern and instructions, then start."
+                actions={
+                    <>
+                        <Link
+                            href="/"
+                            className={slimHeaderPillClassName}
+                            style={getSlimHeaderPillStyle()}
+                        >
+                            Home
+                        </Link>
+                        <Link
+                            href={getAssessmentHistoryPath("advancedV2", exam.id)}
+                            className={slimHeaderPillClassName}
+                            style={getSlimHeaderPillStyle()}
+                        >
+                            History
+                        </Link>
+                    </>
+                }
+            />
 
             <main className="max-w-5xl mx-auto w-full px-4 pt-8 pb-16">
                 <section className="rounded-2xl border p-5 sm:p-6" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
@@ -250,7 +262,7 @@ export default async function AdvancedTestStartPage({
                             className="inline-flex items-center justify-center h-7 rounded-full border px-2.5 whitespace-nowrap"
                             style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                         >
-                            JEE Advanced
+                            {getAssessmentLabel("advancedV2")}
                         </span>
                         <span className="opacity-60">{exam.code}</span>
                         <span className="opacity-60">{subjectStats.length} subjects</span>

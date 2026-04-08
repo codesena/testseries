@@ -1,5 +1,15 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import {
+    getAssessmentLabel,
+    getAssessmentReportPath,
+    getAssessmentStartPath,
+} from "@/lib/assessment";
+import {
+    SlimPageHeader,
+    getSlimHeaderPillStyle,
+    slimHeaderPillClassName,
+} from "@/components/common/SlimPageHeader";
 import { prisma } from "@/server/db";
 import { getAuthUserId } from "@/server/auth";
 
@@ -108,61 +118,41 @@ export default async function AdvancedExamAttemptHistoryPage({
 
     return (
         <div className="min-h-screen flex flex-col">
-            <header
-                className="sticky top-0 z-50 border-b backdrop-blur-md"
-                style={{
-                    borderColor: "var(--border)",
-                    background: "color-mix(in srgb, var(--background) 88%, transparent)",
-                }}
-            >
-                <div className="max-w-5xl mx-auto px-4 py-2">
-                    <div className="rounded-2xl border px-3 py-2" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
-                        <div className="flex flex-nowrap items-center gap-2 overflow-x-auto whitespace-nowrap [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-                            <div className="flex items-center gap-2 min-w-0 shrink-0">
-                                <div
-                                    className="inline-flex h-8 w-8 items-center justify-center rounded-full border text-xs font-semibold shrink-0"
-                                    style={{ borderColor: "var(--border)", background: "var(--muted)" }}
-                                >
-                                    J
-                                </div>
-                                <div className="text-sm font-medium">JEE Test Series</div>
-                            </div>
-                            <div className="flex items-center gap-2 shrink-0 ml-auto">
-                                <Link
-                                    href="/"
-                                    className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
-                                    style={{ borderColor: "var(--border)", background: "var(--muted)" }}
-                                >
-                                    Home
-                                </Link>
-                                <Link
-                                    href="/#tests"
-                                    className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
-                                    style={{ borderColor: "var(--border)", background: "var(--muted)" }}
-                                >
-                                    Available tests
-                                </Link>
-                                <span
-                                    className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap"
-                                    style={{
-                                        borderColor: "rgba(59, 130, 246, 0.5)",
-                                        background: "linear-gradient(135deg, rgba(37,99,235,0.95), rgba(14,165,233,0.9))",
-                                        color: "#e0f2fe",
-                                    }}
-                                >
-                                    History
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </header>
+            <SlimPageHeader
+                badgeLabel="A"
+                title={`${getAssessmentLabel("advancedV2")} History`}
+                subtitle="Review past attempts, then restart the paper when ready."
+                actions={
+                    <>
+                        <Link
+                            href="/"
+                            className={slimHeaderPillClassName}
+                            style={getSlimHeaderPillStyle()}
+                        >
+                            Home
+                        </Link>
+                        <Link
+                            href="/#tests"
+                            className={slimHeaderPillClassName}
+                            style={getSlimHeaderPillStyle()}
+                        >
+                            All papers
+                        </Link>
+                        <span
+                            className={slimHeaderPillClassName}
+                            style={getSlimHeaderPillStyle("accent")}
+                        >
+                            History
+                        </span>
+                    </>
+                }
+            />
 
             <main className="max-w-5xl mx-auto w-full px-4 pt-7 pb-14">
                 <section className="rounded-2xl border p-5 sm:p-6" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
                     <h1 className="text-2xl font-semibold">{exam.title}</h1>
                     <div className="mt-2 text-sm opacity-70">
-                        {exam.code} · {exam._count.subjects} subjects · {exam.durationMinutes} min
+                        {getAssessmentLabel("advancedV2")} · {exam.code} · {exam._count.subjects} subjects · {exam.durationMinutes} min
                     </div>
 
                     <div className="mt-6 flex flex-wrap items-center gap-2 text-sm">
@@ -175,7 +165,7 @@ export default async function AdvancedExamAttemptHistoryPage({
                                 : `Attempted ${attemptsAsc.length} time${attemptsAsc.length === 1 ? "" : "s"}`}
                         </span>
                         <Link
-                            href={`/advance/test/${exam.id}`}
+                            href={getAssessmentStartPath("advancedV2", exam.id)}
                             className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
                             style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                         >
@@ -205,7 +195,7 @@ export default async function AdvancedExamAttemptHistoryPage({
                         return (
                             <Link
                                 key={a.id}
-                                href={`/advance/${a.id}/report`}
+                                href={getAssessmentReportPath("advancedV2", a.id)}
                                 className="rounded-2xl border p-3 sm:p-4 ui-click"
                                 style={{ borderColor: "var(--border)", background: "var(--card)" }}
                             >

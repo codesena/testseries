@@ -1,5 +1,6 @@
 import { getAuthUserId } from "@/server/auth";
 import { prisma } from "@/server/db";
+import { finalizeExamV2Attempt } from "@/server/exam-v2/attempt-finalize";
 import { json } from "@/server/json";
 import { Prisma } from "@prisma/client";
 import { z } from "zod";
@@ -85,15 +86,19 @@ export async function POST(
     }
 
     if (new Date() > attempt.scheduledEndAt) {
-        await prisma.examV2Attempt.update({
-            where: { id: attempt.id },
-            data: {
-                status: "AUTO_SUBMITTED",
-                submittedAt: new Date(),
-            },
-            select: { id: true },
+        const finalized = await finalizeExamV2Attempt(prisma, attempt.id, {
+            status: "AUTO_SUBMITTED",
+            now: new Date(),
         });
-        return json({ error: "Attempt expired" }, { status: 409 });
+        return json(
+            {
+                error: "Attempt expired",
+                attemptId: finalized.attemptId,
+                status: finalized.status,
+                totalScore: finalized.totalScore,
+            },
+            { status: 409 },
+        );
     }
 
     const questionSet = new Set(
@@ -106,6 +111,23 @@ export async function POST(
         return json({ error: "Question does not belong to this attempt" }, { status: 400 });
     }
 
+    const existingResponse = await prisma.examV2Response.findUnique({
+        where: {
+            attemptId_questionId: {
+                attemptId: attempt.id,
+                questionId: body.data.questionId,
+            },
+        },
+        select: {
+            timeSpentSeconds: true,
+        },
+    });
+
+    const nextTimeSpentSeconds = Math.max(
+        existingResponse?.timeSpentSeconds ?? 0,
+        body.data.timeSpentSeconds ?? 0,
+    );
+
     const upserted = await prisma.examV2Response.upsert({
         where: {
             attemptId_questionId: {
@@ -117,7 +139,7 @@ export async function POST(
             responseJson: body.data.responseJson ?? Prisma.JsonNull,
             numericValue: body.data.numericValue,
             answerState: body.data.answerState,
-            timeSpentSeconds: body.data.timeSpentSeconds,
+            timeSpentSeconds: nextTimeSpentSeconds,
             lastUpdated: new Date(),
         },
         create: {
@@ -126,7 +148,7 @@ export async function POST(
             responseJson: body.data.responseJson ?? Prisma.JsonNull,
             numericValue: body.data.numericValue,
             answerState: body.data.answerState,
-            timeSpentSeconds: body.data.timeSpentSeconds ?? 0,
+            timeSpentSeconds: nextTimeSpentSeconds,
             lastUpdated: new Date(),
         },
         select: {

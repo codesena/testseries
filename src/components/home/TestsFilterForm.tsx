@@ -16,7 +16,7 @@ export function TestsFilterForm({ rawQ, rawStatus, rawFormat }: TestsFilterFormP
             <input
                 name="q"
                 defaultValue={rawQ}
-                placeholder="Search tests"
+                placeholder="Search papers"
                 className="h-10 rounded-full border px-4 bg-transparent ui-field text-sm"
                 style={{ borderColor: "var(--border)" }}
             />

@@ -1069,19 +1069,19 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
                         background: "color-mix(in srgb, var(--background) 88%, transparent)",
                     }}
                 >
-                    <div className="max-w-[1400px] mx-auto px-4 py-2">
-                        <div className="rounded-2xl border px-3 py-2" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
-                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <div className="max-w-[1400px] mx-auto px-3 sm:px-4 py-1.5">
+                        <div className="rounded-xl border px-3 py-2" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5">
                                 <div className="min-w-0 sm:flex-1">
                                     <div className="flex items-center gap-2 min-w-0">
-                                        <div className="text-lg font-semibold truncate">{testTitle}</div>
+                                        <div className="text-base sm:text-lg font-semibold truncate">{testTitle}</div>
                                     </div>
                                     <div className="mt-2 flex sm:hidden items-center gap-1.5">
-                                        <span className="inline-flex min-w-0 flex-[1.12] items-center justify-center h-9 rounded-full border px-2 text-xs whitespace-nowrap" style={{ borderColor: "var(--border)", background: "var(--muted)" }}>
+                                        <span className="inline-flex min-w-0 flex-[1.12] items-center justify-center h-8 rounded-full border px-2 text-[11px] whitespace-nowrap" style={{ borderColor: "var(--border)", background: "var(--muted)" }}>
                                             Answered {answeredCount}/{totalQuestions || "-"}
                                         </span>
                                         <div
-                                            className="inline-flex min-w-0 flex-1 items-center justify-center h-9 rounded-full border px-2 text-xs font-mono whitespace-nowrap"
+                                            className="inline-flex min-w-0 flex-1 items-center justify-center h-8 rounded-full border px-2 text-[11px] font-mono whitespace-nowrap"
                                             style={{
                                                 borderColor: timeLeftSeconds <= 10 * 60 ? "rgba(239,68,68,0.6)" : "var(--border)",
                                                 background: timeLeftSeconds <= 10 * 60 ? "rgba(127,29,29,0.35)" : "var(--muted)",
@@ -1092,7 +1092,7 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
                                         </div>
                                         <ThemeToggle className="flex-1 min-w-0" buttonClassName="w-full min-w-0" compact />
                                         <button
-                                            className="inline-flex min-w-0 flex-[0.88] items-center justify-center h-9 rounded-full border px-0.5 text-xs font-medium ui-click whitespace-nowrap"
+                                            className="inline-flex min-w-0 flex-[0.88] items-center justify-center h-8 rounded-full border px-0.5 text-[11px] font-medium ui-click whitespace-nowrap"
                                             style={{
                                                 borderColor: "rgba(245, 158, 11, 0.55)",
                                                 background: "rgba(146, 64, 14, 0.22)",
@@ -1117,7 +1117,7 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
 
                                 <div className="hidden sm:flex items-center flex-wrap justify-end gap-2 sm:gap-3 self-start sm:self-auto shrink-0 max-w-full">
                                     <div
-                                        className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs sm:text-sm font-mono shrink-0 whitespace-nowrap"
+                                        className="inline-flex items-center justify-center h-8 rounded-full border px-3 text-[11px] sm:text-sm font-mono shrink-0 whitespace-nowrap"
                                         style={{
                                             borderColor: timeLeftSeconds <= 10 * 60 ? "rgba(239,68,68,0.6)" : "var(--border)",
                                             background: timeLeftSeconds <= 10 * 60 ? "rgba(127,29,29,0.35)" : "var(--muted)",
@@ -1128,7 +1128,7 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
                                     </div>
                                     <ThemeToggle />
                                     <button
-                                        className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs ui-click shrink-0 whitespace-nowrap"
+                                        className="inline-flex items-center justify-center h-8 rounded-full border px-3 text-[11px] sm:text-xs ui-click shrink-0 whitespace-nowrap"
                                         style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                                         onClick={() => {
                                             if (isFullscreen) exitFullscreenMode();
@@ -1139,7 +1139,7 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
                                         {isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
                                     </button>
                                     <button
-                                        className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs font-medium ui-click shrink-0 whitespace-nowrap"
+                                        className="inline-flex items-center justify-center h-8 rounded-full border px-3 text-[11px] sm:text-xs font-medium ui-click shrink-0 whitespace-nowrap"
                                         style={{
                                             borderColor: "rgba(245, 158, 11, 0.55)",
                                             background: "rgba(146, 64, 14, 0.22)",
@@ -1151,7 +1151,7 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
                                         Submit
                                     </button>
                                     <span
-                                        className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap shrink-0"
+                                        className="inline-flex items-center justify-center h-8 rounded-full border px-3 text-[11px] sm:text-xs whitespace-nowrap shrink-0"
                                         style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                                     >
                                         {studentFirstName}

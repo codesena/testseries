@@ -1,16 +1,18 @@
+import { z } from "zod";
+import { type AssessmentVariant } from "@/lib/assessment";
 import { getAuthUserId } from "@/server/auth";
-import { json } from "@/server/json";
 import {
     AssessmentAttemptError,
-    createV2AssessmentAttempt,
+    createAssessmentAttempt,
 } from "@/server/assessment/attempts";
-import { z } from "zod";
+import { json } from "@/server/json";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const CreateAttemptSchema = z.object({
-    examId: z.string().uuid(),
+const CreateAssessmentAttemptSchema = z.object({
+    variant: z.enum(["main", "advancedLegacy", "advancedV2"] satisfies [AssessmentVariant, ...AssessmentVariant[]]),
+    assessmentId: z.string().uuid(),
     clientOffsetMs: z.number().int().min(-86_400_000).max(86_400_000).optional(),
 });
 
@@ -20,7 +22,7 @@ export async function POST(req: Request) {
         return json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const parsed = CreateAttemptSchema.safeParse(await req.json().catch(() => null));
+    const parsed = CreateAssessmentAttemptSchema.safeParse(await req.json().catch(() => null));
     if (!parsed.success) {
         return json(
             { error: "Invalid request", details: parsed.error.flatten() },
@@ -29,19 +31,14 @@ export async function POST(req: Request) {
     }
 
     try {
-        const created = await createV2AssessmentAttempt(
+        const created = await createAssessmentAttempt({
             userId,
-            parsed.data.examId,
-            parsed.data.clientOffsetMs,
-        );
+            variant: parsed.data.variant,
+            assessmentId: parsed.data.assessmentId,
+            clientOffsetMs: parsed.data.clientOffsetMs,
+        });
 
-        return json({
-            attempt: created.v2Attempt,
-            attemptId: created.attemptId,
-            attemptPath: created.attemptPath,
-            reportPath: created.reportPath,
-            variant: created.variant,
-        }, { status: 201 });
+        return json(created, { status: 201 });
     } catch (error) {
         if (error instanceof AssessmentAttemptError) {
             return json({ error: error.message }, { status: error.status });

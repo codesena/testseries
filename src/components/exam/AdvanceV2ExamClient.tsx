@@ -239,20 +239,18 @@ export function AdvanceV2ExamClient({ attemptId }: { attemptId: string }) {
     const [submitConfirmOpen, setSubmitConfirmOpen] = useState(false);
     const [mobilePanelOpen, setMobilePanelOpen] = useState(false);
     const [saveNextNotice, setSaveNextNotice] = useState<string | null>(null);
-    const [baseTimeByQid, setBaseTimeByQid] = useState<Record<string, number>>({});
+    const baseTimeByQidRef = useRef<Record<string, number>>({});
     const activeEnteredAtRef = useRef<number | null>(null);
-
-    const load = async () => {
-        const res = await apiGet<V2AttemptPayload>(`/api/v2/attempts/${attemptId}/report`);
-        setData(res);
-    };
 
     useEffect(() => {
         let cancelled = false;
         (async () => {
             try {
                 setLoading(true);
-                await load();
+                const res = await apiGet<V2AttemptPayload>(`/api/v2/attempts/${attemptId}/report`);
+                if (!cancelled) {
+                    setData(res);
+                }
             } catch (e) {
                 if (!cancelled) {
                     setError(e instanceof Error ? e.message : "Failed to load");
@@ -326,7 +324,7 @@ export function AdvanceV2ExamClient({ attemptId }: { attemptId: string }) {
 
         setAnswersByQid(nextAnswers);
         setStatusByQid(nextStatus);
-        setBaseTimeByQid(nextTime);
+        baseTimeByQidRef.current = nextTime;
 
         const firstQuestion = questions[0]?.questionId ?? null;
         setActiveQuestionId((prev) => prev && nextAnswers[prev] !== undefined ? prev : firstQuestion);
@@ -346,12 +344,15 @@ export function AdvanceV2ExamClient({ attemptId }: { attemptId: string }) {
     }
 
     function computeAndSealTimeForQuestion(questionId: string): number {
-        const base = baseTimeByQid[questionId] ?? 0;
+        const base = baseTimeByQidRef.current[questionId] ?? 0;
         if (questionId !== activeQuestionId) return base;
 
         const elapsed = currentElapsedSecondsForActiveQuestion();
         const total = base + elapsed;
-        setBaseTimeByQid((prev) => ({ ...prev, [questionId]: total }));
+        baseTimeByQidRef.current = {
+            ...baseTimeByQidRef.current,
+            [questionId]: total,
+        };
         activeEnteredAtRef.current = Date.now();
         return total;
     }
@@ -776,11 +777,11 @@ export function AdvanceV2ExamClient({ attemptId }: { attemptId: string }) {
                         background: "color-mix(in srgb, var(--background) 88%, transparent)",
                     }}
                 >
-                    <div className="max-w-[1400px] mx-auto px-4 py-2">
-                        <div className="rounded-2xl border px-3 py-2" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
-                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <div className="max-w-[1400px] mx-auto px-3 sm:px-4 py-1.5">
+                        <div className="rounded-xl border px-3 py-2" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5">
                                 <div className="min-w-0 sm:flex-1">
-                                    <div className="text-lg font-semibold truncate">{data.exam.title}</div>
+                                    <div className="text-base sm:text-lg font-semibold truncate">{data.exam.title}</div>
                                     <div className="mt-1 flex sm:hidden items-center gap-2 text-[11px] opacity-75">
                                         <span>Q{subjectQuestionNoByQid[activeQuestion.questionId] ?? (activeIndex + 1)}</span>
                                         <span>•</span>
@@ -798,14 +799,14 @@ export function AdvanceV2ExamClient({ attemptId }: { attemptId: string }) {
 
                                 <div className="flex items-center flex-wrap justify-end gap-2 sm:gap-3 self-start sm:self-auto shrink-0 max-w-full">
                                     <div
-                                        className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs sm:text-sm font-mono shrink-0 whitespace-nowrap"
+                                        className="inline-flex items-center justify-center h-8 rounded-full border px-3 text-[11px] sm:text-sm font-mono shrink-0 whitespace-nowrap"
                                         style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                                     >
                                         ⏱ {timeLabel}
                                     </div>
                                     <ThemeToggle />
                                     <button
-                                        className="sm:hidden inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs ui-click shrink-0 whitespace-nowrap"
+                                        className="sm:hidden inline-flex items-center justify-center h-8 rounded-full border px-3 text-[11px] ui-click shrink-0 whitespace-nowrap"
                                         style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                                         onClick={() => setMobilePanelOpen(true)}
                                         type="button"
@@ -813,7 +814,7 @@ export function AdvanceV2ExamClient({ attemptId }: { attemptId: string }) {
                                         Menu
                                     </button>
                                     <button
-                                        className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs font-medium ui-click shrink-0 whitespace-nowrap"
+                                        className="inline-flex items-center justify-center h-8 rounded-full border px-3 text-[11px] sm:text-xs font-medium ui-click shrink-0 whitespace-nowrap"
                                         style={{
                                             borderColor: "rgba(245, 158, 11, 0.55)",
                                             background: "rgba(146, 64, 14, 0.22)",

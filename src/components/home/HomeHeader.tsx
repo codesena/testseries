@@ -85,18 +85,18 @@ export function HomeHeader({ isAdmin, userInitial, userName }: HomeHeaderProps) 
                 background: "color-mix(in srgb, var(--background) 88%, transparent)",
             }}
         >
-            <div className="max-w-5xl mx-auto px-4 py-2">
-                <div className="rounded-2xl border px-3 py-2" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
+            <div className="max-w-5xl mx-auto px-3 sm:px-4 py-1.5">
+                <div className="rounded-xl border px-3 py-2" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
                     <div className="flex items-center justify-between gap-3">
                         <div className="min-w-0 flex items-center gap-2">
                             <div
-                                className="inline-flex h-8 w-8 items-center justify-center rounded-full border text-xs font-semibold shrink-0"
+                                className="inline-flex h-7 w-7 items-center justify-center rounded-full border text-[11px] font-semibold shrink-0"
                                 style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                             >
                                 J
                             </div>
                             <div className="min-w-0">
-                                <div className="text-[1.22rem] sm:text-[clamp(1.35rem,2.6vw,1.7rem)] font-semibold leading-none">JEE Test Series</div>
+                                <div className="text-sm sm:text-base font-semibold leading-none">JEE Test Series</div>
                                 <div className="hidden sm:block text-[11px] leading-tight" style={{ color: "var(--foreground)", opacity: 0.8 }}>
                                     Practice. Analyze. Improve.
                                 </div>
@@ -106,7 +106,7 @@ export function HomeHeader({ isAdmin, userInitial, userName }: HomeHeaderProps) 
                         <nav className="hidden lg:flex items-center gap-1">
                             <Link
                                 href="#dashboard"
-                                className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
+                                className="inline-flex items-center justify-center h-8 rounded-full border px-2.5 text-[11px] whitespace-nowrap ui-click"
                                 style={
                                     activeSection === "dashboard"
                                         ? {
@@ -121,7 +121,7 @@ export function HomeHeader({ isAdmin, userInitial, userName }: HomeHeaderProps) 
                             </Link>
                             <Link
                                 href="#tests"
-                                className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
+                                className="inline-flex items-center justify-center h-8 rounded-full border px-2.5 text-[11px] whitespace-nowrap ui-click"
                                 style={
                                     activeSection === "tests"
                                         ? {
@@ -132,11 +132,11 @@ export function HomeHeader({ isAdmin, userInitial, userName }: HomeHeaderProps) 
                                         : { borderColor: "var(--border)", background: "transparent" }
                                 }
                             >
-                                Available Tests
+                                Papers
                             </Link>
                             <Link
                                 href="#history"
-                                className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
+                                className="inline-flex items-center justify-center h-8 rounded-full border px-2.5 text-[11px] whitespace-nowrap ui-click"
                                 style={
                                     activeSection === "history"
                                         ? {
@@ -157,7 +157,7 @@ export function HomeHeader({ isAdmin, userInitial, userName }: HomeHeaderProps) 
                             {isAdmin ? (
                                 <Link
                                     href="/admin"
-                                    className="hidden md:inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
+                                    className="hidden md:inline-flex items-center justify-center h-8 rounded-full border px-2.5 text-[11px] whitespace-nowrap ui-click"
                                     style={{ borderColor: "var(--border)", background: "color-mix(in srgb, var(--muted) 70%, black 30%)" }}
                                 >
                                     ⇄ Switch to Admin
@@ -167,7 +167,7 @@ export function HomeHeader({ isAdmin, userInitial, userName }: HomeHeaderProps) 
                             <div className="relative md:hidden" ref={mobileNavRef}>
                                 <button
                                     type="button"
-                                    className="inline-flex items-center justify-center h-9 w-9 rounded-full border text-sm ui-click"
+                                    className="inline-flex items-center justify-center h-8 w-8 rounded-full border text-sm ui-click"
                                     style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                                     aria-label="Open navigation menu"
                                     aria-expanded={isMobileNavOpen}
@@ -177,16 +177,16 @@ export function HomeHeader({ isAdmin, userInitial, userName }: HomeHeaderProps) 
                                 </button>
                                 {isMobileNavOpen ? (
                                     <div
-                                        className="absolute right-0 mt-2 min-w-52 rounded-lg border p-2 flex flex-col gap-1 z-50"
+                                        className="absolute right-0 mt-2 min-w-44 rounded-xl border p-1.5 flex flex-col gap-1 z-50"
                                         style={{ borderColor: "var(--border)", background: "var(--card)" }}
                                     >
-                                        <Link href="#dashboard" className="inline-flex items-center h-9 rounded-md px-3 text-sm ui-click" style={{ background: "transparent" }} onClick={() => setIsMobileNavOpen(false)}>
+                                        <Link href="#dashboard" className="inline-flex items-center h-8 rounded-lg px-3 text-sm ui-click" style={{ background: "transparent" }} onClick={() => setIsMobileNavOpen(false)}>
                                             Dashboard
                                         </Link>
-                                        <Link href="#tests" className="inline-flex items-center h-9 rounded-md px-3 text-sm ui-click" style={{ background: "transparent" }} onClick={() => setIsMobileNavOpen(false)}>
-                                            Available Tests
+                                        <Link href="#tests" className="inline-flex items-center h-8 rounded-lg px-3 text-sm ui-click" style={{ background: "transparent" }} onClick={() => setIsMobileNavOpen(false)}>
+                                            Papers
                                         </Link>
-                                        <Link href="#history" className="inline-flex items-center h-9 rounded-md px-3 text-sm ui-click" style={{ background: "transparent" }} onClick={() => setIsMobileNavOpen(false)}>
+                                        <Link href="#history" className="inline-flex items-center h-8 rounded-lg px-3 text-sm ui-click" style={{ background: "transparent" }} onClick={() => setIsMobileNavOpen(false)}>
                                             Attempted History
                                         </Link>
                                     </div>
@@ -196,7 +196,7 @@ export function HomeHeader({ isAdmin, userInitial, userName }: HomeHeaderProps) 
                             <div className="relative" ref={profileRef}>
                                 <button
                                     type="button"
-                                    className="inline-flex items-center justify-center h-9 w-9 rounded-full border text-xs font-semibold ui-click"
+                                    className="inline-flex items-center justify-center h-8 w-8 rounded-full border text-[11px] font-semibold ui-click"
                                     style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                                     aria-label="Open account menu"
                                     aria-expanded={isProfileOpen}
@@ -206,14 +206,14 @@ export function HomeHeader({ isAdmin, userInitial, userName }: HomeHeaderProps) 
                                 </button>
                                 {isProfileOpen ? (
                                     <div
-                                        className="absolute right-0 mt-2 min-w-44 rounded-lg border p-2 flex flex-col gap-2 z-50"
+                                        className="absolute right-0 mt-2 min-w-40 rounded-xl border p-1.5 flex flex-col gap-1.5 z-50"
                                         style={{ borderColor: "var(--border)", background: "var(--card)" }}
                                     >
                                         <div className="px-2 py-1 text-xs opacity-70">{userName}</div>
                                         {isAdmin ? (
                                             <Link
                                                 href="/admin"
-                                                className="md:hidden inline-flex items-center h-9 rounded-md px-3 text-sm ui-click"
+                                                className="md:hidden inline-flex items-center h-8 rounded-lg px-3 text-sm ui-click"
                                                 style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                                                 onClick={() => setIsProfileOpen(false)}
                                             >

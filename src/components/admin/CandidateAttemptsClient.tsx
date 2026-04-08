@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { getAssessmentAdminDeleteAttemptPath } from "@/lib/assessment";
 
 type AttemptItem = {
     id: string;
@@ -74,7 +75,7 @@ export function CandidateAttemptsClient({
         try {
             const deletePath = deleteEndpointTemplate
                 ? deleteEndpointTemplate.replace("{attemptId}", selected.id)
-                : `/api/admin/attempts/${selected.id}`;
+                : getAssessmentAdminDeleteAttemptPath(selected.id);
 
             const res = await fetch(deletePath, {
                 method: "DELETE",

@@ -1,6 +1,9 @@
-import { prisma } from "@/server/db";
 import { getAuthUserId } from "@/server/auth";
 import { json } from "@/server/json";
+import {
+    AssessmentAttemptError,
+    createLegacyAssessmentAttempt,
+} from "@/server/assessment/attempts";
 import { z } from "zod";
 
 export const runtime = "nodejs";
@@ -24,58 +27,19 @@ export async function POST(req: Request) {
         );
     }
 
-    const test = await prisma.testSeries.findUnique({
-        where: { id: parsed.data.testId },
-        select: {
-            id: true,
-            totalDurationMinutes: true,
-            questions: {
-                orderBy: { orderIndex: "asc" },
-                select: { questionId: true },
-            },
-        },
-    });
+    try {
+        const created = await createLegacyAssessmentAttempt(userId, parsed.data.testId);
+        return json({
+            attemptId: created.attemptId,
+            attemptPath: created.attemptPath,
+            reportPath: created.reportPath,
+            variant: created.variant,
+        });
+    } catch (error) {
+        if (error instanceof AssessmentAttemptError) {
+            return json({ error: error.message }, { status: error.status });
+        }
 
-    if (!test) {
-        return json({ error: "Test not found" }, { status: 404 });
+        throw error;
     }
-
-    const baseQuestionOrder = test.questions.map((q) => q.questionId);
-    // Keep test-defined ordering (no random shuffle) so questions stay sequential by section.
-    const questionOrder = baseQuestionOrder;
-
-    const questions = await prisma.question.findMany({
-        where: { id: { in: questionOrder } },
-        select: { id: true, options: true },
-    });
-    const byId = new Map(questions.map((q) => [q.id, q] as const));
-
-    const optionOrders: Record<string, string[]> = {};
-    for (const qid of questionOrder) {
-        const q = byId.get(qid);
-        const opt = (q?.options ?? {}) as Record<string, unknown>;
-        // Preserve author-defined option order; no randomization in exam mode.
-        optionOrders[qid] = Object.keys(opt);
-    }
-
-    const attempt = await prisma.studentAttempt.create({
-        data: {
-            studentId: userId,
-            testId: test.id,
-            status: "IN_PROGRESS",
-            questionOrder,
-            optionOrders,
-        },
-        select: { id: true },
-    });
-
-    await prisma.activityLog.create({
-        data: {
-            attemptId: attempt.id,
-            type: "HEARTBEAT",
-            payload: { created: true },
-        },
-    });
-
-    return json({ attemptId: attempt.id });
 }

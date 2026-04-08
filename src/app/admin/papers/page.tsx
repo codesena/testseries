@@ -1,5 +1,10 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import {
+    getAssessmentAdminPaperPath,
+    getAssessmentLabel,
+    getTestSeriesVariant,
+} from "@/lib/assessment";
 import { prisma } from "@/server/db";
 import { getAuthUser } from "@/server/auth";
 import { isAdminUsername } from "@/server/admin";
@@ -29,6 +34,7 @@ export default async function AdminPapersPage() {
         select: {
             id: true,
             title: true,
+            isAdvancedFormat: true,
             createdAt: true,
             _count: { select: { questions: true } },
         },
@@ -175,21 +181,26 @@ export default async function AdminPapersPage() {
                 <div className="mt-6 grid gap-3">
                     {tests.map((t) => (
                         <div key={t.id} className="rounded-2xl border p-4" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
-                            <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                                <div className="min-w-0">
-                                    <div className="font-medium leading-snug break-words">{t.title}</div>
-                                    <div className="mt-1 text-xs opacity-60">
-                                        {t._count.questions} question{t._count.questions === 1 ? "" : "s"} · Created {fmtDate(t.createdAt)}
+                            {(() => {
+                                const variant = getTestSeriesVariant(t.isAdvancedFormat);
+                                return (
+                                    <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                                        <div className="min-w-0">
+                                            <div className="font-medium leading-snug break-words">{t.title}</div>
+                                            <div className="mt-1 text-xs opacity-60">
+                                                {getAssessmentLabel(variant)} · {t._count.questions} question{t._count.questions === 1 ? "" : "s"} · Created {fmtDate(t.createdAt)}
+                                            </div>
+                                        </div>
+                                        <Link
+                                            href={getAssessmentAdminPaperPath(variant, t.id)}
+                                            className="inline-flex w-full sm:w-auto items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
+                                            style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                                        >
+                                            Open paper
+                                        </Link>
                                     </div>
-                                </div>
-                                <Link
-                                    href={`/admin/paper/${t.id}`}
-                                    className="inline-flex w-full sm:w-auto items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
-                                    style={{ borderColor: "var(--border)", background: "var(--muted)" }}
-                                >
-                                    Open paper
-                                </Link>
-                            </div>
+                                );
+                            })()}
                         </div>
                     ))}
                     {advancedPapers.map((p) => {
@@ -209,11 +220,11 @@ export default async function AdminPapersPage() {
                                     <div className="min-w-0">
                                         <div className="font-medium leading-snug break-words">{p.title}</div>
                                         <div className="mt-1 text-xs opacity-60">
-                                            JEE Advanced · {p.code} · {questionCount} question{questionCount === 1 ? "" : "s"} · Created {fmtDate(p.createdAt)}
+                                            {getAssessmentLabel("advancedV2")} · {p.code} · {questionCount} question{questionCount === 1 ? "" : "s"} · Created {fmtDate(p.createdAt)}
                                         </div>
                                     </div>
                                     <Link
-                                        href={`/admin/paper/advance/${p.id}`}
+                                        href={getAssessmentAdminPaperPath("advancedV2", p.id)}
                                         className="inline-flex w-full sm:w-auto items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
                                         style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                                     >

@@ -1,5 +1,15 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import {
+    getAssessmentAdminCandidatePaperPath,
+    getAssessmentShortLabel,
+    getTestSeriesVariant,
+} from "@/lib/assessment";
+import {
+    SlimPageHeader,
+    getSlimHeaderPillStyle,
+    slimHeaderPillClassName,
+} from "@/components/common/SlimPageHeader";
 import { prisma } from "@/server/db";
 import { getAuthUser } from "@/server/auth";
 import { isAdminUsername } from "@/server/admin";
@@ -125,7 +135,7 @@ export default async function AdminCandidatePage(
 
     const tests = await prisma.testSeries.findMany({
         where: { id: { in: testIds } },
-        select: { id: true, title: true },
+        select: { id: true, title: true, isAdvancedFormat: true },
     });
     const advancedExams = await prisma.examV2.findMany({
         where: { id: { in: examIds } },
@@ -138,24 +148,25 @@ export default async function AdminCandidatePage(
     const papers = [
         ...testAgg.map((t) => {
             const test = testById.get(t.testId);
+            const variant = getTestSeriesVariant(test?.isAdvancedFormat ?? false);
             return {
-                kind: "main" as const,
+                kind: variant,
                 paperId: t.testId,
                 title: test?.title ?? t.testId,
                 attemptCount: t._count._all,
                 lastAttemptAt: t._max.startTimestamp,
-                href: `/admin/candidate/${candidate.id}/test/${t.testId}`,
+                href: getAssessmentAdminCandidatePaperPath(variant, candidate.id, t.testId),
             };
         }),
         ...advancedAgg.map((a) => {
             const exam = examById.get(a.examId);
             return {
-                kind: "advanced" as const,
+                kind: "advancedV2" as const,
                 paperId: a.examId,
                 title: exam?.title ?? exam?.code ?? a.examId,
                 attemptCount: a._count._all,
                 lastAttemptAt: a._max.startTimestamp,
-                href: `/admin/candidate/${candidate.id}/advance/${a.examId}`,
+                href: getAssessmentAdminCandidatePaperPath("advancedV2", candidate.id, a.examId),
             };
         }),
     ].sort((x, y) => {
@@ -166,28 +177,28 @@ export default async function AdminCandidatePage(
 
     return (
         <div className="min-h-screen flex flex-col">
-            <header
-                className="sticky top-0 z-50 border-b backdrop-blur-md"
-                style={{
-                    borderColor: "var(--border)",
-                    background: "color-mix(in srgb, var(--background) 88%, transparent)",
-                }}
-            >
-                <div className="max-w-5xl mx-auto px-4 py-2">
-                    <div className="rounded-2xl border px-3 py-2" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
-                        <div className="flex items-center justify-between gap-2">
-                            <Link
-                                href="/admin"
-                                className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
-                                style={{ borderColor: "var(--border)", background: "var(--muted)" }}
-                            >
-                                Admin
-                            </Link>
-                            <div className="text-sm opacity-70">Admin</div>
-                        </div>
-                    </div>
-                </div>
-            </header>
+            <SlimPageHeader
+                badgeLabel="A"
+                title="Candidate Papers"
+                subtitle="Open any Main or Advanced paper the candidate has attempted."
+                actions={
+                    <>
+                        <Link
+                            href="/admin"
+                            className={slimHeaderPillClassName}
+                            style={getSlimHeaderPillStyle()}
+                        >
+                            Admin
+                        </Link>
+                        <span
+                            className={slimHeaderPillClassName}
+                            style={getSlimHeaderPillStyle("accent")}
+                        >
+                            Papers
+                        </span>
+                    </>
+                }
+            />
 
             <main className="max-w-5xl mx-auto w-full px-4 py-8">
                 <section className="rounded-2xl border p-5 sm:p-6" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
@@ -209,7 +220,7 @@ export default async function AdminCandidatePage(
                                             <div className="font-medium truncate">{paper.title}</div>
                                             <div className="mt-1 text-xs opacity-60">
                                                 <span className="inline-flex items-center rounded-full border px-2 py-0.5 mr-2" style={{ borderColor: "var(--border)", background: "var(--muted)" }}>
-                                                    {paper.kind === "advanced" ? "Advanced" : "Main"}
+                                                    {getAssessmentShortLabel(paper.kind)}
                                                 </span>
                                                 {paper.attemptCount} attempt{paper.attemptCount === 1 ? "" : "s"}
                                                 {paper.lastAttemptAt ? ` · Last ${fmtDate(paper.lastAttemptAt)}` : ""}

@@ -1,6 +1,8 @@
 import { getAuthUserId } from "@/server/auth";
 import { prisma } from "@/server/db";
+import { finalizeExamV2Attempt } from "@/server/exam-v2/attempt-finalize";
 import { json } from "@/server/json";
+import { Prisma } from "@prisma/client";
 import { z } from "zod";
 
 export const runtime = "nodejs";
@@ -14,7 +16,7 @@ const EventSchema = z.object({
     clientEventId: z.string().trim().min(1).max(128),
     eventType: z.string().trim().min(1).max(64),
     questionId: z.string().uuid().optional(),
-    payload: z.any().optional(),
+    payload: z.unknown().optional(),
 });
 
 export async function POST(
@@ -59,23 +61,22 @@ export async function POST(
     }
 
     if (new Date() > attempt.scheduledEndAt) {
-        const submitted = await prisma.examV2Attempt.update({
-            where: { id: attempt.id },
-            data: {
-                status: "AUTO_SUBMITTED",
-                submittedAt: new Date(),
-            },
-            select: { id: true },
+        const finalized = await finalizeExamV2Attempt(prisma, attempt.id, {
+            status: "AUTO_SUBMITTED",
+            now: new Date(),
         });
         return json(
             {
                 error: "Attempt expired",
-                attemptId: submitted.id,
-                status: "AUTO_SUBMITTED",
+                attemptId: finalized.attemptId,
+                status: finalized.status,
+                totalScore: finalized.totalScore,
             },
             { status: 409 },
         );
     }
+
+    const payload = body.data.payload as Prisma.InputJsonValue | undefined;
 
     const created = await prisma.examV2AttemptEvent.upsert({
         where: {
@@ -85,14 +86,14 @@ export async function POST(
             },
         },
         update: {
-            payload: body.data.payload,
+            payload,
         },
         create: {
             attemptId: attempt.id,
             clientEventId: body.data.clientEventId,
             questionId: body.data.questionId,
             eventType: body.data.eventType,
-            payload: body.data.payload,
+            payload,
         },
         select: {
             id: true,

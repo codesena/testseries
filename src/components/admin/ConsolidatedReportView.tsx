@@ -129,11 +129,6 @@ function shortAttemptId(id: string): string {
 }
 
 export function ConsolidatedReportView({ data }: { data: ConsolidatedReportData }) {
-    if (!data.attempts.length || !data.questions.length) {
-        return <div className="text-sm opacity-70">No consolidated data for current selection.</div>;
-    }
-
-    const attemptMetaById = new Map(data.attempts.map((a) => [a.id, a] as const));
     const [issueQuestionId, setIssueQuestionId] = useState<string | null>(null);
     const [issueQuestionNumber, setIssueQuestionNumber] = useState<number | null>(null);
     const [issue, setIssue] = useState<string>("");
@@ -141,6 +136,12 @@ export function ConsolidatedReportView({ data }: { data: ConsolidatedReportData 
     const [sendingIssue, setSendingIssue] = useState(false);
     const [issueError, setIssueError] = useState<string | null>(null);
     const [issueSuccess, setIssueSuccess] = useState<string | null>(null);
+
+    if (!data.attempts.length || !data.questions.length) {
+        return <div className="text-sm opacity-70">No consolidated data for current selection.</div>;
+    }
+
+    const attemptMetaById = new Map(data.attempts.map((a) => [a.id, a] as const));
 
     function openIssueModal(questionId: string, questionNumber: number) {
         setIssueQuestionId(questionId);

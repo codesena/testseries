@@ -1,5 +1,15 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import {
+    getAssessmentLabel,
+    getAssessmentReportPath,
+    getTestSeriesVariant,
+} from "@/lib/assessment";
+import {
+    SlimPageHeader,
+    getSlimHeaderPillStyle,
+    slimHeaderPillClassName,
+} from "@/components/common/SlimPageHeader";
 import { prisma } from "@/server/db";
 import { getAuthUser } from "@/server/auth";
 import { isAdminUsername } from "@/server/admin";
@@ -13,22 +23,6 @@ function hasAnswer(value: unknown): boolean {
     if (typeof value === "string") return value.trim() !== "";
     if (Array.isArray(value)) return value.length > 0;
     return true;
-}
-
-function fmtDate(d: Date | null) {
-    if (!d) return "—";
-    try {
-        return new Intl.DateTimeFormat("en-IN", {
-            year: "numeric",
-            month: "short",
-            day: "2-digit",
-            hour: "2-digit",
-            minute: "2-digit",
-            timeZone: "Asia/Kolkata",
-        }).format(d);
-    } catch {
-        return d.toISOString();
-    }
 }
 
 export default async function AdminCandidateTestPage(
@@ -81,7 +75,7 @@ export default async function AdminCandidateTestPage(
 
     const test = await prisma.testSeries.findUnique({
         where: { id: testId },
-        select: { id: true, title: true },
+        select: { id: true, title: true, isAdvancedFormat: true },
     });
 
     const attempts = await prisma.studentAttempt.findMany({
@@ -125,40 +119,39 @@ export default async function AdminCandidateTestPage(
 
     const candidateLabel = candidate ? `${candidate.name} (${candidate.username})` : userId;
     const testTitle = test?.title ?? testId;
+    const variant = getTestSeriesVariant(test?.isAdvancedFormat ?? false);
 
     return (
         <div className="min-h-screen flex flex-col">
-            <header
-                className="sticky top-0 z-50 border-b backdrop-blur-md"
-                style={{
-                    borderColor: "var(--border)",
-                    background: "color-mix(in srgb, var(--background) 88%, transparent)",
-                }}
-            >
-                <div className="max-w-5xl mx-auto px-4 py-2">
-                    <div className="rounded-2xl border px-3 py-2" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
-                        <div className="flex flex-nowrap items-center gap-3 overflow-x-auto whitespace-nowrap [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-                            <div className="flex min-w-0 items-center gap-2 shrink-0">
-                                <Link
-                                    href={`/admin/candidate/${userId}`}
-                                    className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
-                                    style={{ borderColor: "var(--border)", background: "var(--muted)" }}
-                                >
-                                    Papers
-                                </Link>
-                                <Link
-                                    href="/admin"
-                                    className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
-                                    style={{ borderColor: "var(--border)", background: "var(--muted)" }}
-                                >
-                                    Admin
-                                </Link>
-                            </div>
-                            <div className="text-sm opacity-70 truncate shrink-0 ml-auto">Attempts</div>
-                        </div>
-                    </div>
-                </div>
-            </header>
+            <SlimPageHeader
+                badgeLabel={variant === "main" ? "M" : "A"}
+                title={`${getAssessmentLabel(variant)} Attempts`}
+                subtitle="Inspect candidate attempts and reports for this paper."
+                actions={
+                    <>
+                        <Link
+                            href={`/admin/candidate/${userId}`}
+                            className={slimHeaderPillClassName}
+                            style={getSlimHeaderPillStyle()}
+                        >
+                            Papers
+                        </Link>
+                        <Link
+                            href="/admin"
+                            className={slimHeaderPillClassName}
+                            style={getSlimHeaderPillStyle()}
+                        >
+                            Admin
+                        </Link>
+                        <span
+                            className={slimHeaderPillClassName}
+                            style={getSlimHeaderPillStyle("accent")}
+                        >
+                            Attempts
+                        </span>
+                    </>
+                }
+            />
 
             <main className="max-w-5xl mx-auto w-full px-4 py-8">
                 <section className="rounded-2xl border p-5 sm:p-6" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
@@ -170,6 +163,7 @@ export default async function AdminCandidateTestPage(
                         initialAttempts={attemptRows}
                         candidateLabel={candidateLabel}
                         testTitle={testTitle}
+                        reportHrefTemplate={getAssessmentReportPath(variant, "{attemptId}")}
                     />
                 </section>
             </main>

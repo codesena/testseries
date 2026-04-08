@@ -1,6 +1,7 @@
 import { isAdminUsername } from "@/server/admin";
 import { getAuthUser } from "@/server/auth";
 import { prisma } from "@/server/db";
+import { finalizeExamV2Attempt } from "@/server/exam-v2/attempt-finalize";
 import { evaluateWithDynamicScheme } from "@/server/exam-v2/evaluate";
 import { json } from "@/server/json";
 import { extractQuestionOrderFromPayload } from "@/lib/examV2QuestionOrder";
@@ -211,78 +212,82 @@ export async function GET(
         return json({ error: "Invalid attempt id" }, { status: 400 });
     }
 
-    const attempt = await prisma.examV2Attempt.findFirst({
-        where: {
-            id: params.data.attemptId,
-            ...(isAdmin ? {} : { userId: auth.userId }),
-        },
-        select: {
-            id: true,
-            user: { select: { name: true } },
-            status: true,
-            startTimestamp: true,
-            scheduledEndAt: true,
-            submittedAt: true,
-            totalScore: true,
-            exam: {
-                select: {
-                    id: true,
-                    code: true,
-                    title: true,
-                    durationMinutes: true,
-                    subjects: {
-                        orderBy: { sortOrder: "asc" },
-                        select: {
-                            subject: true,
-                            sortOrder: true,
-                            sections: {
-                                orderBy: [{ sectionCode: "asc" }, { sortOrder: "asc" }],
-                                select: {
-                                    id: true,
-                                    sectionCode: true,
-                                    title: true,
-                                    sortOrder: true,
-                                    blocks: {
-                                        orderBy: { sortOrder: "asc" },
-                                        select: {
-                                            questions: {
-                                                orderBy: { createdAt: "asc" },
-                                                select: {
-                                                    id: true,
-                                                    questionType: true,
-                                                    stemRich: true,
-                                                    stemAssets: true,
-                                                    payload: true,
-                                                    createdAt: true,
-                                                    options: {
-                                                        orderBy: { sortOrder: "asc" },
-                                                        select: {
-                                                            optionKey: true,
-                                                            labelRich: true,
-                                                            sortOrder: true,
-                                                            isCorrect: true,
-                                                            assets: true,
+    const attemptWhere = {
+        id: params.data.attemptId,
+        ...(isAdmin ? {} : { userId: auth.userId }),
+    };
+
+    const loadAttempt = () =>
+        prisma.examV2Attempt.findFirst({
+            where: attemptWhere,
+            select: {
+                id: true,
+                user: { select: { name: true } },
+                status: true,
+                startTimestamp: true,
+                scheduledEndAt: true,
+                submittedAt: true,
+                totalScore: true,
+                exam: {
+                    select: {
+                        id: true,
+                        code: true,
+                        title: true,
+                        durationMinutes: true,
+                        subjects: {
+                            orderBy: { sortOrder: "asc" },
+                            select: {
+                                subject: true,
+                                sortOrder: true,
+                                sections: {
+                                    orderBy: [{ sectionCode: "asc" }, { sortOrder: "asc" }],
+                                    select: {
+                                        id: true,
+                                        sectionCode: true,
+                                        title: true,
+                                        sortOrder: true,
+                                        blocks: {
+                                            orderBy: { sortOrder: "asc" },
+                                            select: {
+                                                questions: {
+                                                    orderBy: { createdAt: "asc" },
+                                                    select: {
+                                                        id: true,
+                                                        questionType: true,
+                                                        stemRich: true,
+                                                        stemAssets: true,
+                                                        payload: true,
+                                                        createdAt: true,
+                                                        options: {
+                                                            orderBy: { sortOrder: "asc" },
+                                                            select: {
+                                                                optionKey: true,
+                                                                labelRich: true,
+                                                                sortOrder: true,
+                                                                isCorrect: true,
+                                                                assets: true,
+                                                            },
                                                         },
-                                                    },
-                                                    marksScheme: {
-                                                        select: {
-                                                            id: true,
-                                                            name: true,
-                                                            questionType: true,
-                                                            unattemptedScore: true,
-                                                            rules: {
-                                                                orderBy: { priority: "asc" },
-                                                                select: {
-                                                                    ruleKind: true,
-                                                                    priority: true,
-                                                                    score: true,
-                                                                    minCorrectSelected: true,
-                                                                    maxCorrectSelected: true,
-                                                                    minIncorrectSelected: true,
-                                                                    maxIncorrectSelected: true,
-                                                                    requireAllCorrect: true,
-                                                                    requireZeroIncorrect: true,
-                                                                    requireUnattempted: true,
+                                                        marksScheme: {
+                                                            select: {
+                                                                id: true,
+                                                                name: true,
+                                                                questionType: true,
+                                                                unattemptedScore: true,
+                                                                rules: {
+                                                                    orderBy: { priority: "asc" },
+                                                                    select: {
+                                                                        ruleKind: true,
+                                                                        priority: true,
+                                                                        score: true,
+                                                                        minCorrectSelected: true,
+                                                                        maxCorrectSelected: true,
+                                                                        minIncorrectSelected: true,
+                                                                        maxIncorrectSelected: true,
+                                                                        requireAllCorrect: true,
+                                                                        requireZeroIncorrect: true,
+                                                                        requireUnattempted: true,
+                                                                    },
                                                                 },
                                                             },
                                                         },
@@ -296,23 +301,35 @@ export async function GET(
                         },
                     },
                 },
-            },
-            responses: {
-                select: {
-                    questionId: true,
-                    responseJson: true,
-                    numericValue: true,
-                    answerState: true,
-                    timeSpentSeconds: true,
-                    marksAwarded: true,
-                    evaluatedAt: true,
+                responses: {
+                    select: {
+                        questionId: true,
+                        responseJson: true,
+                        numericValue: true,
+                        answerState: true,
+                        timeSpentSeconds: true,
+                        marksAwarded: true,
+                        evaluatedAt: true,
+                    },
                 },
             },
-        },
-    });
+        });
+
+    let attempt = await loadAttempt();
 
     if (!attempt) {
         return json({ error: "Attempt not found" }, { status: 404 });
+    }
+
+    if (attempt.status === "IN_PROGRESS" && new Date() > attempt.scheduledEndAt) {
+        await finalizeExamV2Attempt(prisma, attempt.id, {
+            status: "AUTO_SUBMITTED",
+            now: new Date(),
+        });
+        attempt = await loadAttempt();
+        if (!attempt) {
+            return json({ error: "Attempt not found" }, { status: 404 });
+        }
     }
 
     const responseByQuestionId = new Map(
