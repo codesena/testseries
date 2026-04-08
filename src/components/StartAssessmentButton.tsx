@@ -16,7 +16,7 @@ type CreateAssessmentAttemptResponse = {
 export function StartAssessmentButton({
     variant,
     assessmentId,
-    label = "Start Test",
+    label = "Start Paper",
 }: {
     variant: AssessmentVariant;
     assessmentId: string;

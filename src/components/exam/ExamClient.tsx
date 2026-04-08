@@ -128,6 +128,7 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
     const [testTitle, setTestTitle] = useState<string>("");
     const [durationSeconds, setDurationSeconds] = useState<number>(180 * 60);
     const [studentName, setStudentName] = useState<string | null>(null);
+    const [reportPath, setReportPath] = useState<string>(`/attempt/${attemptId}/report`);
 
     const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
     const [paletteByQid, setPaletteByQid] = useState<PaletteByQid>({});
@@ -335,8 +336,13 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
                 const data = await getAttemptWithRetry(attemptId);
                 if (cancelled) return;
 
+                const nextReportPath = data.attempt.test.isAdvancedFormat
+                    ? `/advance/${attemptId}/report`
+                    : `/attempt/${attemptId}/report`;
+                setReportPath(nextReportPath);
+
                 if (data.attempt.status !== "IN_PROGRESS") {
-                    router.push(`/attempt/${attemptId}/report`);
+                    router.push(nextReportPath);
                     return;
                 }
 
@@ -939,14 +945,14 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
 
             // Wait briefly so report generation/evaluation settles before redirecting.
             await waitForReportReady(attemptId);
-            window.location.assign(`/attempt/${attemptId}/report`);
+            window.location.assign(reportPath);
         } catch (err) {
             const msg = err instanceof Error ? err.message : "";
 
             // Already submitted: move to report once endpoint is reachable.
             if (/^409\b/.test(msg)) {
                 await waitForReportReady(attemptId);
-                window.location.assign(`/attempt/${attemptId}/report`);
+                window.location.assign(reportPath);
                 return;
             }
 
@@ -954,7 +960,7 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
 
             const ready = await waitForReportReady(attemptId);
             if (ready) {
-                window.location.assign(`/attempt/${attemptId}/report`);
+                window.location.assign(reportPath);
                 return;
             }
 

@@ -33,7 +33,7 @@ export type AttemptPayload = {
         status: string;
         startTimestamp: string;
         serverNow: string;
-        test: { id: string; title: string; totalDurationMinutes: number };
+        test: { id: string; title: string; totalDurationMinutes: number; isAdvancedFormat: boolean };
         questions: AttemptQuestion[];
         responses: AttemptResponse[];
         studentName: string | null;

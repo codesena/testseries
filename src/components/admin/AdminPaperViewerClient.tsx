@@ -642,12 +642,12 @@ export function AdminPaperViewerClient({
                         background: "color-mix(in srgb, var(--background) 88%, transparent)",
                     }}
                 >
-                    <div className="max-w-5xl mx-auto px-4 py-2">
-                        <div className="rounded-2xl border px-3 py-2" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
+                    <div className="max-w-5xl mx-auto px-3 sm:px-4 py-1.5">
+                        <div className="rounded-xl border px-3 py-2" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
                             <div className="flex flex-nowrap items-center gap-2 sm:gap-3 overflow-x-auto whitespace-nowrap [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
                                 <div className="inline-flex items-center gap-2 shrink-0">
                                     <div
-                                        className="inline-flex h-8 w-8 items-center justify-center rounded-full border text-xs font-semibold"
+                                        className="inline-flex h-7 w-7 items-center justify-center rounded-full border text-[11px] font-semibold"
                                         style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                                     >
                                         A
@@ -657,7 +657,7 @@ export function AdminPaperViewerClient({
 
                                 <button
                                     type="button"
-                                    className="inline-flex shrink-0 items-center justify-center h-9 rounded-full border px-3 text-xs font-medium whitespace-nowrap ui-click"
+                                    className="inline-flex shrink-0 items-center justify-center h-8 rounded-full border px-3 text-[11px] sm:text-xs font-medium whitespace-nowrap ui-click"
                                     style={{
                                         borderColor: mode === "edit" ? "rgba(59, 130, 246, 0.5)" : "var(--border)",
                                         background: mode === "edit"
@@ -672,7 +672,7 @@ export function AdminPaperViewerClient({
 
                                 <Link
                                     href="/admin/papers"
-                                    className="inline-flex shrink-0 items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
+                                    className="inline-flex shrink-0 items-center justify-center h-8 rounded-full border px-3 text-[11px] sm:text-xs whitespace-nowrap ui-click"
                                     style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                                 >
                                     Papers
@@ -681,7 +681,7 @@ export function AdminPaperViewerClient({
                                 {mode === "edit" ? (
                                     <>
                                         <div
-                                            className="h-9 inline-flex items-center rounded-full border px-3 w-[10.5rem] sm:w-[12rem] md:w-[13rem] shrink-0"
+                                            className="h-8 inline-flex items-center rounded-full border px-3 w-[10.5rem] sm:w-[12rem] md:w-[13rem] shrink-0"
                                             style={uploadFolderSaved
                                                 ? {
                                                     borderColor: "rgba(34, 197, 94, 0.65)",
@@ -706,7 +706,7 @@ export function AdminPaperViewerClient({
 
                                         <button
                                             type="button"
-                                            className="inline-flex shrink-0 items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
+                                            className="inline-flex shrink-0 items-center justify-center h-8 rounded-full border px-3 text-[11px] sm:text-xs whitespace-nowrap ui-click"
                                             style={{
                                                 borderColor: uploadFolderSaved ? "rgba(34, 197, 94, 0.75)" : "rgba(239, 68, 68, 0.75)",
                                                 background: uploadFolderSaved ? "rgba(20, 83, 45, 0.35)" : "rgba(127, 29, 29, 0.28)",

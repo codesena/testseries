@@ -147,7 +147,7 @@ export function HomeHeader({ isAdmin, userInitial, userName }: HomeHeaderProps) 
                                         : { borderColor: "var(--border)", background: "transparent" }
                                 }
                             >
-                                Attempted History
+                                History
                             </Link>
                         </nav>
 
@@ -187,7 +187,7 @@ export function HomeHeader({ isAdmin, userInitial, userName }: HomeHeaderProps) 
                                             Papers
                                         </Link>
                                         <Link href="#history" className="inline-flex items-center h-8 rounded-lg px-3 text-sm ui-click" style={{ background: "transparent" }} onClick={() => setIsMobileNavOpen(false)}>
-                                            Attempted History
+                                            History
                                         </Link>
                                     </div>
                                 ) : null}

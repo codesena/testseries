@@ -169,7 +169,7 @@ export default async function AdvancedExamAttemptHistoryPage({
                             className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
                             style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                         >
-                            Start test
+                            Start paper
                         </Link>
                     </div>
                 </section>

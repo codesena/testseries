@@ -116,7 +116,7 @@ export async function GET(
             status: true,
             startTimestamp: true,
             test: {
-                select: { id: true, title: true, totalDurationMinutes: true },
+                select: { id: true, title: true, totalDurationMinutes: true, isAdvancedFormat: true },
             },
             questionOrder: true,
             optionOrders: true,
