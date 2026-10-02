@@ -911,7 +911,13 @@ export function AdminPaperViewerClient({
                                                 ))}
                                             </div>
                                         ) : null}
-                                        <MathJax dynamic>{display.questionText}</MathJax>
+                                        <div className="space-y-1">
+                                            {display.questionText.split(/\r?\n/).map((line, lineIndex) => (
+                                                <div key={`question-line-${q.id}-${lineIndex}`} className={line ? undefined : "min-h-[1em]"}>
+                                                    <MathJax dynamic>{line || "\u00a0"}</MathJax>
+                                                </div>
+                                            ))}
+                                        </div>
                                     </div>
 
                                     <div className="mt-4 grid gap-2">
