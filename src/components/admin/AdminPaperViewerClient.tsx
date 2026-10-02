@@ -5,7 +5,7 @@ import { type ClipboardEvent, type DragEvent, useEffect, useMemo, useRef, useSta
 import Link from "next/link";
 import { optimizeImageDelivery } from "@/lib/image-delivery";
 import { PaperJsonEditor } from "./PaperJsonEditor";
-import { inlineLatexSource, normalizeLatexSource } from "@/lib/latex";
+import { normalizeLatexSource } from "@/lib/latex";
 
 type PaperQuestion = {
     id: string;
@@ -941,7 +941,7 @@ export function AdminPaperViewerClient({
                                                         <div className="flex items-start gap-3">
                                                             <div className="text-xs font-mono opacity-70">{o.key}.</div>
                                                             <div className="min-w-0 text-sm leading-relaxed">
-                                                                {inlineLatexSource(o.text).split(/\r?\n/).map((line, lineIndex) => (
+                                                                {normalizeLatexSource(o.text).split(/\r?\n/).map((line, lineIndex) => (
                                                                     <div key={`option-line-${o.key}-${lineIndex}`} className={line ? undefined : "min-h-[1em]"}>
                                                                         <MathJax inline dynamic>{line || "\u00a0"}</MathJax>
                                                                     </div>
