@@ -915,7 +915,7 @@ export function AdminPaperViewerClient({
                                         <div className="space-y-1">
                                         {normalizeLatexSource(display.questionText).split(/\r?\n/).map((line, lineIndex) => (
                                                 <div key={`question-line-${q.id}-${lineIndex}`} className={line ? undefined : "min-h-[1em]"}>
-                                                    <MathJax inline dynamic>{line || "\u00a0"}</MathJax>
+                                                    <MathJax dynamic>{line || "\u00a0"}</MathJax>
                                                 </div>
                                             ))}
                                         </div>
@@ -943,7 +943,7 @@ export function AdminPaperViewerClient({
                                                             <div className="min-w-0 text-sm leading-relaxed">
                                                                 {normalizeLatexSource(o.text).split(/\r?\n/).map((line, lineIndex) => (
                                                                     <div key={`option-line-${o.key}-${lineIndex}`} className={line ? undefined : "min-h-[1em]"}>
-                                                                        <MathJax inline dynamic>{line || "\u00a0"}</MathJax>
+                                                                        <MathJax dynamic>{line || "\u00a0"}</MathJax>
                                                                     </div>
                                                                 ))}
 
@@ -1062,7 +1062,7 @@ export function AdminPaperViewerClient({
                                                             <div className="text-sm leading-relaxed">
                                                                 {(typeof editPayload.questionText === "string" ? editPayload.questionText : "").split(/\r?\n/).map((line, lineIndex) => (
                                                                     <div key={`edit-preview-line-${lineIndex}`} className={line ? undefined : "min-h-[1em]"}>
-                                                                        <MathJax inline dynamic>{line || "\u00a0"}</MathJax>
+                                                                        <MathJax dynamic>{line || "\u00a0"}</MathJax>
                                                                     </div>
                                                                 ))}
                                                             </div>

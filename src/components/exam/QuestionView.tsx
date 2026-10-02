@@ -155,7 +155,7 @@ export const QuestionView = memo(function QuestionView({
                 ) : null}
                 {normalizeLatexSource(question.questionText).split(/\r?\n/).map((line, lineIndex) => (
                     <div key={`question-line-${lineIndex}`} className={line ? undefined : "min-h-[1em]"}>
-                        <MathJax inline dynamic>{line || "\u00a0"}</MathJax>
+                        <MathJax dynamic>{line || "\u00a0"}</MathJax>
                     </div>
                 ))}
             </div>
@@ -219,7 +219,7 @@ export const QuestionView = memo(function QuestionView({
                                 <span className="text-sm min-w-0">
                                     {normalizeLatexSource(o.text).split(/\r?\n/).map((line, lineIndex) => (
                                                         <div key={`option-line-${o.key}-${lineIndex}`} className={line ? undefined : "min-h-[1em]"}>
-                                                            <MathJax inline dynamic>{line || "\u00a0"}</MathJax>
+                                                            <MathJax dynamic>{line || "\u00a0"}</MathJax>
                                                         </div>
                                                     ))}
                                                 </span>
