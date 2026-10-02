@@ -18,6 +18,11 @@
   --font-mono: var(--font-geist-mono);
 }
 
+/* Slightly increase the app's type scale for readability. */
+html {
+  font-size: 106.25%;
+}
+
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;

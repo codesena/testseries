@@ -39,6 +39,7 @@ Open `http://localhost:3000`.
 Copy `.env.example` → `.env` and adjust if needed.
 
 - `DATABASE_URL`
+- `DIRECT_URL` (recommended for Prisma CLI and Vercel builds when using hosted PostgreSQL)
 - `REDIS_URL` (optional; Redis isn’t required for the current feature set)
 - `NEXT_PUBLIC_IDLE_TIMEOUT_MS` (default 300000)
 - `NEXT_PUBLIC_HEARTBEAT_INTERVAL_MS` (default 30000)
@@ -128,3 +129,25 @@ Notes:
 ## Notes
 
 - This repository includes basic exam-like restrictions (context menu + basic copy/paste blocking) and logs tab/fullscreen changes; it is not a secure proctoring system.
+
+## Vercel + Azure Database for PostgreSQL
+
+This project can use Azure Database for PostgreSQL Flexible Server without changing its Prisma schema. Add the server's connection strings to the Vercel project environment:
+
+- Set `DATABASE_URL` to the runtime connection string.
+- Set `DIRECT_URL` to the direct server connection for Prisma CLI tasks such as `prisma migrate deploy`.
+- Include `sslmode=require` in both URLs so connections use TLS. Azure's quickstart uses this mode; certificate-verifying modes provide stronger server identity checks when the application's trust store and network setup support them.
+- `publicNetworkAccess: Enabled` exposes a public endpoint, but Azure firewall rules still control which client IPs can connect. Allow the required local and deployment egress IPs.
+
+For the server `jeetestseries` (`Standard_B1ms`, Burstable), use port `5432` for both URLs. Azure's built-in PgBouncer isn't supported on the Burstable tier, so port `6432` isn't available for this server. On a supported compute tier, Azure PgBouncer uses transaction pooling on port `6432`; keep migrations on the direct `5432` endpoint.
+
+Use this URL shape, replacing the password and database name. Create a `testseries` database first, or substitute the name of a database that already exists. URL-encode special characters in the password.
+
+```dotenv
+DATABASE_URL="postgresql://senatenikhil:<URL-ENCODED-PASSWORD>@jeetestseries.postgres.database.azure.com:5432/testseries?schema=public&sslmode=require"
+DIRECT_URL="postgresql://senatenikhil:<URL-ENCODED-PASSWORD>@jeetestseries.postgres.database.azure.com:5432/testseries?schema=public&sslmode=require"
+```
+
+The Vercel build script runs migrations before `next build`, and Prisma CLI prefers `DIRECT_URL` when present.
+
+Azure references: [Flexible Server connection quickstart](https://learn.microsoft.com/en-us/azure/postgresql/configure-maintain/quickstart-create-server), [TLS guidance](https://learn.microsoft.com/en-us/azure/postgresql/flexible-server/concepts-networking-ssl-tls), [built-in PgBouncer support and limits](https://learn.microsoft.com/en-us/azure/postgresql/connectivity/concepts-pgbouncer), and [firewall rules](https://learn.microsoft.com/en-us/azure/postgresql/security/security-firewall-rules).

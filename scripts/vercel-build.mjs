@@ -47,16 +47,35 @@ function isAdvisoryLockTimeout(output) {
 
 function isTransientDbError(output) {
     return (
+        /\bP1001\b/i.test(output) ||
         /\bP1017\b/i.test(output) ||
+        /Can't reach database server/i.test(output) ||
         /server has closed the connection/i.test(output) ||
         /ECONNRESET|ECONNREFUSED|ETIMEDOUT|ENETUNREACH|EHOSTUNREACH/i.test(output) ||
         /Connection terminated unexpectedly/i.test(output)
     );
 }
 
+function looksLikePooledPostgresUrl(value) {
+    if (typeof value !== "string") return false;
+
+    try {
+        const url = new URL(value);
+        return (
+            url.port === "6432" ||
+            /-pooler\./i.test(url.hostname) ||
+            ["true", "1"].includes(url.searchParams.get("pgbouncer")?.toLowerCase() ?? "")
+        );
+    } catch {
+        return /(?:^|[?&])port=6432(?:&|$)/i.test(value) || /-pooler\./i.test(value);
+    }
+}
+
 async function main() {
     const prisma = getBin("prisma");
     const next = getBin("next");
+    const hasDirectUrl = Boolean(process.env.DIRECT_URL || process.env.DIRECT_DATABASE_URL);
+    const runtimeDatabaseUrl = process.env.DATABASE_URL;
 
     const maxRetries = Number(process.env.PRISMA_MIGRATE_DEPLOY_RETRIES ?? "12");
     const baseDelayMs = Number(process.env.PRISMA_MIGRATE_DEPLOY_RETRY_DELAY_MS ?? "5000");
@@ -70,6 +89,15 @@ async function main() {
         const transientDb = isTransientDbError(combined);
         const shouldRetry = (lockBusy || transientDb) && attempt < maxRetries;
         if (!shouldRetry) {
+            if (!hasDirectUrl && looksLikePooledPostgresUrl(runtimeDatabaseUrl)) {
+                console.error(
+                    "\n[vercel-build] Prisma is running migrations against DATABASE_URL, " +
+                    "and it looks like a pooled PostgreSQL connection string. " +
+                    "Set DIRECT_URL (or DIRECT_DATABASE_URL) in Vercel to the direct database endpoint " +
+                    "for prisma migrate deploy, while keeping DATABASE_URL for runtime traffic. " +
+                    "For Azure Database for PostgreSQL Flexible Server, use port 5432 for the direct endpoint.\n",
+                );
+            }
             process.exit(res.code);
         }
 
