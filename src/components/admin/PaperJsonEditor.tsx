@@ -2,6 +2,17 @@
 
 import { useEffect, useState } from "react";
 
+function highlightedJson(raw: string): string {
+    const escaped = raw.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    return escaped.replace(/("(?:\\.|[^"\\])*"\s*:)|("(?:\\.|[^"\\])*")|(-?\d+(?:\.\d+)?)|\b(true|false)\b|\b(null)\b/g, (token, key, string, number, bool, nil) => {
+        if (key) return `<span class="text-sky-300">${key}</span>`;
+        if (string) return `<span class="text-emerald-300">${string}</span>`;
+        if (number) return `<span class="text-amber-300">${number}</span>`;
+        if (bool) return `<span class="text-violet-300">${bool}</span>`;
+        return `<span class="text-rose-300">${nil}</span>`;
+    });
+}
+
 export function PaperJsonEditor({
     endpoint,
     method = "PUT",
@@ -86,14 +97,18 @@ export function PaperJsonEditor({
                 </div>
                 {error ? <div className="mb-2 rounded-lg border border-red-500/50 bg-red-500/10 p-2 text-xs text-red-200">{error}</div> : null}
                 {message ? <div className="mb-2 rounded-lg border border-emerald-500/50 bg-emerald-500/10 p-2 text-xs text-emerald-200">{message}</div> : null}
-                <textarea
-                    className="min-h-[55vh] flex-1 resize-y rounded-xl border p-3 font-mono text-xs outline-none"
-                    style={{ borderColor: "var(--border)", background: "var(--background)" }}
-                    value={raw}
-                    onChange={(e) => setRaw(e.target.value)}
-                    disabled={busy && !raw}
-                    spellCheck={false}
-                />
+                <div className="grid min-h-[55vh] flex-1 gap-3 lg:grid-cols-2">
+                    <textarea
+                        className="min-h-[55vh] resize-y rounded-xl border p-3 font-mono text-xs leading-5 outline-none"
+                        style={{ borderColor: "rgba(56,189,248,.45)", background: "#0b1220", color: "#e2e8f0" }}
+                        value={raw}
+                        onChange={(e) => setRaw(e.target.value)}
+                        disabled={busy && !raw}
+                        spellCheck={false}
+                        aria-label="Paper JSON editor"
+                    />
+                    <pre className="min-h-[55vh] overflow-auto rounded-xl border p-3 font-mono text-xs leading-5" style={{ borderColor: "rgba(167,139,250,.45)", background: "linear-gradient(135deg, #111827, #172554)", color: "#cbd5e1" }} dangerouslySetInnerHTML={{ __html: highlightedJson(raw || "// JSON preview") }} />
+                </div>
                 <div className="mt-3 flex flex-wrap justify-end gap-2">
                     <button type="button" className="rounded-full border px-3 py-1.5 text-xs ui-click" style={{ borderColor: "var(--border)" }} onClick={() => { try { setRaw(JSON.stringify(JSON.parse(raw), null, 2)); setError(null); } catch { setError("Invalid JSON."); } }}>Format JSON</button>
                     <button type="button" className="rounded-full border px-3 py-1.5 text-xs ui-click" style={{ borderColor: "var(--border)" }} onClick={() => void navigator.clipboard.writeText(raw)}>Copy JSON</button>
