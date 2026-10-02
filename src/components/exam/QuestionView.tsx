@@ -7,7 +7,7 @@ import { apiPost } from "@/lib/api";
 import type { PaletteStatus } from "@/components/exam/palette";
 import { optimizeImageDelivery } from "@/lib/image-delivery";
 import { ImageCarousel } from "@/components/common/ImageCarousel";
-import { normalizeLatexSource } from "@/lib/latex";
+import { inlineLatexSource, normalizeLatexSource } from "@/lib/latex";
 
 function isNullLikeToken(s: string): boolean {
     const v = s.trim().toLowerCase();
@@ -217,7 +217,7 @@ export const QuestionView = memo(function QuestionView({
                                             </span>
                             {o.text ? (
                                 <span className="text-sm min-w-0">
-                                    {normalizeLatexSource(o.text).split(/\r?\n/).map((line, lineIndex) => (
+                                    {inlineLatexSource(o.text).split(/\r?\n/).map((line, lineIndex) => (
                                                         <div key={`option-line-${o.key}-${lineIndex}`} className={line ? undefined : "min-h-[1em]"}>
                                                             <MathJax inline dynamic>{line || "\u00a0"}</MathJax>
                                                         </div>
