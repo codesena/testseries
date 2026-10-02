@@ -1055,7 +1055,11 @@ export function AdminPaperViewerClient({
                                                         <div className="rounded border px-2.5 py-2 text-xs" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
                                                             <div className="mb-1 opacity-70">Question LaTeX preview</div>
                                                             <div className="text-sm leading-relaxed">
-                                                                <MathJax dynamic>{typeof editPayload.questionText === "string" ? editPayload.questionText : ""}</MathJax>
+                                                                {(typeof editPayload.questionText === "string" ? editPayload.questionText : "").split(/\r?\n/).map((line, lineIndex) => (
+                                                                    <div key={`edit-preview-line-${lineIndex}`} className={line ? undefined : "min-h-[1em]"}>
+                                                                        <MathJax dynamic>{line || "\u00a0"}</MathJax>
+                                                                    </div>
+                                                                ))}
                                                             </div>
                                                         </div>
 
