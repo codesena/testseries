@@ -52,6 +52,7 @@ body {
   color: var(--foreground);
   font-family: "Times New Roman", Times, serif;
   font-size: 17px;
+  font-weight: 700;
 }
 
 button,
@@ -60,6 +61,13 @@ textarea,
 select,
 option {
   font-family: inherit;
+}
+
+/* MathJax renders into its own elements, so apply the app's bold text weight explicitly. */
+mjx-container,
+.MathJax,
+mjx-math {
+  font-weight: 700 !important;
 }
 
 @layer base {
