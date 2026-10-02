@@ -1,13 +1,12 @@
 "use client";
 
-import { MathJax } from "better-react-mathjax";
 import { memo, useState } from "react";
 import type { AttemptQuestion } from "@/lib/types";
 import { apiPost } from "@/lib/api";
 import type { PaletteStatus } from "@/components/exam/palette";
 import { optimizeImageDelivery } from "@/lib/image-delivery";
 import { ImageCarousel } from "@/components/common/ImageCarousel";
-import { normalizeLatexSource } from "@/lib/latex";
+import { OptionContent, QuestionContent } from "@/components/common/MathText";
 
 function isNullLikeToken(s: string): boolean {
     const v = s.trim().toLowerCase();
@@ -153,11 +152,7 @@ export const QuestionView = memo(function QuestionView({
                         />
                     </div>
                 ) : null}
-                {normalizeLatexSource(question.questionText).split(/\r?\n/).map((line, lineIndex) => (
-                    <div key={`question-line-${lineIndex}`} className={line ? undefined : "min-h-[1em]"}>
-                        <MathJax dynamic>{line || "\u00a0"}</MathJax>
-                    </div>
-                ))}
+                <QuestionContent text={question.questionText} />
             </div>
 
             <div className="mt-5 grid gap-2">
@@ -215,15 +210,7 @@ export const QuestionView = memo(function QuestionView({
                                             <span className="text-xs opacity-70 shrink-0">
                                                 ({o.key})
                                             </span>
-                            {o.text ? (
-                                <span className="text-sm min-w-0">
-                                    {normalizeLatexSource(o.text).split(/\r?\n/).map((line, lineIndex) => (
-                                                        <div key={`option-line-${o.key}-${lineIndex}`} className={line ? undefined : "min-h-[1em]"}>
-                                                            <MathJax dynamic>{line || "\u00a0"}</MathJax>
-                                                        </div>
-                                                    ))}
-                                                </span>
-                                            ) : null}
+                                            {o.text ? <OptionContent text={o.text} className="text-sm" /> : null}
                                         </div>
 
                                         {optionImageUrls.length ? (

@@ -5,7 +5,7 @@ import { type ClipboardEvent, type DragEvent, useEffect, useMemo, useRef, useSta
 import Link from "next/link";
 import { optimizeImageDelivery } from "@/lib/image-delivery";
 import { PaperJsonEditor } from "./PaperJsonEditor";
-import { normalizeLatexSource } from "@/lib/latex";
+import { OptionContent, QuestionContent } from "@/components/common/MathText";
 
 type PaperQuestion = {
     id: string;
@@ -913,11 +913,7 @@ export function AdminPaperViewerClient({
                                             </div>
                                         ) : null}
                                         <div className="space-y-1">
-                                        {normalizeLatexSource(display.questionText).split(/\r?\n/).map((line, lineIndex) => (
-                                                <div key={`question-line-${q.id}-${lineIndex}`} className={line ? undefined : "min-h-[1em]"}>
-                                                    <MathJax dynamic>{line || "\u00a0"}</MathJax>
-                                                </div>
-                                            ))}
+                                        <QuestionContent text={display.questionText} imageUrls={[]} />
                                         </div>
                                     </div>
 
@@ -941,11 +937,7 @@ export function AdminPaperViewerClient({
                                                         <div className="flex items-start gap-3">
                                                             <div className="text-xs font-mono opacity-70">{o.key}.</div>
                                                             <div className="min-w-0 text-sm leading-relaxed">
-                                                                {normalizeLatexSource(o.text).split(/\r?\n/).map((line, lineIndex) => (
-                                                                    <div key={`option-line-${o.key}-${lineIndex}`} className={line ? undefined : "min-h-[1em]"}>
-                                                                        <MathJax dynamic>{line || "\u00a0"}</MathJax>
-                                                                    </div>
-                                                                ))}
+                                                                <OptionContent text={o.text} />
 
                                                                 {optionImageUrls.length ? (
                                                                     <div className={`mt-2 grid gap-2 ${optionHasMultipleImages ? "sm:grid-cols-2" : ""}`}>
@@ -1157,7 +1149,7 @@ export function AdminPaperViewerClient({
                                                                             <div className="mt-1 rounded border px-2 py-1 text-xs" style={{ borderColor: "var(--border)", background: "var(--muted)" }}>
                                                                                 <div className="mb-1 opacity-70">Preview</div>
                                                                                 <div className="text-sm leading-relaxed">
-                                                                                    <MathJax dynamic>{option.text}</MathJax>
+                                                                                    <OptionContent text={option.text} />
                                                                                 </div>
                                                                             </div>
                                                                             <div

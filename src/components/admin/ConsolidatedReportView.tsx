@@ -1,6 +1,7 @@
 "use client";
 
 import { MathJax, MathJaxContext } from "better-react-mathjax";
+import { OptionContent, QuestionContent } from "@/components/common/MathText";
 import { useState } from "react";
 import { optimizeImageDelivery } from "@/lib/image-delivery";
 import { apiPost } from "@/lib/api";
@@ -253,7 +254,7 @@ export function ConsolidatedReportView({ data }: { data: ConsolidatedReportData 
                                     ))}
                                 </div>
                             ) : null}
-                            <MathJax dynamic>{q.questionText}</MathJax>
+                            <QuestionContent text={q.questionText} />
                         </div>
 
                         {q.options.length ? (
@@ -275,7 +276,7 @@ export function ConsolidatedReportView({ data }: { data: ConsolidatedReportData 
                                             <div className="flex items-start gap-2">
                                                 <span className="text-xs opacity-70 shrink-0">({o.key})</span>
                                                 <div className="min-w-0">
-                                                    {o.text ? <MathJax dynamic>{o.text}</MathJax> : null}
+                                                    {o.text ? <OptionContent text={o.text} /> : null}
 
                                                     {optionImageUrls.length ? (
                                                         <div className={`mt-2 grid gap-2 ${optionHasMultipleImages ? "sm:grid-cols-2" : ""}`}>

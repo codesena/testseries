@@ -1,6 +1,7 @@
 "use client";
 
 import { MathJax, MathJaxContext } from "better-react-mathjax";
+import { OptionContent, QuestionContent } from "@/components/common/MathText";
 import type { QuestionOption } from "@/lib/types";
 import { optimizeImageDelivery } from "@/lib/image-delivery";
 
@@ -165,7 +166,7 @@ export function IssueReportsClient({ groups }: { groups: IssueQuestionGroup[] })
 
                                 {questionText ? (
                                     <div className="min-w-0 overflow-x-auto">
-                                        <MathJax dynamic>{questionText}</MathJax>
+                                        <QuestionContent text={questionText} />
                                     </div>
                                 ) : (
                                     <div className="text-sm opacity-70">Question not found.</div>
@@ -189,7 +190,7 @@ export function IssueReportsClient({ groups }: { groups: IssueQuestionGroup[] })
                                                     <div className="min-w-0">
                                                         {o.text ? (
                                                             <div className="text-sm min-w-0 overflow-x-auto">
-                                                                <MathJax dynamic>{o.text}</MathJax>
+                                                                <OptionContent text={o.text} />
                                                             </div>
                                                         ) : null}
 

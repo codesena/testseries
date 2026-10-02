@@ -8,6 +8,7 @@ import type { QuestionOption } from "@/lib/types";
 import { optimizeImageDelivery } from "@/lib/image-delivery";
 import { apiPost } from "@/lib/api";
 import { ImageCarousel } from "@/components/common/ImageCarousel";
+import { OptionContent, QuestionContent } from "@/components/common/MathText";
 import {
     SlimPageHeader,
     getSlimHeaderPillStyle,
@@ -476,7 +477,7 @@ export function AttemptReportClient({ attemptId }: { attemptId: string }) {
                                                     </div>
                                                 ) : null}
 
-                                                <MathJax dynamic>{q.questionText}</MathJax>
+                                                <QuestionContent text={q.questionText} />
                                             </div>
 
                                             {q.options?.length ? (
@@ -494,7 +495,7 @@ export function AttemptReportClient({ attemptId }: { attemptId: string }) {
                                                                 <div className="flex items-start gap-3">
                                                                     <div className="mt-0.5 text-xs font-mono opacity-70">{o.key}.</div>
                                                                     <div className="text-sm leading-relaxed min-w-0">
-                                                                        <MathJax dynamic>{o.text}</MathJax>
+                                                                        <OptionContent text={o.text} />
 
                                                                         {optionImageUrls.length ? (
                                                                             <div

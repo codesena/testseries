@@ -1,8 +1,7 @@
 "use client";
 
-import { MathJax } from "better-react-mathjax";
 import { optimizeImageDelivery } from "@/lib/image-delivery";
-import { normalizeLatexSource } from "@/lib/latex";
+import { MathText } from "@/components/common/MathText";
 
 type ParsedPipeTable = {
     headers: string[];
@@ -126,11 +125,7 @@ export function RichStemContent({ text }: { text: string }) {
                         {parseCellSegments(block.text).map((segment, sIdx) => (
                             segment.kind === "text" ? (
                                 <div key={`stem-text-seg-${idx}-${sIdx}`} className="space-y-1">
-                                    {normalizeLatexSource(sanitizeRenderableText(segment.text)).split(/\r?\n/).map((line, lineIdx) => (
-                                        <div key={`stem-line-${idx}-${sIdx}-${lineIdx}`} className={line ? undefined : "min-h-[1em]"}>
-                                            <MathJax dynamic>{line || "\u00a0"}</MathJax>
-                                        </div>
-                                    ))}
+                                    <MathText text={sanitizeRenderableText(segment.text)} />
                                 </div>
                             ) : (
                                 <div key={`stem-img-seg-${idx}-${sIdx}`} className="rounded border p-1.5 inline-block" style={{ borderColor: "var(--border)", background: "var(--muted)" }}>
@@ -147,7 +142,7 @@ export function RichStemContent({ text }: { text: string }) {
                                 <tr style={{ background: "var(--muted)" }}>
                                     {block.table.headers.map((h, hIdx) => (
                                         <th key={`h-${hIdx}`} className="border px-3 py-2 text-left font-semibold" style={{ borderColor: "var(--border)" }}>
-                                            <MathJax dynamic>{sanitizeRenderableText(h)}</MathJax>
+                                            <MathText text={sanitizeRenderableText(h)} />
                                         </th>
                                     ))}
                                 </tr>
@@ -162,7 +157,7 @@ export function RichStemContent({ text }: { text: string }) {
                                                     <div className="space-y-2">
                                                         {segments.map((segment, sIdx) => (
                                                             segment.kind === "text" ? (
-                                                                <MathJax key={`t-${sIdx}`} dynamic>{sanitizeRenderableText(segment.text)}</MathJax>
+                                                                <MathText key={`t-${sIdx}`} text={sanitizeRenderableText(segment.text)} />
                                                             ) : (
                                                                 <div key={`i-${sIdx}`} className="rounded border p-1.5" style={{ borderColor: "var(--border)", background: "var(--muted)" }}>
                                                                     {/* eslint-disable-next-line @next/next/no-img-element */}

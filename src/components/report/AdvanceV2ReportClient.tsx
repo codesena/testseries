@@ -8,6 +8,7 @@ import { optimizeImageDelivery } from "@/lib/image-delivery";
 import { formatDateTimeIST } from "@/lib/time";
 import { ImageCarousel } from "@/components/common/ImageCarousel";
 import { RichStemContent } from "@/components/common/RichStemContent";
+import { OptionContent } from "@/components/common/MathText";
 import {
     SlimPageHeader,
     getSlimHeaderPillStyle,
@@ -692,7 +693,7 @@ export function AdvanceV2ReportClient({ attemptId }: { attemptId: string }) {
                                                             <div className="flex items-start gap-3">
                                                                 <div className="mt-0.5 text-xs font-mono opacity-70">{o.optionKey}.</div>
                                                                 <div className="text-sm leading-relaxed min-w-0">
-                                                                    <MathJax dynamic>{sanitizeRenderableText(o.labelRich)}</MathJax>
+                                                                    <OptionContent text={sanitizeRenderableText(o.labelRich)} />
 
                                                                     {optionImageUrls.length ? (
                                                                         <div className="mt-2 grid gap-2 sm:grid-cols-2">
