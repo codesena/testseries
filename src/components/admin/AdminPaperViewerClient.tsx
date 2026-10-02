@@ -1,7 +1,7 @@
 "use client";
 
 import { MathJax, MathJaxContext } from "better-react-mathjax";
-import { type DragEvent, useEffect, useMemo, useState } from "react";
+import { type ClipboardEvent, type DragEvent, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { optimizeImageDelivery } from "@/lib/image-delivery";
 import { PaperJsonEditor } from "./PaperJsonEditor";
@@ -587,6 +587,16 @@ export function AdminPaperViewerClient({
         if (file) void uploadOptionImage(file, optionKey);
     }
 
+    function onQuestionPaste(e: ClipboardEvent<HTMLDivElement>) {
+        const files = Array.from(e.clipboardData.files || []).filter((f) => f.type.startsWith("image/"));
+        if (files.length) { e.preventDefault(); void uploadQuestionImages(files); }
+    }
+
+    function onOptionPaste(optionKey: string, e: ClipboardEvent<HTMLDivElement>) {
+        const file = Array.from(e.clipboardData.files || []).find((f) => f.type.startsWith("image/"));
+        if (file) { e.preventDefault(); void uploadOptionImage(file, optionKey); }
+    }
+
     async function submitIssue() {
         if (!issueQuestion || sendingIssue) return;
 
@@ -1065,6 +1075,7 @@ export function AdminPaperViewerClient({
                                                                 style={{ borderColor: "var(--border)", background: "var(--card)" }}
                                                                 onDragOver={(e) => e.preventDefault()}
                                                                 onDrop={onQuestionDrop}
+                                                                onPaste={onQuestionPaste}
                                                             >
                                                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
                                                                     <textarea
@@ -1080,7 +1091,7 @@ export function AdminPaperViewerClient({
                                                                         className="inline-flex items-center justify-center min-h-[72px] rounded border px-2 text-[11px] text-center ui-click cursor-pointer"
                                                                         style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                                                                     >
-                                                                        {uploadingQuestionImage ? "Uploading..." : "Drag/drop or upload question image"}
+                                                                            {uploadingQuestionImage ? "Uploading..." : "Drag/drop, paste, or upload question image"}
                                                                         <input
                                                                             type="file"
                                                                             accept="image/*"
@@ -1124,6 +1135,7 @@ export function AdminPaperViewerClient({
                                                                                 style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                                                                                 onDragOver={(e) => e.preventDefault()}
                                                                                 onDrop={(e) => onOptionDrop(key, e)}
+                                                                                onPaste={(e) => onOptionPaste(key, e)}
                                                                             >
                                                                                 <input
                                                                                     className="w-full rounded border px-2 py-1.5 bg-transparent ui-field text-xs"
@@ -1138,7 +1150,7 @@ export function AdminPaperViewerClient({
                                                                                     className="inline-flex items-center justify-center h-8 w-full text-[11px] rounded-full border px-2 whitespace-nowrap ui-click cursor-pointer"
                                                                                     style={{ borderColor: "var(--border)", background: "var(--card)" }}
                                                                                 >
-                                                                                    {uploadingOptionImage ? "Uploading..." : `Drag/drop or upload option ${key} image`}
+                                                                                    {uploadingOptionImage ? "Uploading..." : `Drag/drop, paste, or upload option ${key} image`}
                                                                                     <input
                                                                                         type="file"
                                                                                         accept="image/*"
