@@ -52,7 +52,7 @@ body {
   color: var(--foreground);
   font-family: "Times New Roman", Times, serif;
   font-size: 17px;
-  font-weight: 700;
+  font-weight: 500;
 }
 
 button,
@@ -67,7 +67,7 @@ option {
 mjx-container,
 .MathJax,
 mjx-math {
-  font-weight: 700 !important;
+  font-weight: 500 !important;
 }
 
 @layer base {
