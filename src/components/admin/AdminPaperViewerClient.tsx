@@ -940,7 +940,11 @@ export function AdminPaperViewerClient({
                                                         <div className="flex items-start gap-3">
                                                             <div className="text-xs font-mono opacity-70">{o.key}.</div>
                                                             <div className="min-w-0 text-sm leading-relaxed">
-                                                                <MathJax dynamic>{o.text}</MathJax>
+                                                                {o.text.split(/\r?\n/).map((line, lineIndex) => (
+                                                                    <div key={`option-line-${o.key}-${lineIndex}`} className={line ? undefined : "min-h-[1em]"}>
+                                                                        <MathJax dynamic>{line || "\u00a0"}</MathJax>
+                                                                    </div>
+                                                                ))}
 
                                                                 {optionImageUrls.length ? (
                                                                     <div className={`mt-2 grid gap-2 ${optionHasMultipleImages ? "sm:grid-cols-2" : ""}`}>

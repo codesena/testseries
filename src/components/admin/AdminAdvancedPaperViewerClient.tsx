@@ -1443,7 +1443,11 @@ export function AdminAdvancedPaperViewerClient({
                                                     <div key={o.key} className="rounded border p-3" style={{ borderColor: correct ? "rgba(16,185,129,0.7)" : "var(--border)", background: correct ? "rgba(16,185,129,0.12)" : "transparent" }}>
                                                         <div className="text-sm">
                                                             <span className="opacity-75">({o.key}) </span>
-                                                            <MathJax inline dynamic>{o.text}</MathJax>
+                                                            {o.text.split(/\r?\n/).map((line, lineIndex) => (
+                                                                <div key={`option-line-${o.key}-${lineIndex}`} className={line ? undefined : "min-h-[1em]"}>
+                                                                    <MathJax inline dynamic>{line || "\u00a0"}</MathJax>
+                                                                </div>
+                                                            ))}
                                                         </div>
                                                         {optionImageUrls.length ? (
                                                             <div className="mt-2 grid gap-2 sm:grid-cols-2">
