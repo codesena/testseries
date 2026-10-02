@@ -7,7 +7,7 @@
   --muted-foreground: #4b5563;
   --border: #e5e7eb;
   --card: #ffffff;
-  --font-geist-sans: Arial, Helvetica, sans-serif;
+  --font-geist-sans: "Times New Roman", Times, serif;
   --font-geist-mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
 }
 
@@ -50,7 +50,15 @@ html[data-theme="dark"] {
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  font-family: "Times New Roman", Times, serif;
+}
+
+button,
+input,
+textarea,
+select,
+option {
+  font-family: inherit;
 }
 
 @layer base {
