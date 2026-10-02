@@ -18,11 +18,6 @@
   --font-mono: var(--font-geist-mono);
 }
 
-/* Slightly increase the app's type scale for readability. */
-html {
-  font-size: 115%;
-}
-
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
@@ -56,6 +51,7 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: "Times New Roman", Times, serif;
+  font-size: 17px;
 }
 
 button,
@@ -111,4 +107,14 @@ option {
     @apply transition-colors transition-shadow duration-150 ease-out;
     @apply focus:outline-none focus:ring-2 focus:ring-black/30 dark:focus:ring-white/30;
   }
+}
+
+@layer utilities {
+  /* Enlarge text while leaving layout dimensions and spacing unchanged. */
+  .text-xs { font-size: 0.8125rem; }
+  .text-sm { font-size: 0.9375rem; }
+  .text-base { font-size: 1.0625rem; }
+  .text-lg { font-size: 1.1875rem; }
+  .text-xl { font-size: 1.3125rem; }
+  .text-2xl { font-size: 1.5625rem; }
 }
