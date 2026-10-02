@@ -116,7 +116,39 @@ export async function GET(
 
     if (!exam) return json({ error: "Exam not found" }, { status: 404 });
 
-    return json({ exam });
+    const paper = {
+        code: exam.code,
+        title: exam.title,
+        durationMinutes: exam.durationMinutes,
+        instructionsRichText: exam.instructionsRichText ?? undefined,
+        isActive: exam.isActive,
+        subjects: exam.subjects.map((subject) => ({
+            subject: subject.subject,
+            sections: subject.sections.map((section) => ({
+                sectionCode: section.sectionCode,
+                title: section.title,
+                instructionsRich: section.instructionsRich ?? undefined,
+                config: section.config ?? undefined,
+                blocks: section.blocks.map((block) => ({
+                    blockType: block.blockType,
+                    paragraphRich: block.paragraphRich ?? undefined,
+                    paragraphAssets: block.paragraphAssets ?? undefined,
+                    questions: block.questions.map((question) => ({
+                        questionType: question.questionType,
+                        stemRich: question.stemRich,
+                        stemAssets: question.stemAssets ?? undefined,
+                        payload: question.payload ?? undefined,
+                        difficultyRank: question.difficultyRank,
+                        markingSchemeName: question.marksScheme?.name ?? undefined,
+                        options: question.options.map((option) => ({ optionKey: option.optionKey, labelRich: option.labelRich, assets: option.assets ?? undefined, isCorrect: option.isCorrect })),
+                        matchItems: question.matchItems.map((item) => ({ listName: item.listName, itemKey: item.itemKey, labelRich: item.labelRich })),
+                    })),
+                })),
+            })),
+        })),
+    };
+
+    return json({ exam, paper });
 }
 
 export async function PUT(

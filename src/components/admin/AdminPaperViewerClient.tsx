@@ -4,6 +4,7 @@ import { MathJax, MathJaxContext } from "better-react-mathjax";
 import { type DragEvent, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { optimizeImageDelivery } from "@/lib/image-delivery";
+import { PaperJsonEditor } from "./PaperJsonEditor";
 
 type PaperQuestion = {
     id: string;
@@ -135,9 +136,11 @@ function slugifyFolderName(input: string): string {
 }
 
 export function AdminPaperViewerClient({
+    testId,
     testTitle,
     questions,
 }: {
+    testId: string;
     testTitle: string;
     questions: PaperQuestion[];
 }) {
@@ -153,6 +156,7 @@ export function AdminPaperViewerClient({
     const [uploadFolderDraft, setUploadFolderDraft] = useState(DEFAULT_UPLOAD_FOLDER);
     const [uploadFolderSaved, setUploadFolderSaved] = useState(false);
     const [mode, setMode] = useState<"view" | "edit">("view");
+    const [paperJsonOpen, setPaperJsonOpen] = useState(false);
     const [editUiMode, setEditUiMode] = useState<"form" | "json">("form");
     const [editError, setEditError] = useState<string | null>(null);
     const [editSuccess, setEditSuccess] = useState<string | null>(null);
@@ -680,6 +684,7 @@ export function AdminPaperViewerClient({
 
                                 {mode === "edit" ? (
                                     <>
+                                        <button type="button" className="inline-flex shrink-0 items-center justify-center h-8 rounded-full border px-3 text-[11px] sm:text-xs whitespace-nowrap ui-click" style={{ borderColor: "rgba(59,130,246,.5)", background: "rgba(37,99,235,.18)" }} onClick={() => setPaperJsonOpen(true)}>Paper JSON</button>
                                         <div
                                             className="h-8 inline-flex items-center rounded-full border px-3 w-[10.5rem] sm:w-[12rem] md:w-[13rem] shrink-0"
                                             style={uploadFolderSaved
@@ -1311,6 +1316,7 @@ export function AdminPaperViewerClient({
 
             </div>
 
+            <PaperJsonEditor endpoint={`/api/admin/tests/${testId}`} open={paperJsonOpen} onClose={() => setPaperJsonOpen(false)} onSaved={() => window.location.reload()} />
         </MathJaxContext>
     );
 }

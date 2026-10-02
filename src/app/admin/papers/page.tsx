@@ -8,6 +8,7 @@ import {
 import { prisma } from "@/server/db";
 import { getAuthUser } from "@/server/auth";
 import { isAdminUsername } from "@/server/admin";
+import { NewPaperJsonButton } from "@/components/admin/NewPaperJsonButton";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -175,6 +176,7 @@ export default async function AdminPapersPage() {
             <main className="max-w-5xl mx-auto w-full px-4 py-8">
                 <div>
                     <h1 className="text-2xl font-semibold">Papers</h1>
+                    <div className="mt-3"><NewPaperJsonButton /></div>
                 </div>
                 <div className="mt-2 text-sm opacity-70">Select a paper to open the paper view.</div>
 

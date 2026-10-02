@@ -6,6 +6,7 @@ import { type DragEvent, useEffect, useMemo, useRef, useState } from "react";
 import { InstructionRichText } from "@/components/common/InstructionRichText";
 import { RichStemContent } from "@/components/common/RichStemContent";
 import { optimizeImageDelivery } from "@/lib/image-delivery";
+import { PaperJsonEditor } from "./PaperJsonEditor";
 import { composeInstructionSections, splitInstructionSections } from "@/lib/instructions";
 
 type QuestionType = "SINGLE_CORRECT" | "MULTI_CORRECT" | "MATCHING_LIST" | "NAT_INTEGER" | "NAT_DECIMAL";
@@ -357,6 +358,7 @@ export function AdminAdvancedPaperViewerClient({
     const [paperInstructionsError, setPaperInstructionsError] = useState<string | null>(null);
     const [paperInstructionsSuccess, setPaperInstructionsSuccess] = useState<string | null>(null);
     const [mode, setMode] = useState<"view" | "edit">("view");
+    const [paperJsonOpen, setPaperJsonOpen] = useState(false);
     const [uploadFolderName, setUploadFolderName] = useState(DEFAULT_UPLOAD_FOLDER);
     const [uploadFolderDraft, setUploadFolderDraft] = useState(DEFAULT_UPLOAD_FOLDER);
     const [uploadFolderSaved, setUploadFolderSaved] = useState(false);
@@ -1020,6 +1022,7 @@ export function AdminAdvancedPaperViewerClient({
 
                                 {mode === "edit" ? (
                                     <>
+                                        <button type="button" className="inline-flex shrink-0 items-center justify-center h-8 rounded-full border px-3 text-[11px] sm:text-xs whitespace-nowrap ui-click" style={{ borderColor: "rgba(59,130,246,.5)", background: "rgba(37,99,235,.18)" }} onClick={() => setPaperJsonOpen(true)}>Paper JSON</button>
                                         <div
                                             className="h-8 inline-flex items-center rounded-full border px-3 w-[10.5rem] sm:w-[12rem] md:w-[13rem] shrink-0"
                                             style={uploadFolderSaved
@@ -1906,6 +1909,7 @@ export function AdminAdvancedPaperViewerClient({
                     </div>
                 ) : null}
             </div>
+            <PaperJsonEditor endpoint={`/api/v2/admin/exams/${examId}`} open={paperJsonOpen} onClose={() => setPaperJsonOpen(false)} onSaved={() => window.location.reload()} />
         </MathJaxContext>
     );
 }

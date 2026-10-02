@@ -139,6 +139,7 @@ export default async function AdminPaperViewPage(
 
     return (
         <AdminPaperViewerClient
+            testId={test.id}
             testTitle={test.title}
             questions={questions}
         />
