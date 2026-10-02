@@ -1,7 +1,7 @@
 "use client";
 
 import { MathJax, MathJaxContext } from "better-react-mathjax";
-import { type ClipboardEvent, type DragEvent, useEffect, useMemo, useState } from "react";
+import { type ClipboardEvent, type DragEvent, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { optimizeImageDelivery } from "@/lib/image-delivery";
 import { PaperJsonEditor } from "./PaperJsonEditor";
@@ -176,6 +176,14 @@ export function AdminPaperViewerClient({
         for (const q of questions) seeded[q.id] = q.issueCount;
         return seeded;
     });
+    const questionCardRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
+    function scrollToQuestionCard(questionId: string) {
+        const target = questionCardRefs.current[questionId];
+        if (!target) return;
+        target.scrollIntoView({ behavior: "smooth", block: "start" });
+        target.focus({ preventScroll: true });
+    }
 
     const issueQuestion = useMemo(
         () => viewerQuestions.find((q) => q.id === issueOpenForQuestionId) ?? null,
@@ -391,11 +399,13 @@ export function AdminPaperViewerClient({
                 return next;
             });
 
+            const savedQuestionId = editOpenForQuestionId;
             setEditOpenForQuestionId(null);
             setEditError(null);
             setEditSuccess(null);
             setEditRaw("");
             setEditUiMode("form");
+            window.setTimeout(() => scrollToQuestionCard(savedQuestionId), 0);
         } catch (e) {
             setEditError(e instanceof Error ? e.message : "Failed to save question");
         } finally {
@@ -770,6 +780,11 @@ export function AdminPaperViewerClient({
                             return (
                                 <div
                                     key={q.id}
+                                    id={`question-card-${q.id}`}
+                                    ref={(node) => {
+                                        questionCardRefs.current[q.id] = node;
+                                    }}
+                                    tabIndex={-1}
                                     className="rounded-lg border p-4"
                                     style={{ borderColor: "var(--border)", background: "var(--card)" }}
                                 >
