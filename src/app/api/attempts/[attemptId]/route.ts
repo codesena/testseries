@@ -21,8 +21,9 @@ function normalizeDisplayText(value: string) {
     // back into literal backslash sequences so MathJax sees \tan / \frac instead of tabs/formfeeds.
     s = s.replace(/\u000c/g, "\\f"); // form feed
     s = s.replace(/\t/g, "\\t");
+    s = s.replace(/\\n(?=[A-Z0-9([\[]|$)/g, "\n");
 
-    // Minimal unescape for leftover artifacts (avoid \n -> newline, which can break LaTeX like \nu)
+    // Minimal unescape for leftover quote artifacts.
     s = s.replace(/\\"/g, '"');
     s = s.replace(/\\'/g, "'");
 

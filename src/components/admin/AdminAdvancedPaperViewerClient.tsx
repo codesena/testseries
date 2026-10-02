@@ -7,6 +7,7 @@ import { InstructionRichText } from "@/components/common/InstructionRichText";
 import { RichStemContent } from "@/components/common/RichStemContent";
 import { optimizeImageDelivery } from "@/lib/image-delivery";
 import { PaperJsonEditor } from "./PaperJsonEditor";
+import { normalizeLatexSource } from "@/lib/latex";
 import { composeInstructionSections, splitInstructionSections } from "@/lib/instructions";
 
 type QuestionType = "SINGLE_CORRECT" | "MULTI_CORRECT" | "MATCHING_LIST" | "NAT_INTEGER" | "NAT_DECIMAL";
@@ -1443,7 +1444,7 @@ export function AdminAdvancedPaperViewerClient({
                                                     <div key={o.key} className="rounded border p-3" style={{ borderColor: correct ? "rgba(16,185,129,0.7)" : "var(--border)", background: correct ? "rgba(16,185,129,0.12)" : "transparent" }}>
                                                         <div className="text-sm">
                                                             <span className="opacity-75">({o.key}) </span>
-                                                            {o.text.split(/\r?\n/).map((line, lineIndex) => (
+                                                            {normalizeLatexSource(o.text).split(/\r?\n/).map((line, lineIndex) => (
                                                                 <div key={`option-line-${o.key}-${lineIndex}`} className={line ? undefined : "min-h-[1em]"}>
                                                                     <MathJax inline dynamic>{line || "\u00a0"}</MathJax>
                                                                 </div>

@@ -5,6 +5,7 @@ import { type ClipboardEvent, type DragEvent, useEffect, useMemo, useRef, useSta
 import Link from "next/link";
 import { optimizeImageDelivery } from "@/lib/image-delivery";
 import { PaperJsonEditor } from "./PaperJsonEditor";
+import { normalizeLatexSource } from "@/lib/latex";
 
 type PaperQuestion = {
     id: string;
@@ -912,7 +913,7 @@ export function AdminPaperViewerClient({
                                             </div>
                                         ) : null}
                                         <div className="space-y-1">
-                                            {display.questionText.split(/\r?\n/).map((line, lineIndex) => (
+                                        {normalizeLatexSource(display.questionText).split(/\r?\n/).map((line, lineIndex) => (
                                                 <div key={`question-line-${q.id}-${lineIndex}`} className={line ? undefined : "min-h-[1em]"}>
                                                     <MathJax dynamic>{line || "\u00a0"}</MathJax>
                                                 </div>
@@ -940,7 +941,7 @@ export function AdminPaperViewerClient({
                                                         <div className="flex items-start gap-3">
                                                             <div className="text-xs font-mono opacity-70">{o.key}.</div>
                                                             <div className="min-w-0 text-sm leading-relaxed">
-                                                                {o.text.split(/\r?\n/).map((line, lineIndex) => (
+                                                                {normalizeLatexSource(o.text).split(/\r?\n/).map((line, lineIndex) => (
                                                                     <div key={`option-line-${o.key}-${lineIndex}`} className={line ? undefined : "min-h-[1em]"}>
                                                                         <MathJax dynamic>{line || "\u00a0"}</MathJax>
                                                                     </div>

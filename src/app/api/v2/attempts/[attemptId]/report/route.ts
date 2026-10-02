@@ -26,6 +26,7 @@ function normalizeDisplayText(value: string) {
 
     s = s.replace(/\u000c/g, "\\f");
     s = s.replace(/\t/g, "\\t");
+    s = s.replace(/\\n(?=[A-Z0-9([\[]|$)/g, "\n");
     s = s.replace(/\"/g, '"');
     s = s.replace(/\\'/g, "'");
 

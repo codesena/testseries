@@ -5,6 +5,7 @@ import { MathJax, MathJaxContext } from "better-react-mathjax";
 import { apiGet, apiPost } from "@/lib/api";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { RichStemContent } from "@/components/common/RichStemContent";
+import { normalizeLatexSource } from "@/lib/latex";
 import { optimizeImageDelivery } from "@/lib/image-delivery";
 
 type V2Question = {
@@ -939,7 +940,11 @@ export function AdvanceV2ExamClient({ attemptId }: { attemptId: string }) {
                                                             className="pointer-events-none"
                                                         />
                                                         <span style={{ userSelect: "none", WebkitUserSelect: "none" }}>
-                                                            {opt.optionKey}. <MathJax inline dynamic>{sanitizeRenderableText(opt.labelRich)}</MathJax>
+                                                            {opt.optionKey}. {normalizeLatexSource(sanitizeRenderableText(opt.labelRich)).split(/\r?\n/).map((line, lineIndex) => (
+                                                                <span key={`option-line-${opt.optionKey}-${lineIndex}`} className={`block ${line ? "" : "min-h-[1em]"}`}>
+                                                                    <MathJax inline dynamic>{line || "\u00a0"}</MathJax>
+                                                                </span>
+                                                            ))}
                                                         </span>
                                                     </div>
                                                     {(() => {
@@ -980,7 +985,11 @@ export function AdvanceV2ExamClient({ attemptId }: { attemptId: string }) {
                                                                 className="pointer-events-none"
                                                             />
                                                             <span style={{ userSelect: "none", WebkitUserSelect: "none" }}>
-                                                                {opt.optionKey}. <MathJax inline dynamic>{sanitizeRenderableText(opt.labelRich)}</MathJax>
+                                                                {opt.optionKey}. {normalizeLatexSource(sanitizeRenderableText(opt.labelRich)).split(/\r?\n/).map((line, lineIndex) => (
+                                                                    <span key={`multi-option-line-${opt.optionKey}-${lineIndex}`} className={`block ${line ? "" : "min-h-[1em]"}`}>
+                                                                        <MathJax inline dynamic>{line || "\u00a0"}</MathJax>
+                                                                    </span>
+                                                                ))}
                                                             </span>
                                                         </div>
                                                         {(() => {

@@ -7,6 +7,7 @@ import { apiPost } from "@/lib/api";
 import type { PaletteStatus } from "@/components/exam/palette";
 import { optimizeImageDelivery } from "@/lib/image-delivery";
 import { ImageCarousel } from "@/components/common/ImageCarousel";
+import { normalizeLatexSource } from "@/lib/latex";
 
 function isNullLikeToken(s: string): boolean {
     const v = s.trim().toLowerCase();
@@ -152,7 +153,11 @@ export const QuestionView = memo(function QuestionView({
                         />
                     </div>
                 ) : null}
-                <MathJax dynamic>{question.questionText}</MathJax>
+                {normalizeLatexSource(question.questionText).split(/\r?\n/).map((line, lineIndex) => (
+                    <div key={`question-line-${lineIndex}`} className={line ? undefined : "min-h-[1em]"}>
+                        <MathJax dynamic>{line || "\u00a0"}</MathJax>
+                    </div>
+                ))}
             </div>
 
             <div className="mt-5 grid gap-2">
@@ -210,9 +215,13 @@ export const QuestionView = memo(function QuestionView({
                                             <span className="text-xs opacity-70 shrink-0">
                                                 ({o.key})
                                             </span>
-                                            {o.text ? (
-                                                <span className="text-sm min-w-0">
-                                                    <MathJax dynamic>{o.text}</MathJax>
+                            {o.text ? (
+                                <span className="text-sm min-w-0">
+                                    {normalizeLatexSource(o.text).split(/\r?\n/).map((line, lineIndex) => (
+                                                        <div key={`option-line-${o.key}-${lineIndex}`} className={line ? undefined : "min-h-[1em]"}>
+                                                            <MathJax dynamic>{line || "\u00a0"}</MathJax>
+                                                        </div>
+                                                    ))}
                                                 </span>
                                             ) : null}
                                         </div>

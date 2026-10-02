@@ -2,6 +2,7 @@
 
 import { MathJax } from "better-react-mathjax";
 import { optimizeImageDelivery } from "@/lib/image-delivery";
+import { normalizeLatexSource } from "@/lib/latex";
 
 type ParsedPipeTable = {
     headers: string[];
@@ -125,7 +126,7 @@ export function RichStemContent({ text }: { text: string }) {
                         {parseCellSegments(block.text).map((segment, sIdx) => (
                             segment.kind === "text" ? (
                                 <div key={`stem-text-seg-${idx}-${sIdx}`} className="space-y-1">
-                                    {sanitizeRenderableText(segment.text).split(/\r?\n/).map((line, lineIdx) => (
+                                    {normalizeLatexSource(sanitizeRenderableText(segment.text)).split(/\r?\n/).map((line, lineIdx) => (
                                         <div key={`stem-line-${idx}-${sIdx}-${lineIdx}`} className={line ? undefined : "min-h-[1em]"}>
                                             <MathJax dynamic>{line || "\u00a0"}</MathJax>
                                         </div>
