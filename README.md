@@ -126,6 +126,29 @@ Notes:
 	- `MAINS_NUMERICAL` / `ADV_NAT`
 	- `ADV_MULTI_CORRECT` (subset partial marking)
 
+## Exam UI: Question Media and Report Visibility
+
+### Question and option images
+
+Question media is rendered through the reusable `QuestionMediaLayout` and `MediaImageGroup` components. They are used in exam attempts, reports, and paper previews.
+
+- With multiple question images, all images appear above the question text in one horizontal row by default. Their aspect ratios do not change this layout, and the group does not use a carousel or horizontal scrolling. A caller can set `maxColumns` to wrap a larger group into additional rows.
+- With one question image, its natural width-to-height ratio controls placement. At `2:1` or wider, the image appears above the question text. Below `2:1`, the question text is on the left and the image is on the right on wider screens; narrow screens stack them.
+- Images keep their original proportions inside a frame (`object-fit: contain`), so they are not cropped. The default frame ratio is `1.4:1` and the default maximum image height is `320px`; callers can customize the ratio, height, and column count through component props.
+- Clicking a question image opens it in a large overlay for reading. Pressing Escape or the close button dismisses it. This behavior applies to question images only; option images do not open the overlay.
+- On wider screens, answer options use a two-column grid (two options per row). Images within an option can use up to two columns and wrap as needed; narrow screens stack option cards and option images.
+
+### Math text size
+
+MathJax-rendered LaTeX is displayed at `1.25em` relative to its surrounding text. This sizing rule applies to rendered math; regular text keeps its existing size.
+
+### Live attempt reports
+
+- Students can open their report after the attempt is `SUBMITTED` or `AUTO_SUBMITTED`. While it is `IN_PROGRESS`, student report pages redirect to the attempt and report API requests are denied.
+- Admins can review an attempt live or after submission through the admin candidate report pages under `/admin/candidate/...`.
+- Admin accounts use the same ownership and submission rules as students on the normal attempt and report routes. An admin taking their own paper is treated as its student until they enter an explicit admin report view.
+- Admins cannot open another candidate’s live exam page. Live exam routes and response APIs remain scoped to the authenticated attempt owner. The V2 live exam client also loads from a separate endpoint that omits correct answers and scoring rules.
+
 ## Notes
 
 - This repository includes basic exam-like restrictions (context menu + basic copy/paste blocking) and logs tab/fullscreen changes; it is not a secure proctoring system.

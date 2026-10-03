@@ -2,7 +2,6 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import {
     getAssessmentLabel,
-    getAssessmentReportPath,
     getTestSeriesVariant,
 } from "@/lib/assessment";
 import {
@@ -154,7 +153,7 @@ export default async function AdminCandidateTestPage(
                         initialAttempts={attemptRows}
                         candidateLabel={candidateLabel}
                         testTitle={testTitle}
-                        reportHrefTemplate={getAssessmentReportPath(variant, "{attemptId}")}
+                        reportHrefTemplate={`/admin/candidate/${userId}/test/${testId}/attempt/{attemptId}/report`}
                     />
                 </section>
             </main>

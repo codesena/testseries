@@ -1,4 +1,5 @@
 import { isAdminUsername } from "@/server/admin";
+import { isFinalAttemptStatus } from "@/server/attempt-access";
 import { getAuthUser } from "@/server/auth";
 import { prisma } from "@/server/db";
 import { finalizeExamV2Attempt } from "@/server/exam-v2/attempt-finalize";
@@ -199,14 +200,15 @@ function shouldUseAdvancedFallback(
 }
 
 export async function GET(
-    _req: Request,
+    req: Request,
     ctx: { params: Promise<{ attemptId: string }> },
 ) {
     const auth = await getAuthUser();
     if (!auth) {
         return json({ error: "Unauthorized" }, { status: 401 });
     }
-    const isAdmin = isAdminUsername(auth.username);
+    const adminReportMode =
+        isAdminUsername(auth.username) && new URL(req.url).searchParams.get("adminMode") === "true";
 
     const params = ParamsSchema.safeParse(await ctx.params);
     if (!params.success) {
@@ -215,7 +217,7 @@ export async function GET(
 
     const attemptWhere = {
         id: params.data.attemptId,
-        ...(isAdmin ? {} : { userId: auth.userId }),
+        ...(adminReportMode ? {} : { userId: auth.userId }),
     };
 
     const loadAttempt = () =>
@@ -331,6 +333,10 @@ export async function GET(
         if (!attempt) {
             return json({ error: "Attempt not found" }, { status: 404 });
         }
+    }
+
+    if (!adminReportMode && !isFinalAttemptStatus(attempt.status)) {
+        return json({ error: "Report is available after submission" }, { status: 403 });
     }
 
     const responseByQuestionId = new Map(

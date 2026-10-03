@@ -249,8 +249,12 @@ export function AdvanceV2ExamClient({ attemptId }: { attemptId: string }) {
         (async () => {
             try {
                 setLoading(true);
-                const res = await apiGet<V2AttemptPayload>(`/api/v2/attempts/${attemptId}/report`);
+                const res = await apiGet<V2AttemptPayload>(`/api/v2/attempts/${attemptId}/exam`);
                 if (!cancelled) {
+                    if (res.attempt.status !== "IN_PROGRESS") {
+                        window.location.replace(`/advance/${attemptId}/report`);
+                        return;
+                    }
                     setData(res);
                 }
             } catch (e) {

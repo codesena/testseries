@@ -1,6 +1,7 @@
 import { prisma } from "@/server/db";
 import { getAuthUser } from "@/server/auth";
 import { isAdminUsername } from "@/server/admin";
+import { isFinalAttemptStatus } from "@/server/attempt-access";
 import { autoSubmitAttemptIfOverdue } from "@/server/attempt-finalize";
 import { evaluateResponse } from "@/server/evaluate";
 import { json } from "@/server/json";
@@ -101,7 +102,7 @@ function isAttemptedAnswer(value: unknown): boolean {
 }
 
 export async function GET(
-    _req: Request,
+    req: Request,
     ctx: { params: Promise<{ attemptId: string }> },
 ) {
     const auth = await getAuthUser();
@@ -109,7 +110,8 @@ export async function GET(
         return json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const isAdmin = isAdminUsername(auth.username);
+    const adminReportMode =
+        isAdminUsername(auth.username) && new URL(req.url).searchParams.get("adminMode") === "true";
 
     const params = ParamsSchema.safeParse(await ctx.params);
     if (!params.success) {
@@ -117,7 +119,7 @@ export async function GET(
     }
 
     const attempt = await prisma.studentAttempt.findFirst({
-        where: isAdmin
+        where: adminReportMode
             ? { id: params.data.attemptId }
             : { id: params.data.attemptId, studentId: auth.userId },
         select: {
@@ -162,6 +164,21 @@ export async function GET(
             selectedAnswer: r.selectedAnswer,
         })),
     });
+
+    if (!adminReportMode) {
+        const latestStatus = autoSubmitResult.didAutoSubmit
+            ? "AUTO_SUBMITTED"
+            : attempt.status === "IN_PROGRESS"
+                ? (await prisma.studentAttempt.findUnique({
+                    where: { id: attempt.id },
+                    select: { status: true },
+                }))?.status ?? attempt.status
+                : attempt.status;
+
+        if (!isFinalAttemptStatus(latestStatus)) {
+            return json({ error: "Report is available after submission" }, { status: 403 });
+        }
+    }
 
     const student = await prisma.user.findUnique({
         where: { id: attempt.studentId },

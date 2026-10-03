@@ -282,20 +282,21 @@ function fmtCompact(seconds: number) {
     return mm > 0 ? `${mm}m ${ss}s` : `${ss}s`;
 }
 
-export function AdvanceV2ReportClient({ attemptId }: { attemptId: string }) {
+export function AdvanceV2ReportClient({ attemptId, adminMode = false }: { attemptId: string; adminMode?: boolean }) {
     const [data, setData] = useState<Payload | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [redirecting, setRedirecting] = useState(false);
     const [attemptNo, setAttemptNo] = useState(0);
     const [exporting, setExporting] = useState(false);
     const [exportMsg, setExportMsg] = useState<string | null>(null);
+    const reportApiPath = `/api/v2/attempts/${attemptId}/report${adminMode ? "?adminMode=true" : ""}`;
 
     useEffect(() => {
         let cancelled = false;
         let intervalId: ReturnType<typeof setInterval> | null = null;
 
         const fetchLatest = async () => {
-            const res = await apiGet<Payload>(`/api/v2/attempts/${attemptId}/report`);
+            const res = await apiGet<Payload>(reportApiPath);
             if (cancelled) return;
             setData(res);
             setError(null);
@@ -311,7 +312,7 @@ export function AdvanceV2ReportClient({ attemptId }: { attemptId: string }) {
                 if (cancelled) return;
                 setAttemptNo(i + 1);
                 try {
-                    const res = await apiGet<Payload>(`/api/v2/attempts/${attemptId}/report`);
+                    const res = await apiGet<Payload>(reportApiPath);
                     if (cancelled) return;
 
                     setData(res);
@@ -355,7 +356,7 @@ export function AdvanceV2ReportClient({ attemptId }: { attemptId: string }) {
             cancelled = true;
             if (intervalId) clearInterval(intervalId);
         };
-    }, [attemptId]);
+    }, [attemptId, adminMode, reportApiPath]);
 
     const flatQuestions = useMemo<FlatQuestion[]>(() => {
         let index = 0;

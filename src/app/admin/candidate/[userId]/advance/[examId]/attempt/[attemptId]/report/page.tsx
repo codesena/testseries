@@ -27,5 +27,5 @@ export default async function AdminCandidateAdvancedAttemptReportPage(
 
     if (!attempt) notFound();
 
-    return <AdvanceV2ReportClient attemptId={attemptId} />;
+    return <AdvanceV2ReportClient attemptId={attemptId} adminMode />;
 }

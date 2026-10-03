@@ -131,7 +131,7 @@ function formatAnswer(value: unknown): string {
     }
 }
 
-export function AttemptReportClient({ attemptId }: { attemptId: string }) {
+export function AttemptReportClient({ attemptId, adminMode = false }: { attemptId: string; adminMode?: boolean }) {
     const [data, setData] = useState<ReportPayload | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [redirecting, setRedirecting] = useState(false);
@@ -141,6 +141,7 @@ export function AttemptReportClient({ attemptId }: { attemptId: string }) {
     const [reflectionByQid, setReflectionByQid] = useState<Record<string, ReflectionDraft>>({});
     const [savingByQid, setSavingByQid] = useState<Record<string, boolean>>({});
     const [saveMsgByQid, setSaveMsgByQid] = useState<Record<string, string | null>>({});
+    const reportApiPath = `/api/attempts/${attemptId}/report${adminMode ? "?adminMode=true" : ""}`;
 
     useEffect(() => {
         let cancelled = false;
@@ -164,7 +165,7 @@ export function AttemptReportClient({ attemptId }: { attemptId: string }) {
         };
 
         const fetchLatest = async () => {
-            const res = await apiGet<ReportPayload>(`/api/attempts/${attemptId}/report`);
+            const res = await apiGet<ReportPayload>(reportApiPath);
             if (cancelled) return;
             applyReportData(res);
             if (res.attempt.status !== "IN_PROGRESS" && intervalId) {
@@ -181,7 +182,7 @@ export function AttemptReportClient({ attemptId }: { attemptId: string }) {
                 setAttemptNo(i + 1);
 
                 try {
-                    const res = await apiGet<ReportPayload>(`/api/attempts/${attemptId}/report`);
+                    const res = await apiGet<ReportPayload>(reportApiPath);
                     if (!cancelled) {
                         applyReportData(res);
                         if (res.attempt.status === "IN_PROGRESS") {
@@ -223,7 +224,7 @@ export function AttemptReportClient({ attemptId }: { attemptId: string }) {
             cancelled = true;
             if (intervalId) clearInterval(intervalId);
         };
-    }, [attemptId]);
+    }, [attemptId, adminMode, reportApiPath]);
 
     if (error) {
         return (
@@ -267,6 +268,8 @@ export function AttemptReportClient({ attemptId }: { attemptId: string }) {
     }
 
     async function saveReflection(questionId: string) {
+        if (adminMode) return;
+
         const draft = reflectionByQid[questionId] ?? {
             wrongReason: "",
             leftReason: "",
@@ -511,7 +514,7 @@ export function AttemptReportClient({ attemptId }: { attemptId: string }) {
                                                 </div>
                                             </div>
 
-                                            {(!q.correct || !q.attempted || tookLong) ? (
+                                            {!adminMode && (!q.correct || !q.attempted || tookLong) ? (
                                                 <div
                                                     className="mt-4 rounded border p-3"
                                                     style={{ borderColor: "var(--border)", background: "var(--muted)" }}
