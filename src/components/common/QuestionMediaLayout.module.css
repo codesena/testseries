@@ -1,0 +1,90 @@
+.questionLayout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) minmax(15rem, 1fr);
+    align-items: start;
+    gap: 0.75rem;
+    min-width: 0;
+}
+
+.questionLayout.imageOnly {
+    grid-template-columns: minmax(0, 1fr);
+}
+
+.stackedQuestionLayout {
+    grid-template-columns: minmax(0, 1fr);
+}
+
+.stackedQuestionLayout .questionText {
+    order: 2;
+}
+
+.stackedQuestionLayout .questionImages {
+    order: 1;
+    width: 100%;
+}
+
+.questionText {
+    min-width: 0;
+}
+
+.questionImages,
+.optionImages,
+.inlineImages {
+    display: grid;
+    gap: 0.5rem;
+    min-width: 0;
+}
+
+.questionImages {
+    width: 100%;
+    grid-template-columns: repeat(var(--media-columns), minmax(0, 1fr));
+}
+
+.optionImages {
+    width: 100%;
+    grid-template-columns: repeat(var(--media-columns), minmax(0, 1fr));
+}
+
+.inlineImages {
+    grid-template-columns: repeat(var(--media-columns), minmax(0, 1fr));
+}
+
+.imageFrame {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-width: 0;
+    min-height: 8rem;
+    max-height: var(--media-image-height, 320px);
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: 0.5rem;
+    padding: 0.5rem;
+    background: var(--muted);
+    aspect-ratio: var(--media-frame-ratio, 1.4) / 1;
+}
+
+.optionImages .imageFrame {
+    min-height: 7rem;
+}
+
+.image {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+@media (max-width: 700px) {
+    .questionLayout {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+@media (max-width: 560px) {
+    .optionImages,
+    .inlineImages {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}

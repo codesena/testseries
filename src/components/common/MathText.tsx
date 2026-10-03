@@ -2,7 +2,7 @@
 
 import { MathJax } from "better-react-mathjax";
 import { normalizeLatexSource } from "@/lib/latex";
-import { optimizeImageDelivery } from "@/lib/image-delivery";
+import { MediaImageGroup, QuestionMediaLayout } from "@/components/common/QuestionMediaLayout";
 
 type Segment = { kind: "text" | "math"; value: string; display?: boolean };
 
@@ -64,19 +64,14 @@ export function QuestionContent({
 }) {
     const urls = imageUrls.map((url) => url.trim()).filter(Boolean);
     return (
-        <div className={`leading-relaxed ${className}`}>
-            {urls.length ? (
-                <div className={`mb-3 grid gap-2 ${urls.length > 1 ? "sm:grid-cols-2" : ""}`}>
-                    {urls.map((url) => (
-                        <div key={url} className="rounded border p-2 flex items-center justify-center min-h-28" style={{ borderColor: "var(--border)", background: "var(--muted)" }}>
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img src={optimizeImageDelivery(url)} alt="Question" className="max-w-full max-h-72 object-contain" loading="lazy" decoding="async" referrerPolicy="no-referrer" />
-                        </div>
-                    ))}
-                </div>
-            ) : null}
+        <QuestionMediaLayout
+            imageUrls={urls}
+            altBase="Question image"
+            hasText={Boolean(text.trim())}
+            className={`leading-relaxed ${className}`.trim()}
+        >
             <MathText text={text} />
-        </div>
+        </QuestionMediaLayout>
     );
 }
 
@@ -86,14 +81,13 @@ export function OptionContent({ text, imageUrls = [], className = "" }: { text: 
         <div className={`min-w-0 ${className}`}>
             <MathText text={text} />
             {urls.length ? (
-                <div className={`mt-2 grid gap-2 ${urls.length > 1 ? "sm:grid-cols-2" : ""}`}>
-                    {urls.map((url) => (
-                        <div key={url} className="rounded border p-2 flex items-center justify-center min-h-20" style={{ borderColor: "var(--border)", background: "var(--muted)" }}>
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img src={optimizeImageDelivery(url)} alt="Option" className="max-w-full max-h-56 object-contain" loading="lazy" decoding="async" referrerPolicy="no-referrer" />
-                        </div>
-                    ))}
-                </div>
+                <MediaImageGroup
+                    imageUrls={urls}
+                    altBase="Option image"
+                    variant="option"
+                    maxImageHeight={320}
+                    className="mt-2"
+                />
             ) : null}
         </div>
     );

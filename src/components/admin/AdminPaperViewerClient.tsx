@@ -3,9 +3,9 @@
 import { MathJax, MathJaxContext } from "better-react-mathjax";
 import { type ClipboardEvent, type DragEvent, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { optimizeImageDelivery } from "@/lib/image-delivery";
 import { PaperJsonEditor } from "./PaperJsonEditor";
 import { OptionContent, QuestionContent } from "@/components/common/MathText";
+import { MediaImageGroup } from "@/components/common/QuestionMediaLayout";
 
 type PaperQuestion = {
     id: string;
@@ -891,33 +891,10 @@ export function AdminPaperViewerClient({
                                     ) : null}
 
                                     <div className="mt-4 text-base leading-relaxed">
-                                        {display.imageUrls.length ? (
-                                            <div className={`mb-3 grid gap-2 mx-auto ${display.imageUrls.length > 1 ? "sm:grid-cols-2 max-w-3xl" : "max-w-4xl"}`}>
-                                                {display.imageUrls.map((url) => (
-                                                    <div
-                                                        key={url}
-                                                        className={`rounded border p-2 flex items-center justify-center w-full relative ${display.imageUrls.length > 1 ? "h-44 sm:h-56" : "h-64 sm:h-80"}`}
-                                                        style={{ borderColor: "var(--border)", background: "var(--card)" }}
-                                                    >
-                                                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                                                        <img
-                                                            src={optimizeImageDelivery(url)}
-                                                            alt="Question"
-                                                            className="max-w-full max-h-full object-contain"
-                                                            loading="lazy"
-                                                            decoding="async"
-                                                            referrerPolicy="no-referrer"
-                                                        />
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        ) : null}
-                                        <div className="space-y-1">
-                                        <QuestionContent text={display.questionText} imageUrls={[]} />
-                                        </div>
+                                        <QuestionContent text={display.questionText} imageUrls={display.imageUrls} />
                                     </div>
 
-                                    <div className="mt-4 grid gap-2">
+                                    <div className="mt-4 grid gap-2 sm:grid-cols-2">
                                         {display.markingSchemeType === "MAINS_NUMERICAL" || display.markingSchemeType === "ADV_NAT" ? (
                                             <div className="rounded border p-3 text-sm" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
                                                 Correct answer: <span className="font-medium">{formatAnswer(display.correctAnswer)}</span>
@@ -925,7 +902,6 @@ export function AdminPaperViewerClient({
                                         ) : (
                                             display.options.map((o) => {
                                                 const optionImageUrls = o.imageUrl ? splitUrlList(o.imageUrl) : [];
-                                                const optionHasMultipleImages = optionImageUrls.length > 1;
                                                 const correct = isCorrectOption(display.markingSchemeType, display.correctAnswer, o.key);
 
                                                 return (
@@ -936,29 +912,17 @@ export function AdminPaperViewerClient({
                                                     >
                                                         <div className="flex items-start gap-3">
                                                             <div className="text-xs font-mono opacity-70">{o.key}.</div>
-                                                            <div className="min-w-0 text-sm leading-relaxed">
+                                                            <div className="min-w-0 flex-1 text-sm leading-relaxed">
                                                                 <OptionContent text={o.text} />
 
                                                                 {optionImageUrls.length ? (
-                                                                    <div className={`mt-2 grid gap-2 ${optionHasMultipleImages ? "sm:grid-cols-2" : ""}`}>
-                                                                        {optionImageUrls.map((url) => (
-                                                                            <div
-                                                                                key={url}
-                                                                                className={`rounded border p-2 flex items-center justify-center w-full relative ${optionHasMultipleImages ? "h-32 sm:h-40" : "h-40 sm:h-48"}`}
-                                                                                style={{ borderColor: "var(--border)", background: "var(--card)" }}
-                                                                            >
-                                                                                {/* eslint-disable-next-line @next/next/no-img-element */}
-                                                                                <img
-                                                                                    src={optimizeImageDelivery(url)}
-                                                                                    alt={`Option ${o.key}`}
-                                                                                    className="max-w-full max-h-full object-contain"
-                                                                                    loading="lazy"
-                                                                                    decoding="async"
-                                                                                    referrerPolicy="no-referrer"
-                                                                                />
-                                                                            </div>
-                                                                        ))}
-                                                                    </div>
+                                                                    <MediaImageGroup
+                                                                        imageUrls={optionImageUrls}
+                                                                        altBase={`Option ${o.key}`}
+                                                                        variant="option"
+                                                                        maxImageHeight={320}
+                                                                        className="mt-2"
+                                                                    />
                                                                 ) : null}
                                                             </div>
                                                             {correct ? (
@@ -1129,6 +1093,13 @@ export function AdminPaperViewerClient({
                                                                     </label>
                                                                 </div>
                                                             </div>
+                                                            <div className="mt-2 rounded border p-2" style={{ borderColor: "var(--border)", background: "var(--muted)" }}>
+                                                                <div className="mb-1 text-[11px] opacity-70">Question preview</div>
+                                                                <QuestionContent
+                                                                    text={String(editPayload.questionText ?? "")}
+                                                                    imageUrls={asStringArray(editPayload.imageUrls)}
+                                                                />
+                                                            </div>
                                                         </label>
 
                                                         {!isNumericalEditQuestion ? (
@@ -1186,6 +1157,13 @@ export function AdminPaperViewerClient({
                                                                                     />
                                                                                 </label>
                                                                             </div>
+                                                                            <MediaImageGroup
+                                                                                imageUrls={option.imageUrl ? splitUrlList(option.imageUrl) : []}
+                                                                                altBase={`Option ${key}`}
+                                                                                variant="option"
+                                                                                maxImageHeight={240}
+                                                                                className="mt-2"
+                                                                            />
                                                                         </div>
                                                                     );
                                                                 })}

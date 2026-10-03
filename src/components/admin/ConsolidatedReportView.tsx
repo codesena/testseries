@@ -2,8 +2,8 @@
 
 import { MathJax, MathJaxContext } from "better-react-mathjax";
 import { OptionContent, QuestionContent } from "@/components/common/MathText";
+import { MediaImageGroup } from "@/components/common/QuestionMediaLayout";
 import { useState } from "react";
-import { optimizeImageDelivery } from "@/lib/image-delivery";
 import { apiPost } from "@/lib/api";
 import type { QuestionOption } from "@/lib/types";
 
@@ -229,40 +229,14 @@ export function ConsolidatedReportView({ data }: { data: ConsolidatedReportData 
                         </div>
 
                         <div className="mt-3 text-base leading-relaxed">
-                            {q.imageUrls?.length ? (
-                                <div
-                                    className={`mb-3 grid gap-2 mx-auto ${q.imageUrls.length > 1 ? "sm:grid-cols-2 max-w-3xl" : "max-w-4xl"}`}
-                                >
-                                    {q.imageUrls.map((url) => (
-                                        <div
-                                            key={url}
-                                            className={`rounded border p-2 flex items-center justify-center w-full relative ${q.imageUrls && q.imageUrls.length > 1
-                                                ? "h-44 sm:h-56"
-                                                : "h-64 sm:h-80"}`}
-                                            style={{ borderColor: "var(--border)", background: "var(--card)" }}
-                                        >
-                                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                                            <img
-                                                src={optimizeImageDelivery(url)}
-                                                alt="Question"
-                                                className="max-w-full max-h-full object-contain"
-                                                loading="lazy"
-                                                decoding="async"
-                                                referrerPolicy="no-referrer"
-                                            />
-                                        </div>
-                                    ))}
-                                </div>
-                            ) : null}
-                            <QuestionContent text={q.questionText} />
+                            <QuestionContent text={q.questionText} imageUrls={q.imageUrls ?? []} />
                         </div>
 
                         {q.options.length ? (
-                            <div className="mt-4 grid gap-2">
+                            <div className="mt-4 grid gap-2 sm:grid-cols-2">
                                 {q.options.map((o) => {
                                     const correct = isCorrectOption(q.markingSchemeType, q.correctAnswer, o.key);
                                     const optionImageUrls = o.imageUrl ? splitUrlList(o.imageUrl) : [];
-                                    const optionHasMultipleImages = optionImageUrls.length > 1;
 
                                     return (
                                         <div
@@ -275,31 +249,17 @@ export function ConsolidatedReportView({ data }: { data: ConsolidatedReportData 
                                         >
                                             <div className="flex items-start gap-2">
                                                 <span className="text-xs opacity-70 shrink-0">({o.key})</span>
-                                                <div className="min-w-0">
+                                                <div className="min-w-0 flex-1">
                                                     {o.text ? <OptionContent text={o.text} /> : null}
 
                                                     {optionImageUrls.length ? (
-                                                        <div className={`mt-2 grid gap-2 ${optionHasMultipleImages ? "sm:grid-cols-2" : ""}`}>
-                                                            {optionImageUrls.map((url) => (
-                                                                <div
-                                                                    key={url}
-                                                                    className={`rounded border p-2 flex items-center justify-center w-full relative ${optionHasMultipleImages
-                                                                        ? "h-32 sm:h-40"
-                                                                        : "h-40 sm:h-48"}`}
-                                                                    style={{ borderColor: "var(--border)", background: "var(--card)" }}
-                                                                >
-                                                                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                                                                    <img
-                                                                        src={optimizeImageDelivery(url)}
-                                                                        alt={`Option ${o.key}`}
-                                                                        className="max-w-full max-h-full object-contain"
-                                                                        loading="lazy"
-                                                                        decoding="async"
-                                                                        referrerPolicy="no-referrer"
-                                                                    />
-                                                                </div>
-                                                            ))}
-                                                        </div>
+                                                        <MediaImageGroup
+                                                            imageUrls={optionImageUrls}
+                                                            altBase={`Option ${o.key}`}
+                                                            variant="option"
+                                                            maxImageHeight={320}
+                                                            className="mt-2"
+                                                        />
                                                     ) : null}
                                                 </div>
                                             </div>

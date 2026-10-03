@@ -4,9 +4,8 @@ import Link from "next/link";
 import { MathJax, MathJaxContext } from "better-react-mathjax";
 import { useEffect, useMemo, useState } from "react";
 import { apiGet } from "@/lib/api";
-import { optimizeImageDelivery } from "@/lib/image-delivery";
 import { formatDateTimeIST } from "@/lib/time";
-import { ImageCarousel } from "@/components/common/ImageCarousel";
+import { MediaImageGroup, QuestionMediaLayout } from "@/components/common/QuestionMediaLayout";
 import { RichStemContent } from "@/components/common/RichStemContent";
 import { OptionContent } from "@/components/common/MathText";
 import {
@@ -609,17 +608,13 @@ export function AdvanceV2ReportClient({ attemptId }: { attemptId: string }) {
                                             </div>
                                         </div>
 
-                                        <div className="mt-3 text-base leading-relaxed">
-                                            {questionImageUrls.length ? (
-                                                <div className="mb-3 mx-auto max-w-4xl">
-                                                    <ImageCarousel
-                                                        imageUrls={questionImageUrls}
-                                                        altBase="Report question image"
-                                                        heightClass="h-64 sm:h-80"
-                                                    />
-                                                </div>
-                                            ) : null}
-
+                                        <QuestionMediaLayout
+                                            className="mt-3"
+                                            imageUrls={questionImageUrls}
+                                            altBase="Report question image"
+                                            hasText={Boolean(q.stemRich.trim())}
+                                        >
+                                        <div className="text-base leading-relaxed">
                                             {q.questionType === "MATCHING_LIST" && parsedMatching ? (
                                                 <div className="space-y-3">
                                                     {parsedMatching.intro.map((line, idx) => (
@@ -665,9 +660,10 @@ export function AdvanceV2ReportClient({ attemptId }: { attemptId: string }) {
                                                 <RichStemContent text={q.stemRich} />
                                             )}
                                         </div>
+                                        </QuestionMediaLayout>
 
                                         {q.options?.length ? (
-                                            <div className="mt-4 grid gap-2">
+                                            <div className="mt-4 grid gap-2 sm:grid-cols-2">
                                                 {q.options.map((o) => {
                                                     const selected = selectedKeys.includes(o.optionKey);
                                                     const correct = correctKeys.includes(o.optionKey) || Boolean(o.isCorrect);
@@ -692,32 +688,17 @@ export function AdvanceV2ReportClient({ attemptId }: { attemptId: string }) {
                                                         >
                                                             <div className="flex items-start gap-3">
                                                                 <div className="mt-0.5 text-xs font-mono opacity-70">{o.optionKey}.</div>
-                                                                <div className="text-sm leading-relaxed min-w-0">
+                                                                <div className="text-sm leading-relaxed min-w-0 flex-1">
                                                                     <OptionContent text={sanitizeRenderableText(o.labelRich)} />
 
                                                                     {optionImageUrls.length ? (
-                                                                        <div className="mt-2 grid gap-2 sm:grid-cols-2">
-                                                                            {optionImageUrls.map((url) => (
-                                                                                <div
-                                                                                    key={`${q.questionId}-${o.optionKey}-${url}`}
-                                                                                    className="rounded border p-2 flex items-center justify-center w-full h-40 sm:h-48"
-                                                                                    style={{
-                                                                                        borderColor: "var(--border)",
-                                                                                        background: "var(--card)",
-                                                                                    }}
-                                                                                >
-                                                                                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                                                                                    <img
-                                                                                        src={optimizeImageDelivery(url)}
-                                                                                        alt={`Option ${o.optionKey}`}
-                                                                                        className="max-w-full max-h-full object-contain"
-                                                                                        loading="lazy"
-                                                                                        decoding="async"
-                                                                                        referrerPolicy="no-referrer"
-                                                                                    />
-                                                                                </div>
-                                                                            ))}
-                                                                        </div>
+                                                                        <MediaImageGroup
+                                                                            imageUrls={optionImageUrls}
+                                                                            altBase={`Option ${o.optionKey}`}
+                                                                            variant="option"
+                                                                            maxImageHeight={320}
+                                                                            className="mt-2"
+                                                                        />
                                                                     ) : null}
                                                                 </div>
                                                             </div>

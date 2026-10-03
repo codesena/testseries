@@ -2,6 +2,7 @@
 
 import { optimizeImageDelivery } from "@/lib/image-delivery";
 import { MathText } from "@/components/common/MathText";
+import { QuestionMediaLayout } from "@/components/common/QuestionMediaLayout";
 
 type ParsedPipeTable = {
     headers: string[];
@@ -121,20 +122,28 @@ export function RichStemContent({ text }: { text: string }) {
         <div className="space-y-3">
             {blocks.map((block, idx) => (
                 block.kind === "text" ? (
-                    <div key={`stem-text-${idx}`} className="space-y-2">
-                        {parseCellSegments(block.text).map((segment, sIdx) => (
-                            segment.kind === "text" ? (
-                                <div key={`stem-text-seg-${idx}-${sIdx}`} className="space-y-1">
-                                    <MathText text={sanitizeRenderableText(segment.text)} />
+                    (() => {
+                        const segments = parseCellSegments(block.text);
+                        const imageUrls = segments.flatMap((segment) => segment.kind === "image" ? [segment.url] : []);
+                        const textSegments = segments.flatMap((segment) => segment.kind === "text" ? [segment] : []);
+                        return (
+                            <QuestionMediaLayout
+                                key={`stem-text-${idx}`}
+                                imageUrls={imageUrls}
+                                altBase="Question image"
+                                hasText={textSegments.some((segment) => segment.text.trim().length > 0)}
+                                maxImageHeight={280}
+                            >
+                                <div className="space-y-2">
+                                    {textSegments.map((segment, sIdx) => (
+                                        <div key={`stem-text-seg-${idx}-${sIdx}`} className="space-y-1">
+                                            <MathText text={sanitizeRenderableText(segment.text)} />
+                                        </div>
+                                    ))}
                                 </div>
-                            ) : (
-                                <div key={`stem-img-seg-${idx}-${sIdx}`} className="rounded border p-1.5 inline-block" style={{ borderColor: "var(--border)", background: "var(--muted)" }}>
-                                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                                    <img src={optimizeImageDelivery(segment.url)} alt={segment.alt} className="max-h-56 w-auto object-contain" />
-                                </div>
-                            )
-                        ))}
-                    </div>
+                            </QuestionMediaLayout>
+                        );
+                    })()
                 ) : (
                     <div key={`stem-table-${idx}`} className="overflow-x-auto rounded-lg border" style={{ borderColor: "var(--border)" }}>
                         <table className="w-full min-w-[540px] border-collapse text-sm sm:text-base">

@@ -5,7 +5,7 @@ import { MathJax, MathJaxContext } from "better-react-mathjax";
 import { type ClipboardEvent, type DragEvent, useEffect, useMemo, useRef, useState } from "react";
 import { InstructionRichText } from "@/components/common/InstructionRichText";
 import { RichStemContent } from "@/components/common/RichStemContent";
-import { optimizeImageDelivery } from "@/lib/image-delivery";
+import { MediaImageGroup, QuestionMediaLayout } from "@/components/common/QuestionMediaLayout";
 import { PaperJsonEditor } from "./PaperJsonEditor";
 import { OptionContent } from "@/components/common/MathText";
 import { composeInstructionSections, splitInstructionSections } from "@/lib/instructions";
@@ -1370,17 +1370,13 @@ export function AdminAdvancedPaperViewerClient({
                                         </div>
                                     ) : null}
 
-                                    <div className="mt-3 text-sm leading-relaxed">
-                                        {display.imageUrls.length ? (
-                                            <div className="mb-3 grid gap-2 sm:grid-cols-2">
-                                                {display.imageUrls.map((url) => (
-                                                    <div key={url} className="rounded border p-2 flex items-center justify-center min-h-28" style={{ borderColor: "var(--border)", background: "var(--muted)" }}>
-                                                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                                                        <img src={optimizeImageDelivery(url)} alt="Question" className="max-w-full max-h-72 object-contain" />
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        ) : null}
+                                    <QuestionMediaLayout
+                                        className="mt-3"
+                                        imageUrls={display.imageUrls}
+                                        altBase="Question image"
+                                        hasText={Boolean(display.questionText.trim())}
+                                    >
+                                    <div className="text-sm leading-relaxed">
                                         {display.questionType === "MATCHING_LIST" && matchingStem ? (
                                             <div className="space-y-3">
                                                 {matchingStem.intro.length ? (
@@ -1430,13 +1426,14 @@ export function AdminAdvancedPaperViewerClient({
                                             <RichStemContent text={display.questionText} />
                                         )}
                                     </div>
+                                    </QuestionMediaLayout>
 
                                     {isNumerical ? (
                                         <div className="mt-3 inline-flex h-8 items-center rounded-full border px-3 text-xs" style={{ borderColor: "var(--border)", background: "var(--muted)" }}>
                                             Correct Answer: {formatAnswer(display.correctAnswer)}
                                         </div>
                                     ) : (
-                                        <div className="mt-3 grid gap-2">
+                                        <div className="mt-3 grid gap-2 sm:grid-cols-2">
                                             {display.options.map((o) => {
                                                 const optionImageUrls = o.imageUrl ? splitUrlList(o.imageUrl) : [];
                                                 const correct = isCorrectOption(display, o.key);
@@ -1447,14 +1444,13 @@ export function AdminAdvancedPaperViewerClient({
                                                             <OptionContent text={o.text} />
                                                         </div>
                                                         {optionImageUrls.length ? (
-                                                            <div className="mt-2 grid gap-2 sm:grid-cols-2">
-                                                                {optionImageUrls.map((url) => (
-                                                                    <div key={url} className="rounded border p-2 flex items-center justify-center min-h-20" style={{ borderColor: "var(--border)", background: "var(--muted)" }}>
-                                                                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                                                                        <img src={optimizeImageDelivery(url)} alt={`Option ${o.key}`} className="max-w-full max-h-56 object-contain" />
-                                                                    </div>
-                                                                ))}
-                                                            </div>
+                                                            <MediaImageGroup
+                                                                imageUrls={optionImageUrls}
+                                                                altBase={`Option ${o.key}`}
+                                                                variant="option"
+                                                                maxImageHeight={320}
+                                                                className="mt-2"
+                                                            />
                                                         ) : null}
                                                     </div>
                                                 );
@@ -1700,6 +1696,17 @@ export function AdminAdvancedPaperViewerClient({
                                                                     </label>
                                                                 </div>
                                                             </div>
+                                                            <div className="mt-2 rounded border p-2" style={{ borderColor: "var(--border)", background: "var(--muted)" }}>
+                                                                <div className="mb-1 text-[11px] opacity-70">Question preview</div>
+                                                                <QuestionMediaLayout
+                                                                    imageUrls={editPayload.questionImageUrls}
+                                                                    altBase="Question image"
+                                                                    hasText={Boolean(editPayload.questionText.trim())}
+                                                                    maxImageHeight={320}
+                                                                >
+                                                                    <RichStemContent text={editPayload.questionText} />
+                                                                </QuestionMediaLayout>
+                                                            </div>
                                                         </label>
 
                                                         {(editPayload.questionType === "NAT_INTEGER" || editPayload.questionType === "NAT_DECIMAL") ? null : (
@@ -1756,6 +1763,13 @@ export function AdminAdvancedPaperViewerClient({
                                                                                 />
                                                                             </label>
                                                                         </div>
+                                                                        <MediaImageGroup
+                                                                            imageUrls={option.imageUrls}
+                                                                            altBase={`Option ${option.optionKey}`}
+                                                                            variant="option"
+                                                                            maxImageHeight={240}
+                                                                            className="mt-2"
+                                                                        />
                                                                     </div>
                                                                 ))}
                                                             </div>

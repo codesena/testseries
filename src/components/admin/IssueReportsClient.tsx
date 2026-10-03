@@ -2,8 +2,8 @@
 
 import { MathJax, MathJaxContext } from "better-react-mathjax";
 import { OptionContent, QuestionContent } from "@/components/common/MathText";
+import { MediaImageGroup } from "@/components/common/QuestionMediaLayout";
 import type { QuestionOption } from "@/lib/types";
-import { optimizeImageDelivery } from "@/lib/image-delivery";
 
 const mathjaxConfig = {
     loader: { load: ["[tex]/mhchem"] },
@@ -138,46 +138,17 @@ export function IssueReportsClient({ groups }: { groups: IssueQuestionGroup[] })
                             </div>
 
                             <div className="mt-3 min-w-0 text-base leading-relaxed">
-                                {g.imageUrls?.length ? (
-                                    <div
-                                        className={`mb-3 grid gap-2 mx-auto w-full ${g.imageUrls.length > 1 ? "sm:grid-cols-2 max-w-3xl" : "max-w-4xl"}`}
-                                    >
-                                        {g.imageUrls.map((url) => (
-                                            <div
-                                                key={url}
-                                                className={`rounded border p-2 flex items-center justify-center w-full relative overflow-hidden ${g.imageUrls && g.imageUrls.length > 1
-                                                    ? "h-44 sm:h-56"
-                                                    : "h-64 sm:h-80"}`}
-                                                style={{ borderColor: "var(--border)", background: "var(--card)" }}
-                                            >
-                                                {/* eslint-disable-next-line @next/next/no-img-element */}
-                                                <img
-                                                    src={optimizeImageDelivery(url)}
-                                                    alt="Question"
-                                                    className="max-w-full max-h-full object-contain"
-                                                    loading="lazy"
-                                                    decoding="async"
-                                                    referrerPolicy="no-referrer"
-                                                />
-                                            </div>
-                                        ))}
-                                    </div>
-                                ) : null}
-
-                                {questionText ? (
-                                    <div className="min-w-0 overflow-x-auto">
-                                        <QuestionContent text={questionText} />
-                                    </div>
+                                {questionText || g.imageUrls?.length ? (
+                                    <QuestionContent text={questionText} imageUrls={g.imageUrls ?? []} />
                                 ) : (
                                     <div className="text-sm opacity-70">Question not found.</div>
                                 )}
                             </div>
 
                             {options.length ? (
-                                <div className="mt-5 grid gap-2">
+                                <div className="mt-5 grid gap-2 sm:grid-cols-2">
                                     {options.map((o) => {
                                         const optionImageUrls = o.imageUrl ? splitUrlList(o.imageUrl) : [];
-                                        const optionHasMultipleImages = optionImageUrls.length > 1;
 
                                         return (
                                             <div
@@ -187,7 +158,7 @@ export function IssueReportsClient({ groups }: { groups: IssueQuestionGroup[] })
                                             >
                                                 <div className="flex items-start gap-3">
                                                     <div className="mt-0.5 text-xs opacity-70 shrink-0">({o.key})</div>
-                                                    <div className="min-w-0">
+                                                    <div className="min-w-0 flex-1">
                                                         {o.text ? (
                                                             <div className="text-sm min-w-0 overflow-x-auto">
                                                                 <OptionContent text={o.text} />
@@ -195,32 +166,13 @@ export function IssueReportsClient({ groups }: { groups: IssueQuestionGroup[] })
                                                         ) : null}
 
                                                         {optionImageUrls.length ? (
-                                                            <div
-                                                                className={`mt-2 grid gap-2 ${optionHasMultipleImages ? "sm:grid-cols-2" : ""}`}
-                                                            >
-                                                                {optionImageUrls.map((url) => (
-                                                                    <div
-                                                                        key={url}
-                                                                        className={`rounded border p-2 flex items-center justify-center w-full relative overflow-hidden ${optionHasMultipleImages
-                                                                            ? "h-32 sm:h-40"
-                                                                            : "h-40 sm:h-48"}`}
-                                                                        style={{
-                                                                            borderColor: "var(--border)",
-                                                                            background: "var(--card)",
-                                                                        }}
-                                                                    >
-                                                                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                                                                        <img
-                                                                            src={optimizeImageDelivery(url)}
-                                                                            alt={`Option ${o.key}`}
-                                                                            className="max-w-full max-h-full object-contain"
-                                                                            loading="lazy"
-                                                                            decoding="async"
-                                                                            referrerPolicy="no-referrer"
-                                                                        />
-                                                                    </div>
-                                                                ))}
-                                                            </div>
+                                                            <MediaImageGroup
+                                                                imageUrls={optionImageUrls}
+                                                                altBase={`Option ${o.key}`}
+                                                                variant="option"
+                                                                maxImageHeight={320}
+                                                                className="mt-2"
+                                                            />
                                                         ) : null}
                                                     </div>
                                                 </div>

@@ -4,8 +4,7 @@ import { memo, useState } from "react";
 import type { AttemptQuestion } from "@/lib/types";
 import { apiPost } from "@/lib/api";
 import type { PaletteStatus } from "@/components/exam/palette";
-import { optimizeImageDelivery } from "@/lib/image-delivery";
-import { ImageCarousel } from "@/components/common/ImageCarousel";
+import { MediaImageGroup } from "@/components/common/QuestionMediaLayout";
 import { OptionContent, QuestionContent } from "@/components/common/MathText";
 
 function isNullLikeToken(s: string): boolean {
@@ -143,19 +142,10 @@ export const QuestionView = memo(function QuestionView({
             </div>
 
             <div className="mt-4 text-base leading-relaxed">
-                {question.imageUrls?.length ? (
-                    <div className="mb-3 mx-auto max-w-4xl">
-                        <ImageCarousel
-                            imageUrls={question.imageUrls}
-                            altBase="Question image"
-                            heightClass="h-64 sm:h-80"
-                        />
-                    </div>
-                ) : null}
-                <QuestionContent text={question.questionText} />
+                <QuestionContent text={question.questionText} imageUrls={question.imageUrls ?? []} />
             </div>
 
-            <div className="mt-5 grid gap-2">
+            <div className="mt-5 grid gap-2 sm:grid-cols-2">
                 {scheme === "MAINS_NUMERICAL" || scheme === "ADV_NAT" ? (
                     <label
                         className="rounded border p-3 ui-click"
@@ -179,7 +169,6 @@ export const QuestionView = memo(function QuestionView({
                                 : selectedSingle === o.key;
 
                         const optionImageUrls = o.imageUrl ? splitUrlList(o.imageUrl) : [];
-                        const optionHasMultipleImages = optionImageUrls.length > 1;
 
                         return (
                             <label
@@ -205,7 +194,7 @@ export const QuestionView = memo(function QuestionView({
                                             }
                                         }}
                                     />
-                                    <div className="min-w-0">
+                                    <div className="min-w-0 flex-1">
                                         <div className="flex items-baseline gap-2 min-w-0">
                                             <span className="text-xs opacity-70 shrink-0">
                                                 ({o.key})
@@ -214,33 +203,13 @@ export const QuestionView = memo(function QuestionView({
                                         </div>
 
                                         {optionImageUrls.length ? (
-                                            <div
-                                                className={`mt-2 grid gap-2 ${optionHasMultipleImages ? "sm:grid-cols-2" : ""}`}
-                                            >
-                                                {optionImageUrls.map((url) => (
-                                                    <div
-                                                        key={url}
-                                                        className={`rounded border p-2 flex items-center justify-center w-full relative ${optionHasMultipleImages
-                                                            ? "h-32 sm:h-40"
-                                                            : "h-40 sm:h-48"
-                                                            }`}
-                                                        style={{
-                                                            borderColor: "var(--border)",
-                                                            background: "var(--card)",
-                                                        }}
-                                                    >
-                                                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                                                        <img
-                                                            src={optimizeImageDelivery(url)}
-                                                            alt={`Option ${o.key}`}
-                                                            className="max-w-full max-h-full object-contain"
-                                                            loading="lazy"
-                                                            decoding="async"
-                                                            referrerPolicy="no-referrer"
-                                                        />
-                                                    </div>
-                                                ))}
-                                            </div>
+                                            <MediaImageGroup
+                                                imageUrls={optionImageUrls}
+                                                altBase={`Option ${o.key}`}
+                                                variant="option"
+                                                maxImageHeight={320}
+                                                className="mt-2"
+                                            />
                                         ) : null}
                                     </div>
                                 </div>

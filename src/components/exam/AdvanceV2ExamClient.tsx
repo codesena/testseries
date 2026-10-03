@@ -6,8 +6,8 @@ import { apiGet, apiPost } from "@/lib/api";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { RichStemContent } from "@/components/common/RichStemContent";
 import { OptionContent } from "@/components/common/MathText";
+import { MediaImageGroup, QuestionMediaLayout } from "@/components/common/QuestionMediaLayout";
 import { normalizeLatexSource } from "@/lib/latex";
-import { optimizeImageDelivery } from "@/lib/image-delivery";
 
 type V2Question = {
     questionId: string;
@@ -862,18 +862,13 @@ export function AdvanceV2ExamClient({ attemptId }: { attemptId: string }) {
                                         </span>
                                     </div>
 
-                                    <div className="mt-4 text-base whitespace-pre-wrap leading-relaxed">
-                                        {questionImageUrls.length ? (
-                                            <div className="mb-3 grid gap-2 sm:grid-cols-2">
-                                                {questionImageUrls.map((url) => (
-                                                    <div key={url} className="rounded border p-2 flex items-center justify-center min-h-28" style={{ borderColor: "var(--border)", background: "var(--muted)" }}>
-                                                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                                                        <img src={optimizeImageDelivery(url)} alt="Question" className="max-w-full max-h-72 object-contain" />
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        ) : null}
-
+                                    <QuestionMediaLayout
+                                        className="mt-4"
+                                        imageUrls={questionImageUrls}
+                                        altBase="Question image"
+                                        hasText={Boolean(activeQuestion.stemRich.trim())}
+                                    >
+                                    <div className="text-base whitespace-pre-wrap leading-relaxed">
                                         {activeQuestion.questionType === "MATCHING_LIST" && parsedMatchingStem ? (
                                             <div className="space-y-3">
                                                 {parsedMatchingStem.intro.map((line, idx) => (
@@ -919,8 +914,9 @@ export function AdvanceV2ExamClient({ attemptId }: { attemptId: string }) {
                                             <RichStemContent text={activeQuestion.stemRich} />
                                         )}
                                     </div>
+                                    </QuestionMediaLayout>
 
-                                    <div className="mt-5 grid gap-2">
+                                    <div className="mt-5 grid gap-2 sm:grid-cols-2">
                                         {(activeQuestion.questionType === "SINGLE_CORRECT" || activeQuestion.questionType === "MATCHING_LIST")
                                             ? activeQuestion.options.map((opt) => (
                                                 <button
@@ -947,14 +943,13 @@ export function AdvanceV2ExamClient({ attemptId }: { attemptId: string }) {
                                                     {(() => {
                                                         const optionImageUrls = asStringArrayFromAsset(opt.assets);
                                                         return optionImageUrls.length ? (
-                                                            <div className="mt-2 grid gap-2 sm:grid-cols-2">
-                                                                {optionImageUrls.map((url) => (
-                                                                    <div key={`${opt.optionKey}-${url}`} className="rounded border p-2 flex items-center justify-center min-h-20" style={{ borderColor: "var(--border)", background: "var(--muted)" }}>
-                                                                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                                                                        <img src={optimizeImageDelivery(url)} alt={`Option ${opt.optionKey}`} className="max-w-full max-h-56 object-contain" />
-                                                                    </div>
-                                                                ))}
-                                                            </div>
+                                                            <MediaImageGroup
+                                                                imageUrls={optionImageUrls}
+                                                                altBase={`Option ${opt.optionKey}`}
+                                                                variant="option"
+                                                                maxImageHeight={320}
+                                                                className="mt-2"
+                                                            />
                                                         ) : null;
                                                     })()}
                                                 </button>
@@ -988,14 +983,13 @@ export function AdvanceV2ExamClient({ attemptId }: { attemptId: string }) {
                                                         {(() => {
                                                             const optionImageUrls = asStringArrayFromAsset(opt.assets);
                                                             return optionImageUrls.length ? (
-                                                                <div className="mt-2 grid gap-2 sm:grid-cols-2">
-                                                                    {optionImageUrls.map((url) => (
-                                                                        <div key={`${opt.optionKey}-${url}`} className="rounded border p-2 flex items-center justify-center min-h-20" style={{ borderColor: "var(--border)", background: "var(--muted)" }}>
-                                                                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                                                                            <img src={optimizeImageDelivery(url)} alt={`Option ${opt.optionKey}`} className="max-w-full max-h-56 object-contain" />
-                                                                        </div>
-                                                                    ))}
-                                                                </div>
+                                                                <MediaImageGroup
+                                                                    imageUrls={optionImageUrls}
+                                                                    altBase={`Option ${opt.optionKey}`}
+                                                                    variant="option"
+                                                                    maxImageHeight={320}
+                                                                    className="mt-2"
+                                                                />
                                                             ) : null;
                                                         })()}
                                                     </button>
