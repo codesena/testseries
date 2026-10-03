@@ -34,6 +34,7 @@ export function MediaImageGroup({
     onImageAspectRatio,
 }: MediaImageGroupProps) {
     const urls = cleanUrls(imageUrls);
+    const [imageRatios, setImageRatios] = useState<Record<string, number>>({});
     const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
     const closeButtonRef = useRef<HTMLButtonElement>(null);
     const triggerButtonRef = useRef<HTMLButtonElement | null>(null);
@@ -70,10 +71,20 @@ export function MediaImageGroup({
             ? styles.inlineImages
             : styles.questionImages;
 
+    function handleImageLoad(imageUrl: string, image: HTMLImageElement) {
+        if (image.naturalHeight <= 0) return;
+        const aspectRatio = image.naturalWidth / image.naturalHeight;
+        onImageAspectRatio?.(imageUrl, aspectRatio);
+        setImageRatios((current) => current[imageUrl] === aspectRatio
+            ? current
+            : { ...current, [imageUrl]: aspectRatio });
+    }
+
     return (
         <>
             <div
                 className={`${groupClass} ${className}`.trim()}
+                data-responsive-columns={maxColumns == null && urls.length > 1 ? "true" : undefined}
                 style={{
                     "--media-columns": columns,
                     "--media-image-height": `${maxImageHeight}px`,
@@ -81,7 +92,11 @@ export function MediaImageGroup({
                 } as CSSProperties}
             >
                 {urls.map((url, index) => (
-                    <div className={styles.imageFrame} key={`${url}-${index}`}>
+                    <div
+                        className={styles.imageFrame}
+                        key={`${url}-${index}`}
+                        style={{ "--media-frame-ratio": imageRatios[url] ?? frameAspectRatio } as CSSProperties}
+                    >
                         {variant === "question" ? (
                             <button
                                 type="button"
@@ -101,12 +116,7 @@ export function MediaImageGroup({
                                     loading="lazy"
                                     decoding="async"
                                     referrerPolicy="no-referrer"
-                                    onLoad={(event) => {
-                                        const image = event.currentTarget;
-                                        if (image.naturalHeight > 0) {
-                                            onImageAspectRatio?.(url, image.naturalWidth / image.naturalHeight);
-                                        }
-                                    }}
+                                    onLoad={(event) => handleImageLoad(url, event.currentTarget)}
                                 />
                             </button>
                         ) : (
@@ -118,12 +128,7 @@ export function MediaImageGroup({
                                 loading="lazy"
                                 decoding="async"
                                 referrerPolicy="no-referrer"
-                                onLoad={(event) => {
-                                    const image = event.currentTarget;
-                                    if (image.naturalHeight > 0) {
-                                        onImageAspectRatio?.(url, image.naturalWidth / image.naturalHeight);
-                                    }
-                                }}
+                                onLoad={(event) => handleImageLoad(url, event.currentTarget)}
                             />
                         )}
                     </div>

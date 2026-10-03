@@ -104,44 +104,34 @@ export const QuestionView = memo(function QuestionView({
     }
 
     return (
-        <div
-            className="rounded-xl border p-4 shadow-sm"
-            style={{ borderColor: "var(--border)", background: "var(--card)" }}
-        >
-            <div>
-                <div className="text-[11px] uppercase tracking-wide opacity-60">
-                    {question.topicName}
+        <div className="space-y-3">
+            <div className="flex min-h-8 flex-wrap items-center gap-x-2 gap-y-1.5">
+                <div className="mr-auto min-w-0 text-sm font-medium">
+                    <span className="opacity-70">Q{questionNumber ?? "?"}</span>
+                    {question.topicName ? <span className="opacity-50"> · </span> : null}
+                    <span>{question.topicName}</span>
                 </div>
-                <div className="mt-2 grid grid-cols-3 gap-2">
-                    <span
-                        className="inline-flex items-center justify-center rounded-full h-7 px-1.5 text-[11px] font-medium whitespace-nowrap"
-                        style={{ borderColor: "var(--border)", background: "var(--muted)", borderWidth: 1 }}
-                    >
-                        Q{questionNumber ?? "?"}
-                    </span>
-                    <span
-                        className={`inline-flex items-center justify-center rounded-full h-7 px-1.5 text-[11px] font-medium whitespace-nowrap ${statusBadgeClass(
-                            paletteStatus,
-                        )}`}
-                    >
-                        {statusLabel(paletteStatus)}
-                    </span>
-                    <button
-                        className="inline-flex items-center justify-center h-7 rounded-full border px-1.5 text-[11px] whitespace-nowrap ui-click"
-                        style={{ borderColor: "var(--border)", background: "transparent" }}
-                        onClick={() => {
-                            setIssueOpen(true);
-                            setIssueError(null);
-                            setIssue((v) => (v ? v : "Wrong answer"));
-                        }}
-                        type="button"
-                    >
-                        Report issue
-                    </button>
-                </div>
+                <span
+                    className={`inline-flex min-h-7 items-center rounded-full border px-2.5 text-[11px] font-medium whitespace-nowrap ${statusBadgeClass(paletteStatus)}`}
+                    style={{ borderColor: "var(--border)" }}
+                >
+                    {statusLabel(paletteStatus)}
+                </span>
+                <button
+                    className="inline-flex min-h-8 items-center justify-center rounded-full border px-2.5 text-[11px] whitespace-nowrap ui-click"
+                    style={{ borderColor: "var(--border)", background: "transparent" }}
+                    onClick={() => {
+                        setIssueOpen(true);
+                        setIssueError(null);
+                        setIssue((v) => (v ? v : "Wrong answer"));
+                    }}
+                    type="button"
+                >
+                    Report issue
+                </button>
             </div>
 
-            <div className="mt-4 text-base leading-relaxed">
+            <div className="text-base leading-relaxed">
                 <QuestionContent text={question.questionText} imageUrls={question.imageUrls ?? []} />
             </div>
 

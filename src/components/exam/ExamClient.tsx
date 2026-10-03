@@ -1065,9 +1065,72 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
         );
     }
 
+    const paletteContent = (
+        <>
+            <div className="rounded-xl border p-2.5" style={{ borderColor: "var(--border)", background: "var(--muted)" }}>
+                <div className="flex items-center justify-between gap-2 text-xs">
+                    <span className="font-medium">Progress</span>
+                    <span className="opacity-75">{progressPercent}% · {markedCount} marked</span>
+                </div>
+                <div className="mt-2 h-1.5 w-full rounded-full" style={{ background: "rgba(148, 163, 184, 0.25)" }}>
+                    <div
+                        className="h-1.5 rounded-full"
+                        style={{
+                            width: `${progressPercent}%`,
+                            background: "linear-gradient(135deg, rgba(37,99,235,0.95), rgba(14,165,233,0.9))",
+                        }}
+                    />
+                </div>
+            </div>
+
+            <div className="mt-2.5 grid grid-cols-3 gap-1.5">
+                {subjects.map((subject) => {
+                    const active = activeSubjectId === subject.id;
+                    const activeTone = subject.id === 1
+                        ? "bg-sky-600/80 text-sky-50"
+                        : subject.id === 2
+                            ? "bg-emerald-600/80 text-emerald-50"
+                            : "bg-amber-500/85 text-amber-950";
+                    return (
+                        <button
+                            key={subject.id}
+                            type="button"
+                            className={`inline-flex min-h-9 w-full items-center justify-center rounded-full border px-1.5 text-[11px] whitespace-nowrap ui-click transition-colors ${active
+                                ? `font-semibold ring-2 ring-white/35 ${activeTone}`
+                                : "opacity-85 bg-[var(--muted)] text-[var(--foreground)] hover:opacity-100"
+                                }`}
+                            style={{ borderColor: "var(--border)" }}
+                            onClick={() => {
+                                setActiveSubjectId(subject.id);
+                                const firstInSubject = questions.find((question) => question.subject.id === subject.id);
+                                if (firstInSubject && firstInSubject.id !== activeQuestionId) goToQuestion(firstInSubject.id);
+                            }}
+                        >
+                            {subject.name}
+                        </button>
+                    );
+                })}
+            </div>
+
+            <div className="mt-2.5">
+                <QuestionPalette
+                    questions={questionsInActiveSubject}
+                    paletteByQid={paletteByQid}
+                    activeQuestionId={activeQuestionId}
+                    onPick={(questionId) => {
+                        setActiveSubjectId(
+                            questions.find((question) => question.id === questionId)?.subject.id ?? activeSubjectId,
+                        );
+                        goToQuestion(questionId);
+                    }}
+                />
+            </div>
+        </>
+    );
+
     return (
         <MathJaxContext version={3} config={mathjaxConfig}>
-            <div className="min-h-screen flex flex-col">
+            <div className="min-h-[100dvh] flex flex-col">
                 <header
                     className="sticky top-0 z-50 shrink-0 border-b backdrop-blur-md"
                     style={{
@@ -1075,19 +1138,19 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
                         background: "color-mix(in srgb, var(--background) 88%, transparent)",
                     }}
                 >
-                    <div className="max-w-[1400px] mx-auto px-3 sm:px-4 py-1.5">
-                        <div className="rounded-xl border px-3 py-2" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
+                    <div className="max-w-[1680px] mx-auto px-3 sm:px-6 py-1.5">
+                        <div className="rounded-xl px-1 py-0.5">
                             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5">
                                 <div className="min-w-0 sm:flex-1">
                                     <div className="flex items-center gap-2 min-w-0">
                                         <div className="text-base sm:text-lg font-semibold truncate">{testTitle}</div>
                                     </div>
-                                    <div className="mt-2 flex sm:hidden items-center gap-1.5">
-                                        <span className="inline-flex min-w-0 flex-[1.12] items-center justify-center h-8 rounded-full border px-2 text-[11px] whitespace-nowrap" style={{ borderColor: "var(--border)", background: "var(--muted)" }}>
+                                    <div className="mt-1.5 grid grid-cols-3 items-center gap-1 sm:hidden">
+                                        <span className="inline-flex min-w-0 items-center justify-center h-8 rounded-full border px-0.5 text-[10px] whitespace-nowrap" style={{ borderColor: "var(--border)", background: "var(--muted)" }}>
                                             Answered {answeredCount}/{totalQuestions || "-"}
                                         </span>
                                         <div
-                                            className="inline-flex min-w-0 flex-1 items-center justify-center h-8 rounded-full border px-2 text-[11px] font-mono whitespace-nowrap"
+                                            className="inline-flex min-w-0 items-center justify-center h-8 rounded-full border px-0.5 text-[10px] font-mono whitespace-nowrap"
                                             style={{
                                                 borderColor: timeLeftSeconds <= 10 * 60 ? "rgba(239,68,68,0.6)" : "var(--border)",
                                                 background: timeLeftSeconds <= 10 * 60 ? "rgba(127,29,29,0.35)" : "var(--muted)",
@@ -1096,9 +1159,8 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
                                         >
                                             {formatTime(timeLeftSeconds)}
                                         </div>
-                                        <ThemeToggle className="flex-1 min-w-0" buttonClassName="w-full min-w-0" compact />
                                         <button
-                                            className="inline-flex min-w-0 flex-[0.88] items-center justify-center h-8 rounded-full border px-0.5 text-[11px] font-medium ui-click whitespace-nowrap"
+                                            className="inline-flex min-w-0 items-center justify-center h-8 rounded-full border px-0.5 text-[10px] font-medium ui-click whitespace-nowrap"
                                             style={{
                                                 borderColor: "rgba(245, 158, 11, 0.55)",
                                                 background: "rgba(146, 64, 14, 0.22)",
@@ -1112,16 +1174,12 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
                                     </div>
                                     <div className="mt-1 hidden sm:flex flex-wrap items-center gap-2 text-[11px]">
                                         <span className="inline-flex items-center justify-center h-6 rounded-full border px-2.5" style={{ borderColor: "var(--border)", background: "var(--muted)" }}>
-                                            Attempt {attemptId.slice(0, 8)}
-                                        </span>
-                                        <span className="inline-flex items-center justify-center h-6 rounded-full border px-2.5" style={{ borderColor: "var(--border)", background: "var(--muted)" }}>
                                             Answered {answeredCount}/{totalQuestions || "-"}
                                         </span>
-                                        <span className="opacity-65">Idle: {idlePaused ? "paused" : "active"}</span>
                                     </div>
                                 </div>
 
-                                <div className="hidden sm:flex items-center flex-wrap justify-end gap-2 sm:gap-3 self-start sm:self-auto shrink-0 max-w-full">
+                                    <div className="hidden sm:flex items-center flex-wrap justify-end gap-2 sm:gap-3 self-start sm:self-auto shrink-0 max-w-full">
                                     <div
                                         className="inline-flex items-center justify-center h-8 rounded-full border px-3 text-[11px] sm:text-sm font-mono shrink-0 whitespace-nowrap"
                                         style={{
@@ -1171,9 +1229,9 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
                 <div
                     className={`flex-1 transition ${submitConfirmOpen ? "blur-sm pointer-events-none select-none" : ""}`}
                 >
-                    <div className="max-w-[1400px] mx-auto w-full px-4 py-4">
-                        <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_360px] lg:items-start">
-                            <main className="rounded-2xl border p-4" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
+                    <div className="max-w-[1680px] mx-auto w-full px-3 sm:px-6 py-2 sm:py-3">
+                        <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-start">
+                            <main className="flex min-w-0 flex-col rounded-2xl border p-3 sm:p-4 lg:min-h-[calc(100dvh-7rem)]" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
                                 {activeQuestion ? (
                                     <QuestionView
                                         attemptId={attemptId}
@@ -1190,19 +1248,31 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
                                     <div className="text-sm opacity-70">No question loaded.</div>
                                 )}
 
-                                <div className="mt-4 rounded-xl border p-3" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
-                                    <div className="text-xs font-medium opacity-75 mb-2">Actions</div>
+                                <div
+                                    className="sticky bottom-0 z-20 -mx-3 mt-auto border-t px-3 pt-3 sm:-mx-4 sm:px-4"
+                                    style={{
+                                        borderColor: "var(--border)",
+                                        background: "color-mix(in srgb, var(--card) 94%, transparent)",
+                                        paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom))",
+                                        backdropFilter: "blur(12px)",
+                                    }}
+                                >
+                                    {saveNextNotice ? (
+                                        <div className="mb-2 text-xs text-amber-500" role="alert">
+                                            {saveNextNotice}
+                                        </div>
+                                    ) : null}
                                     <div className="sm:hidden flex flex-col gap-2">
                                         <div className="flex items-center gap-2">
                                             <button
-                                                className="inline-flex min-w-0 flex-1 items-center justify-center h-10 rounded-full border px-2 text-xs whitespace-nowrap ui-click"
+                                                className="inline-flex min-h-11 min-w-0 flex-1 items-center justify-center rounded-full border px-2 text-xs whitespace-nowrap ui-click"
                                                 style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                                                 onClick={goPrev}
                                             >
                                                 Previous
                                             </button>
                                             <button
-                                                className="inline-flex min-w-0 flex-1 items-center justify-center h-10 rounded-full border px-2 text-xs font-semibold whitespace-nowrap ui-click"
+                                                className="inline-flex min-h-11 min-w-0 flex-1 items-center justify-center rounded-full border px-2 text-xs font-semibold whitespace-nowrap ui-click"
                                                 style={{
                                                     borderColor: "rgba(59, 130, 246, 0.5)",
                                                     background: "linear-gradient(135deg, rgba(37,99,235,0.95), rgba(14,165,233,0.9))",
@@ -1213,23 +1283,24 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
                                                 Save & Next
                                             </button>
                                             <button
-                                                className="inline-flex min-w-0 flex-1 items-center justify-center h-10 rounded-full border px-2 text-xs whitespace-nowrap ui-click"
+                                                className="inline-flex min-h-11 min-w-0 flex-1 items-center justify-center rounded-full border px-2 text-xs whitespace-nowrap ui-click"
                                                 style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                                                 onClick={nextWithAutoSave}
+                                                title="Save an answer if selected, or leave unanswered and continue"
                                             >
-                                                Next
+                                                Next / Skip
                                             </button>
                                         </div>
                                         <div className="flex items-center gap-2">
                                             <button
-                                                className="inline-flex min-w-0 flex-[1.6] items-center justify-center h-10 rounded-full border px-2 text-xs whitespace-nowrap ui-click"
+                                                className="inline-flex min-h-11 min-w-0 flex-[1.6] items-center justify-center rounded-full border px-2 text-xs whitespace-nowrap ui-click"
                                                 style={{ borderColor: "rgba(245, 158, 11, 0.5)", background: "rgba(146, 64, 14, 0.18)", color: "#fde68a" }}
                                                 onClick={markForReviewAndNext}
                                             >
-                                                Mark for Review & Next
+                                                Mark & Next
                                             </button>
                                             <button
-                                                className="inline-flex min-w-0 flex-1 items-center justify-center h-10 rounded-full border px-2 text-xs whitespace-nowrap ui-click"
+                                                className="inline-flex min-h-11 min-w-0 flex-1 items-center justify-center rounded-full border px-2 text-xs whitespace-nowrap ui-click"
                                                 style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                                                 onClick={clearResponse}
                                             >
@@ -1240,14 +1311,14 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
 
                                     <div className="hidden sm:flex flex-wrap gap-2">
                                         <button
-                                            className="inline-flex items-center justify-center h-10 rounded-full border px-4 text-sm whitespace-nowrap ui-click"
+                                            className="inline-flex min-h-10 items-center justify-center rounded-full border px-3 text-sm whitespace-nowrap ui-click"
                                             style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                                             onClick={goPrev}
                                         >
                                             Previous
                                         </button>
                                         <button
-                                            className="inline-flex items-center justify-center h-10 rounded-full border px-4 text-sm font-semibold whitespace-nowrap ui-click"
+                                            className="inline-flex min-h-10 items-center justify-center rounded-full border px-3 text-sm font-semibold whitespace-nowrap ui-click"
                                             style={{
                                                 borderColor: "rgba(59, 130, 246, 0.5)",
                                                 background: "linear-gradient(135deg, rgba(37,99,235,0.95), rgba(14,165,233,0.9))",
@@ -1258,104 +1329,40 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
                                             Save & Next
                                         </button>
                                         <button
-                                            className="inline-flex items-center justify-center h-10 rounded-full border px-4 text-sm whitespace-nowrap ui-click"
+                                            className="inline-flex min-h-10 items-center justify-center rounded-full border px-3 text-sm whitespace-nowrap ui-click"
                                             style={{ borderColor: "rgba(245, 158, 11, 0.5)", background: "rgba(146, 64, 14, 0.18)", color: "#fde68a" }}
                                             onClick={markForReviewAndNext}
                                         >
                                             Mark for Review & Next
                                         </button>
                                         <button
-                                            className="inline-flex items-center justify-center h-10 rounded-full border px-4 text-sm whitespace-nowrap ui-click"
+                                            className="inline-flex min-h-10 items-center justify-center rounded-full border px-3 text-sm whitespace-nowrap ui-click"
                                             style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                                             onClick={clearResponse}
                                         >
                                             Clear Response
                                         </button>
                                         <button
-                                            className="inline-flex items-center justify-center h-10 rounded-full border px-4 text-sm whitespace-nowrap ui-click"
+                                            className="inline-flex min-h-10 items-center justify-center rounded-full border px-3 text-sm whitespace-nowrap ui-click"
                                             style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                                             onClick={nextWithAutoSave}
+                                            title="Save an answer if selected, or leave unanswered and continue"
                                         >
-                                            Next
+                                            Next / Skip
                                         </button>
                                     </div>
+                                    <div className="mt-2 hidden text-[11px] opacity-65 sm:block">
+                                        Shortcuts: Alt+N Next · Alt+V Mark · 1-4 Select option
+                                    </div>
                                 </div>
-
-                                <div className="mt-3 text-xs opacity-70">
-                                    Shortcuts: Alt+N Next · Alt+V Mark · 1-4 Select option
-                                </div>
-
-                                {saveNextNotice ? (
-                                    <div className="mt-2 text-xs text-amber-500">{saveNextNotice}</div>
-                                ) : null}
                             </main>
 
                             <aside
-                                className="rounded-2xl border p-4 lg:sticky lg:top-24 lg:self-start"
+                                className="max-h-[70dvh] min-w-0 overflow-y-auto rounded-2xl border p-3 lg:sticky lg:top-20 lg:max-h-[calc(100dvh-5.5rem)] lg:self-start"
                                 style={{ borderColor: "var(--border)", background: "var(--card)" }}
                             >
-                                <div className="rounded-xl border p-3" style={{ borderColor: "var(--border)", background: "var(--muted)" }}>
-                                    <div className="font-medium">Question Palette</div>
-                                    <div className="mt-2 h-2 w-full rounded-full" style={{ background: "rgba(148, 163, 184, 0.25)" }}>
-                                        <div
-                                            className="h-2 rounded-full"
-                                            style={{
-                                                width: `${progressPercent}%`,
-                                                background: "linear-gradient(135deg, rgba(37,99,235,0.95), rgba(14,165,233,0.9))",
-                                            }}
-                                        />
-                                    </div>
-                                    <div className="mt-2 text-xs opacity-70">
-                                        Progress {progressPercent}% · Marked {markedCount}
-                                    </div>
-                                </div>
-
-                                <div className="mt-3 grid grid-cols-3 gap-2">
-                                    {subjects.map((s) => (
-                                        (() => {
-                                            const active = activeSubjectId === s.id;
-                                            const activeTone =
-                                                s.id === 1
-                                                    ? "bg-sky-600/80 text-sky-50"
-                                                    : s.id === 2
-                                                        ? "bg-emerald-600/80 text-emerald-50"
-                                                        : "bg-amber-500/85 text-amber-950";
-                                            return (
-                                                <button
-                                                    key={s.id}
-                                                    className={`inline-flex w-full items-center justify-center h-9 rounded-full border px-2 text-xs whitespace-nowrap ui-click transition-colors ${active
-                                                        ? `font-semibold ring-2 ring-white/35 ${activeTone}`
-                                                        : "opacity-85 bg-[var(--muted)] text-[var(--foreground)] hover:opacity-100"
-                                                        }`}
-                                                    style={{ borderColor: "var(--border)" }}
-                                                    onClick={() => {
-                                                        setActiveSubjectId(s.id);
-                                                        const firstInSubject = questions.find((q) => q.subject.id === s.id);
-                                                        if (firstInSubject && firstInSubject.id !== activeQuestionId) {
-                                                            goToQuestion(firstInSubject.id);
-                                                        }
-                                                    }}
-                                                >
-                                                    {s.name}
-                                                </button>
-                                            );
-                                        })()
-                                    ))}
-                                </div>
-
-                                <div className="mt-4">
-                                    <QuestionPalette
-                                        questions={questionsInActiveSubject}
-                                        paletteByQid={paletteByQid}
-                                        activeQuestionId={activeQuestionId}
-                                        onPick={(qid) => {
-                                            setActiveSubjectId(
-                                                questions.find((q) => q.id === qid)?.subject.id ?? activeSubjectId,
-                                            );
-                                            goToQuestion(qid);
-                                        }}
-                                    />
-                                </div>
+                                <h2 className="mb-2 text-sm font-semibold">Question palette</h2>
+                                {paletteContent}
                             </aside>
                         </div>
                     </div>

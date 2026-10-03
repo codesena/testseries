@@ -55,8 +55,8 @@
     justify-content: center;
     width: 100%;
     min-width: 0;
-    min-height: 8rem;
-    max-height: var(--media-image-height, 320px);
+    min-height: min(8rem, 18dvh);
+    max-height: min(var(--media-image-height, 320px), 36dvh);
     overflow: hidden;
     border: 1px solid var(--border);
     border-radius: 0.5rem;
@@ -66,7 +66,8 @@
 }
 
 .optionImages .imageFrame {
-    min-height: 7rem;
+    min-height: min(7rem, 16dvh);
+    max-height: min(var(--media-image-height, 320px), 32dvh);
 }
 
 .image {
@@ -152,6 +153,10 @@
 @media (max-width: 700px) {
     .questionLayout {
         grid-template-columns: minmax(0, 1fr);
+    }
+
+    .questionImages[data-responsive-columns="true"] {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }
 

@@ -239,7 +239,6 @@ export function AdvanceV2ExamClient({ attemptId }: { attemptId: string }) {
     const [submitting, setSubmitting] = useState(false);
     const [timeLabel, setTimeLabel] = useState<string>("--:--");
     const [submitConfirmOpen, setSubmitConfirmOpen] = useState(false);
-    const [mobilePanelOpen, setMobilePanelOpen] = useState(false);
     const [saveNextNotice, setSaveNextNotice] = useState<string | null>(null);
     const baseTimeByQidRef = useRef<Record<string, number>>({});
     const activeEnteredAtRef = useRef<number | null>(null);
@@ -663,27 +662,29 @@ export function AdvanceV2ExamClient({ attemptId }: { attemptId: string }) {
 
     const paletteContent = (
         <>
-            <div className="rounded-xl border p-3" style={{ borderColor: "var(--border)", background: "var(--muted)" }}>
-                <div className="font-medium">Question Palette</div>
-                <div className="mt-2 h-2 w-full rounded-full" style={{ background: "rgba(148, 163, 184, 0.25)" }}>
+            <div className="rounded-xl border p-2.5" style={{ borderColor: "var(--border)", background: "var(--muted)" }}>
+                <div className="flex items-center justify-between gap-2 text-xs">
+                    <span className="font-medium">Progress</span>
+                    <span className="opacity-75">{progressPercent}% · {markedCount} marked</span>
+                </div>
+                <div className="mt-2 h-1.5 w-full rounded-full" style={{ background: "rgba(148, 163, 184, 0.25)" }}>
                     <div
-                        className="h-2 rounded-full"
+                        className="h-1.5 rounded-full"
                         style={{
                             width: `${progressPercent}%`,
                             background: "linear-gradient(135deg, rgba(37,99,235,0.95), rgba(14,165,233,0.9))",
                         }}
                     />
                 </div>
-                <div className="mt-2 text-xs opacity-70">Progress {progressPercent}% · Marked {markedCount}</div>
             </div>
 
-            <div className="mt-3 grid grid-cols-3 gap-2">
+            <div className="mt-2.5 grid grid-cols-3 gap-1.5">
                 {subjects.map((subject) => {
                     const active = activeSubject === subject;
                     return (
                         <button
                             key={subject}
-                            className={`inline-flex w-full items-center justify-center h-9 rounded-full border px-2 text-xs whitespace-nowrap ui-click transition-colors ${active
+                            className={`inline-flex min-h-9 w-full items-center justify-center rounded-full border px-1.5 text-[11px] whitespace-nowrap ui-click transition-colors ${active
                                 ? `font-semibold ring-2 ring-white/35 ${subjectTone(subject)}`
                                 : "opacity-85 bg-[var(--muted)] text-[var(--foreground)] hover:opacity-100"
                                 }`}
@@ -694,7 +695,6 @@ export function AdvanceV2ExamClient({ attemptId }: { attemptId: string }) {
                                 if (first) {
                                     setActiveQuestionType(first.questionType);
                                     void goToQuestion(first.questionId);
-                                    setMobilePanelOpen(false);
                                 }
                             }}
                         >
@@ -704,13 +704,13 @@ export function AdvanceV2ExamClient({ attemptId }: { attemptId: string }) {
                 })}
             </div>
 
-            <div className="mt-3 grid grid-cols-2 gap-2">
+            <div className="mt-2.5 grid grid-cols-2 gap-1.5">
                 {questionTypeCapsules.map(({ type, count }) => {
                     const active = activeQuestionType === type;
                     return (
                         <button
                             key={type}
-                            className={`inline-flex w-full items-center justify-center h-9 rounded-full border px-2 text-[11px] whitespace-nowrap ui-click transition-colors ${active
+                            className={`inline-flex min-h-9 w-full items-center justify-center rounded-full border px-1.5 text-[11px] whitespace-nowrap ui-click transition-colors ${active
                                 ? "font-semibold bg-sky-600/80 text-sky-50 ring-2 ring-white/35"
                                 : "opacity-90 bg-[var(--muted)] text-[var(--foreground)] hover:opacity-100"
                                 }`}
@@ -720,7 +720,6 @@ export function AdvanceV2ExamClient({ attemptId }: { attemptId: string }) {
                                 const first = filteredQuestions.find((q) => q.questionType === type);
                                 if (first) {
                                     void goToQuestion(first.questionId);
-                                    setMobilePanelOpen(false);
                                 }
                             }}
                         >
@@ -730,7 +729,7 @@ export function AdvanceV2ExamClient({ attemptId }: { attemptId: string }) {
                 })}
             </div>
 
-            <div className="mt-4 grid grid-cols-5 gap-2">
+            <div className="mt-3 grid grid-cols-6 gap-1.5 sm:grid-cols-5 sm:gap-2">
                 {filteredQuestionsByType.map((q, idx) => {
                     const status = statusByQid[q.questionId] ?? "NOT_VISITED";
                     const active = q.questionId === activeQuestionId;
@@ -741,9 +740,8 @@ export function AdvanceV2ExamClient({ attemptId }: { attemptId: string }) {
                             type="button"
                             onClick={() => {
                                 void goToQuestion(q.questionId);
-                                setMobilePanelOpen(false);
                             }}
-                            className={`rounded-lg border aspect-square text-xs sm:text-sm flex items-center justify-center ui-click ${statusTone(status)} ${active ? "ring-2 ring-sky-500/75" : ""}`}
+                            className={`min-h-9 min-w-9 sm:min-h-10 sm:min-w-10 rounded-lg border aspect-square text-xs flex items-center justify-center ui-click ${statusTone(status)} ${active ? "ring-2 ring-sky-500/75" : ""}`}
                             style={{ borderColor: "var(--border)" }}
                             title={`Q${displayNo}`}
                         >
@@ -753,20 +751,20 @@ export function AdvanceV2ExamClient({ attemptId }: { attemptId: string }) {
                 })}
             </div>
 
-            <div className="mt-4 text-xs opacity-75">
-                <div className="grid grid-cols-2 gap-2">
-                    <div className="inline-flex items-center gap-2 rounded-full border px-2.5 py-1" style={{ borderColor: "var(--border)", background: "var(--muted)" }}>
-                        <span className="inline-block w-2.5 h-2.5 rounded border" style={{ background: "var(--muted)", borderColor: "var(--border)" }} />
+            <div className="mt-3 text-[11px] opacity-75">
+                <div className="grid grid-cols-2 gap-1.5">
+                    <div className="inline-flex items-center gap-1.5 rounded-full border px-2 py-1" style={{ borderColor: "var(--border)", background: "var(--muted)" }}>
+                        <span className="inline-block w-2.5 h-2.5 shrink-0 rounded border" style={{ background: "var(--muted)", borderColor: "var(--border)" }} />
                         Not visited
                     </div>
-                    <div className="inline-flex items-center gap-2 rounded-full border px-2.5 py-1" style={{ borderColor: "var(--border)", background: "var(--muted)" }}>
-                        <span className="inline-block w-2.5 h-2.5 rounded bg-amber-300 border" /> Visited
+                    <div className="inline-flex items-center gap-1.5 rounded-full border px-2 py-1" style={{ borderColor: "var(--border)", background: "var(--muted)" }}>
+                        <span className="inline-block w-2.5 h-2.5 shrink-0 rounded bg-amber-300 border" /> Visited
                     </div>
-                    <div className="inline-flex items-center gap-2 rounded-full border px-2.5 py-1" style={{ borderColor: "var(--border)", background: "var(--muted)" }}>
-                        <span className="inline-block w-2.5 h-2.5 rounded bg-emerald-400 border" /> Answered
+                    <div className="inline-flex items-center gap-1.5 rounded-full border px-2 py-1" style={{ borderColor: "var(--border)", background: "var(--muted)" }}>
+                        <span className="inline-block w-2.5 h-2.5 shrink-0 rounded bg-emerald-400 border" /> Answered
                     </div>
-                    <div className="inline-flex items-center gap-2 rounded-full border px-2.5 py-1" style={{ borderColor: "var(--border)", background: "var(--muted)" }}>
-                        <span className="inline-block w-2.5 h-2.5 rounded bg-violet-400 border" /> Marked
+                    <div className="inline-flex items-center gap-1.5 rounded-full border px-2 py-1" style={{ borderColor: "var(--border)", background: "var(--muted)" }}>
+                        <span className="inline-block w-2.5 h-2.5 shrink-0 rounded bg-violet-400 border" /> Marked
                     </div>
                 </div>
             </div>
@@ -775,7 +773,7 @@ export function AdvanceV2ExamClient({ attemptId }: { attemptId: string }) {
 
     return (
         <MathJaxContext config={mathjaxConfig}>
-            <div className="min-h-screen flex flex-col">
+            <div className="min-h-[100dvh] flex flex-col">
                 <header
                     className="sticky top-0 z-50 shrink-0 border-b backdrop-blur-md"
                     style={{
@@ -783,8 +781,8 @@ export function AdvanceV2ExamClient({ attemptId }: { attemptId: string }) {
                         background: "color-mix(in srgb, var(--background) 88%, transparent)",
                     }}
                 >
-                    <div className="max-w-[1400px] mx-auto px-3 sm:px-4 py-1.5">
-                        <div className="rounded-xl border px-3 py-2" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
+                    <div className="max-w-[1680px] mx-auto px-3 sm:px-6 py-1.5">
+                        <div className="rounded-xl px-1 py-0.5">
                             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5">
                                 <div className="min-w-0 sm:flex-1">
                                     <div className="text-base sm:text-lg font-semibold truncate">{data.exam.title}</div>
@@ -794,9 +792,6 @@ export function AdvanceV2ExamClient({ attemptId }: { attemptId: string }) {
                                         <span>{answeredCount}/{questions.length} answered</span>
                                     </div>
                                     <div className="mt-1 hidden sm:flex flex-wrap items-center gap-2 text-[11px]">
-                                        <span className="inline-flex items-center justify-center h-6 rounded-full border px-2.5" style={{ borderColor: "var(--border)", background: "var(--muted)" }}>
-                                            Attempt {attemptId.slice(0, 8)}
-                                        </span>
                                         <span className="inline-flex items-center justify-center h-6 rounded-full border px-2.5" style={{ borderColor: "var(--border)", background: "var(--muted)" }}>
                                             Answered {answeredCount}/{questions.length || "-"}
                                         </span>
@@ -811,14 +806,6 @@ export function AdvanceV2ExamClient({ attemptId }: { attemptId: string }) {
                                         ⏱ {timeLabel}
                                     </div>
                                     <ThemeToggle />
-                                    <button
-                                        className="sm:hidden inline-flex items-center justify-center h-8 rounded-full border px-3 text-[11px] ui-click shrink-0 whitespace-nowrap"
-                                        style={{ borderColor: "var(--border)", background: "var(--muted)" }}
-                                        onClick={() => setMobilePanelOpen(true)}
-                                        type="button"
-                                    >
-                                        Menu
-                                    </button>
                                     <button
                                         className="inline-flex items-center justify-center h-8 rounded-full border px-3 text-[11px] sm:text-xs font-medium ui-click shrink-0 whitespace-nowrap"
                                         style={{
@@ -838,36 +825,32 @@ export function AdvanceV2ExamClient({ attemptId }: { attemptId: string }) {
                 </header>
 
                 <div className={`flex-1 transition ${submitConfirmOpen ? "blur-sm pointer-events-none select-none" : ""}`}>
-                    <div className="max-w-[1400px] mx-auto w-full px-4 py-4">
-                        <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_360px] lg:items-start">
-                            <main className="rounded-2xl border p-4" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
-                                <div className="rounded-xl border p-4 shadow-sm" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
-                                    <div className="text-[11px] uppercase tracking-wide opacity-60">
+                    <div className="max-w-[1680px] mx-auto w-full px-3 sm:px-6 py-2 sm:py-3">
+                        <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-start">
+                            <main className="flex min-w-0 flex-col rounded-2xl border p-3 sm:p-4 lg:min-h-[calc(100dvh-7rem)]" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
+                                <div className="space-y-3">
+                                    <div className="flex min-h-8 flex-wrap items-center gap-x-2 gap-y-1.5">
+                                        <div className="mr-auto min-w-0 text-sm font-medium">
+                                            Q{subjectQuestionNoByQid[activeQuestion.questionId] ?? (activeIndex + 1)}/{questions.length}
+                                            <span className="opacity-50"> · </span>
                                         {formatSectionLabel(activeQuestion.sectionCode)}
-                                        {activeQuestion.topicName ? ` • ${activeQuestion.topicName}` : ""}
-                                    </div>
-                                    <div className="mt-2 grid grid-cols-3 gap-2">
+                                            {activeQuestion.topicName ? <span className="opacity-70"> · {activeQuestion.topicName}</span> : null}
+                                        </div>
                                         <span
-                                            className="inline-flex items-center justify-center rounded-full h-7 px-1.5 text-[11px] font-medium whitespace-nowrap"
-                                            style={{ borderColor: "var(--border)", background: "var(--muted)", borderWidth: 1 }}
-                                        >
-                                            Q{subjectQuestionNoByQid[activeQuestion.questionId] ?? (activeIndex + 1)}
-                                        </span>
-                                        <span
-                                            className={`inline-flex items-center justify-center rounded-full h-7 px-1.5 text-[11px] font-medium whitespace-nowrap ${statusTone(statusByQid[activeQuestion.questionId] ?? "NOT_VISITED")}`}
+                                            className={`inline-flex min-h-7 items-center rounded-full border px-2.5 text-[11px] font-medium whitespace-nowrap ${statusTone(statusByQid[activeQuestion.questionId] ?? "NOT_VISITED")}`}
+                                            style={{ borderColor: "var(--border)" }}
                                         >
                                             {statusLabel(statusByQid[activeQuestion.questionId] ?? "NOT_VISITED")}
                                         </span>
                                         <span
-                                            className="inline-flex items-center justify-center rounded-full h-7 px-1.5 text-[11px] font-medium whitespace-nowrap"
-                                            style={{ borderColor: "var(--border)", background: "transparent", borderWidth: 1 }}
+                                            className="inline-flex min-h-7 items-center rounded-full border px-2.5 text-[11px] font-medium whitespace-nowrap"
+                                            style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                                         >
-                                            {activeQuestion.questionType}
+                                            {questionTypeLabel(activeQuestion.questionType)}
                                         </span>
                                     </div>
 
                                     <QuestionMediaLayout
-                                        className="mt-4"
                                         imageUrls={questionImageUrls}
                                         altBase="Question image"
                                         hasText={Boolean(activeQuestion.stemRich.trim())}
@@ -920,7 +903,7 @@ export function AdvanceV2ExamClient({ attemptId }: { attemptId: string }) {
                                     </div>
                                     </QuestionMediaLayout>
 
-                                    <div className="mt-5 grid gap-2 sm:grid-cols-2">
+                                    <div className="grid gap-2 sm:grid-cols-2">
                                         {(activeQuestion.questionType === "SINGLE_CORRECT" || activeQuestion.questionType === "MATCHING_LIST")
                                             ? activeQuestion.options.map((opt) => (
                                                 <button
@@ -1027,11 +1010,19 @@ export function AdvanceV2ExamClient({ attemptId }: { attemptId: string }) {
                                     </div>
                                 </div>
 
-                                <div className="mt-4 rounded-xl border p-3" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
-                                    <div className="text-xs font-medium opacity-75 mb-2">Actions</div>
+                                <div
+                                    className="sticky bottom-0 z-20 -mx-3 mt-auto border-t px-3 pt-3 sm:-mx-4 sm:px-4"
+                                    style={{
+                                        borderColor: "var(--border)",
+                                        background: "color-mix(in srgb, var(--card) 94%, transparent)",
+                                        paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom))",
+                                        backdropFilter: "blur(12px)",
+                                    }}
+                                >
+                                    {saveNextNotice ? <div className="mb-2 text-xs text-amber-500" role="alert">{saveNextNotice}</div> : null}
                                     <div className="grid sm:hidden grid-cols-2 gap-2">
                                         <button
-                                            className="inline-flex items-center justify-center h-10 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
+                                            className="inline-flex min-h-11 items-center justify-center rounded-full border px-2 text-xs whitespace-nowrap ui-click"
                                             style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                                             onClick={goPrev}
                                             disabled={saving}
@@ -1039,7 +1030,7 @@ export function AdvanceV2ExamClient({ attemptId }: { attemptId: string }) {
                                             Previous
                                         </button>
                                         <button
-                                            className="inline-flex items-center justify-center h-10 rounded-full border px-3 text-xs font-semibold whitespace-nowrap ui-click"
+                                            className="inline-flex min-h-11 items-center justify-center rounded-full border px-2 text-xs font-semibold whitespace-nowrap ui-click"
                                             style={{
                                                 borderColor: "rgba(59, 130, 246, 0.5)",
                                                 background: "linear-gradient(135deg, rgba(37,99,235,0.95), rgba(14,165,233,0.9))",
@@ -1051,7 +1042,7 @@ export function AdvanceV2ExamClient({ attemptId }: { attemptId: string }) {
                                             Save & Next
                                         </button>
                                         <button
-                                            className="inline-flex items-center justify-center h-10 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
+                                            className="inline-flex min-h-11 items-center justify-center rounded-full border px-2 text-xs whitespace-nowrap ui-click"
                                             style={{ borderColor: "rgba(245, 158, 11, 0.5)", background: "rgba(146, 64, 14, 0.18)", color: "#fde68a" }}
                                             onClick={() => void markForReviewAndNext()}
                                             disabled={saving}
@@ -1059,17 +1050,26 @@ export function AdvanceV2ExamClient({ attemptId }: { attemptId: string }) {
                                             Mark & Next
                                         </button>
                                         <button
-                                            className="inline-flex items-center justify-center h-10 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
+                                            className="inline-flex min-h-11 items-center justify-center rounded-full border px-2 text-xs whitespace-nowrap ui-click"
                                             style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                                             onClick={() => void nextWithAutoSave()}
                                             disabled={saving}
+                                            title="Save an answer if selected, or leave unanswered and continue"
                                         >
-                                            Next
+                                            Next / Skip
+                                        </button>
+                                        <button
+                                            className="inline-flex min-h-11 items-center justify-center rounded-full border px-2 text-xs whitespace-nowrap ui-click"
+                                            style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                                            onClick={() => void clearResponse()}
+                                            disabled={saving}
+                                        >
+                                            Clear response
                                         </button>
                                     </div>
                                     <div className="hidden sm:flex flex-wrap gap-2">
                                         <button
-                                            className="inline-flex items-center justify-center h-10 rounded-full border px-4 text-sm whitespace-nowrap ui-click"
+                                            className="inline-flex min-h-10 items-center justify-center rounded-full border px-3 text-sm whitespace-nowrap ui-click"
                                             style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                                             onClick={goPrev}
                                             disabled={saving}
@@ -1077,7 +1077,7 @@ export function AdvanceV2ExamClient({ attemptId }: { attemptId: string }) {
                                             Previous
                                         </button>
                                         <button
-                                            className="inline-flex items-center justify-center h-10 rounded-full border px-4 text-sm font-semibold whitespace-nowrap ui-click"
+                                            className="inline-flex min-h-10 items-center justify-center rounded-full border px-3 text-sm font-semibold whitespace-nowrap ui-click"
                                             style={{
                                                 borderColor: "rgba(59, 130, 246, 0.5)",
                                                 background: "linear-gradient(135deg, rgba(37,99,235,0.95), rgba(14,165,233,0.9))",
@@ -1089,7 +1089,7 @@ export function AdvanceV2ExamClient({ attemptId }: { attemptId: string }) {
                                             Save & Next
                                         </button>
                                         <button
-                                            className="inline-flex items-center justify-center h-10 rounded-full border px-4 text-sm whitespace-nowrap ui-click"
+                                            className="inline-flex min-h-10 items-center justify-center rounded-full border px-3 text-sm whitespace-nowrap ui-click"
                                             style={{ borderColor: "rgba(245, 158, 11, 0.5)", background: "rgba(146, 64, 14, 0.18)", color: "#fde68a" }}
                                             onClick={() => void markForReviewAndNext()}
                                             disabled={saving}
@@ -1097,7 +1097,7 @@ export function AdvanceV2ExamClient({ attemptId }: { attemptId: string }) {
                                             Mark for Review & Next
                                         </button>
                                         <button
-                                            className="inline-flex items-center justify-center h-10 rounded-full border px-4 text-sm whitespace-nowrap ui-click"
+                                            className="inline-flex min-h-10 items-center justify-center rounded-full border px-3 text-sm whitespace-nowrap ui-click"
                                             style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                                             onClick={() => void clearResponse()}
                                             disabled={saving}
@@ -1105,23 +1105,23 @@ export function AdvanceV2ExamClient({ attemptId }: { attemptId: string }) {
                                             Clear Response
                                         </button>
                                         <button
-                                            className="inline-flex items-center justify-center h-10 rounded-full border px-4 text-sm whitespace-nowrap ui-click"
+                                            className="inline-flex min-h-10 items-center justify-center rounded-full border px-3 text-sm whitespace-nowrap ui-click"
                                             style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                                             onClick={() => void nextWithAutoSave()}
                                             disabled={saving}
+                                            title="Save an answer if selected, or leave unanswered and continue"
                                         >
-                                            Next
+                                            Next / Skip
                                         </button>
                                     </div>
                                 </div>
-
-                                {saveNextNotice ? <div className="mt-2 text-xs text-amber-500">{saveNextNotice}</div> : null}
                             </main>
 
                             <aside
-                                className="hidden lg:block rounded-2xl border p-4 lg:sticky lg:top-24 lg:self-start"
+                                className="max-h-[70dvh] min-w-0 overflow-y-auto rounded-2xl border p-3 lg:sticky lg:top-20 lg:max-h-[calc(100dvh-5.5rem)] lg:self-start"
                                 style={{ borderColor: "var(--border)", background: "var(--card)" }}
                             >
+                                <h2 className="mb-2 text-sm font-semibold">Question palette</h2>
                                 {paletteContent}
                             </aside>
                         </div>
@@ -1181,56 +1181,6 @@ export function AdvanceV2ExamClient({ attemptId }: { attemptId: string }) {
                     </div>
                 ) : null}
 
-                {mobilePanelOpen ? (
-                    <div className="lg:hidden fixed inset-0 z-40" role="dialog" aria-modal="true" aria-label="Attempt menu">
-                        <button
-                            type="button"
-                            className="absolute inset-0"
-                            style={{ background: "rgba(0,0,0,0.45)" }}
-                            onClick={() => setMobilePanelOpen(false)}
-                            aria-label="Close menu backdrop"
-                        />
-                        <div
-                            className="absolute inset-y-0 right-0 w-[92vw] max-w-sm border-l p-4 overflow-y-auto"
-                            style={{ borderColor: "var(--border)", background: "var(--card)" }}
-                        >
-                            <div className="flex items-center justify-between">
-                                <div className="text-sm font-semibold">Attempt Menu</div>
-                                <button
-                                    type="button"
-                                    className="inline-flex items-center justify-center h-8 rounded-full border px-3 text-xs ui-click"
-                                    style={{ borderColor: "var(--border)", background: "var(--muted)" }}
-                                    onClick={() => setMobilePanelOpen(false)}
-                                >
-                                    Close
-                                </button>
-                            </div>
-
-                            <div className="mt-3">
-                                {paletteContent}
-                            </div>
-
-                            <div className="mt-4 grid grid-cols-2 gap-2">
-                                <button
-                                    className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
-                                    style={{ borderColor: "var(--border)", background: "var(--muted)" }}
-                                    onClick={() => void clearResponse()}
-                                    disabled={saving}
-                                >
-                                    Clear Response
-                                </button>
-                                <button
-                                    className="inline-flex items-center justify-center h-9 rounded-full border px-3 text-xs whitespace-nowrap ui-click"
-                                    style={{ borderColor: "rgba(245, 158, 11, 0.5)", background: "rgba(146, 64, 14, 0.18)", color: "#fde68a" }}
-                                    onClick={() => setSubmitConfirmOpen(true)}
-                                    disabled={submitting || submitConfirmOpen}
-                                >
-                                    Submit Test
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                ) : null}
             </div>
         </MathJaxContext>
     );
