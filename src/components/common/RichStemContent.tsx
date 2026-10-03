@@ -1,8 +1,7 @@
 "use client";
 
-import { optimizeImageDelivery } from "@/lib/image-delivery";
 import { MathText } from "@/components/common/MathText";
-import { QuestionMediaLayout } from "@/components/common/QuestionMediaLayout";
+import { MediaImageGroup, QuestionMediaLayout } from "@/components/common/QuestionMediaLayout";
 
 type ParsedPipeTable = {
     headers: string[];
@@ -168,9 +167,13 @@ export function RichStemContent({ text }: { text: string }) {
                                                             segment.kind === "text" ? (
                                                                 <MathText key={`t-${sIdx}`} text={sanitizeRenderableText(segment.text)} />
                                                             ) : (
-                                                                <div key={`i-${sIdx}`} className="rounded border p-1.5" style={{ borderColor: "var(--border)", background: "var(--muted)" }}>
-                                                                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                                                                    <img src={optimizeImageDelivery(segment.url)} alt={segment.alt} className="max-h-48 w-auto object-contain" />
+                                                                <div key={`i-${sIdx}`}>
+                                                                    <MediaImageGroup
+                                                                        imageUrls={[segment.url]}
+                                                                        altBase={segment.alt}
+                                                                        variant="question"
+                                                                        maxImageHeight={192}
+                                                                    />
                                                                 </div>
                                                             )
                                                         ))}

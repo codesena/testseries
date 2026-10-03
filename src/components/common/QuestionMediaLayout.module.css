@@ -76,6 +76,79 @@
     object-fit: contain;
 }
 
+.questionImageButton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0.25rem;
+    color: inherit;
+    background: transparent;
+    cursor: zoom-in;
+}
+
+.questionImageButton:focus-visible {
+    outline: 3px solid var(--primary, #60a5fa);
+    outline-offset: 2px;
+}
+
+.lightboxBackdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    display: grid;
+    place-items: center;
+    padding: 1rem;
+    background: rgb(0 0 0 / 88%);
+}
+
+.lightboxDialog {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: min(98vw, 1800px);
+    height: min(96vh, 1300px);
+    padding: 3rem 1rem 1rem;
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
+    background: var(--background, #111);
+    box-shadow: 0 1rem 4rem rgb(0 0 0 / 45%);
+}
+
+.lightboxImage {
+    display: block;
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+.lightboxClose {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    display: grid;
+    place-items: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    border: 1px solid var(--border);
+    border-radius: 9999px;
+    color: inherit;
+    background: var(--muted);
+    font-size: 1.75rem;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.lightboxClose:focus-visible {
+    outline: 3px solid var(--primary, #60a5fa);
+    outline-offset: 2px;
+}
+
 @media (max-width: 700px) {
     .questionLayout {
         grid-template-columns: minmax(0, 1fr);
