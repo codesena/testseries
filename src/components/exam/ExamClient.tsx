@@ -131,6 +131,7 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
     const [reportPath, setReportPath] = useState<string>(`/attempt/${attemptId}/report`);
 
     const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
+    const questionContentRef = useRef<HTMLDivElement>(null);
     const [paletteByQid, setPaletteByQid] = useState<PaletteByQid>({});
     const [answersByQid, setAnswersByQid] = useState<AnswerByQid>({});
     const [timeByQid, setTimeByQid] = useState<TimeByQid>({});
@@ -174,6 +175,10 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
 
     useEffect(() => {
         activeQuestionIdRef.current = activeQuestionId;
+    }, [activeQuestionId]);
+
+    useEffect(() => {
+        questionContentRef.current?.scrollTo({ top: 0 });
     }, [activeQuestionId]);
 
     useEffect(() => {
@@ -771,9 +776,28 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
     }
 
     function goPrev() {
-        const idx = activeSubjectId ? currentQuestionIndexInActiveSubject() : currentQuestionIndexInAll();
-        const list = activeSubjectId ? questionsInActiveSubject : questions;
-        const prev = list[idx - 1];
+        if (activeSubjectId) {
+            const idx = currentQuestionIndexInActiveSubject();
+            const prevInSubject = questionsInActiveSubject[idx - 1];
+            if (prevInSubject) {
+                goToQuestion(prevInSubject.id);
+                return;
+            }
+
+            const subjectIdx = orderedSubjectIds.findIndex((id) => id === activeSubjectId);
+            const previousSubjectId = subjectIdx > 0 ? orderedSubjectIds[subjectIdx - 1] : undefined;
+            if (previousSubjectId) {
+                const lastInPreviousSubject = [...questions].reverse().find((q) => q.subject.id === previousSubjectId);
+                if (lastInPreviousSubject) {
+                    setActiveSubjectId(previousSubjectId);
+                    goToQuestion(lastInPreviousSubject.id);
+                }
+            }
+            return;
+        }
+
+        const idx = currentQuestionIndexInAll();
+        const prev = questions[idx - 1];
         if (prev) goToQuestion(prev.id);
     }
 
@@ -1130,7 +1154,7 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
 
     return (
         <MathJaxContext version={3} config={mathjaxConfig}>
-            <div className="min-h-[100dvh] flex flex-col">
+            <div className="min-h-[100dvh] flex flex-col lg:h-[100dvh] lg:min-h-0 lg:overflow-hidden">
                 <header
                     className="sticky top-0 z-50 shrink-0 border-b backdrop-blur-md"
                     style={{
@@ -1227,29 +1251,34 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
                 </header>
 
                 <div
-                    className={`flex-1 transition ${submitConfirmOpen ? "blur-sm pointer-events-none select-none" : ""}`}
+                    className={`flex-1 transition lg:min-h-0 lg:overflow-hidden ${submitConfirmOpen ? "blur-sm pointer-events-none select-none" : ""}`}
                 >
-                    <div className="max-w-[1680px] mx-auto w-full px-3 sm:px-6 py-2 sm:py-3">
-                        <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-start">
-                            <main className="flex min-w-0 flex-col rounded-2xl border p-3 sm:p-4 lg:min-h-[calc(100dvh-7rem)]" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
-                                {activeQuestion ? (
-                                    <QuestionView
-                                        attemptId={attemptId}
-                                        questionNumber={
-                                            Math.max(0, questions.findIndex((q) => q.id === activeQuestion.id)) +
-                                            1
-                                        }
-                                        question={activeQuestion}
-                                        answer={answersByQid[activeQuestion.id] ?? null}
-                                        paletteStatus={paletteByQid[activeQuestion.id] ?? "NOT_VISITED"}
-                                        onSetAnswer={setAnswer}
-                                    />
-                                ) : (
-                                    <div className="text-sm opacity-70">No question loaded.</div>
-                                )}
+                    <div className="max-w-[1680px] mx-auto w-full px-3 sm:px-6 py-2 sm:py-3 lg:h-full">
+                        <div className="grid grid-cols-1 gap-3 lg:h-full lg:min-h-0 lg:grid-cols-[minmax(0,1fr)_280px]">
+                            <main className="flex h-[calc(100dvh-7rem)] min-h-96 min-w-0 flex-col rounded-2xl border p-3 sm:p-4 lg:h-full lg:min-h-0" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
+                                <div
+                                    ref={questionContentRef}
+                                    className="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-3"
+                                >
+                                    {activeQuestion ? (
+                                        <QuestionView
+                                            attemptId={attemptId}
+                                            questionNumber={
+                                                Math.max(0, questions.findIndex((q) => q.id === activeQuestion.id)) +
+                                                1
+                                            }
+                                            question={activeQuestion}
+                                            answer={answersByQid[activeQuestion.id] ?? null}
+                                            paletteStatus={paletteByQid[activeQuestion.id] ?? "NOT_VISITED"}
+                                            onSetAnswer={setAnswer}
+                                        />
+                                    ) : (
+                                        <div className="text-sm opacity-70">No question loaded.</div>
+                                    )}
+                                </div>
 
                                 <div
-                                    className="sticky bottom-0 z-20 -mx-3 mt-auto border-t px-3 pt-3 sm:-mx-4 sm:px-4"
+                                    className="z-20 -mx-3 shrink-0 border-t px-3 pt-3 sm:-mx-4 sm:px-4"
                                     style={{
                                         borderColor: "var(--border)",
                                         background: "color-mix(in srgb, var(--card) 94%, transparent)",
@@ -1358,7 +1387,7 @@ export function ExamClient({ attemptId }: { attemptId: string }) {
                             </main>
 
                             <aside
-                                className="max-h-[70dvh] min-w-0 overflow-y-auto rounded-2xl border p-3 lg:sticky lg:top-20 lg:max-h-[calc(100dvh-5.5rem)] lg:self-start"
+                                className="max-h-[70dvh] min-w-0 overflow-y-auto rounded-2xl border p-3 lg:h-full lg:max-h-full"
                                 style={{ borderColor: "var(--border)", background: "var(--card)" }}
                             >
                                 <h2 className="mb-2 text-sm font-semibold">Question palette</h2>

@@ -231,6 +231,7 @@ export function AdvanceV2ExamClient({ attemptId }: { attemptId: string }) {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
+    const questionContentRef = useRef<HTMLDivElement>(null);
     const [activeSubject, setActiveSubject] = useState<string | null>(null);
     const [activeQuestionType, setActiveQuestionType] = useState<QuestionTypeKey | null>(null);
     const [answersByQid, setAnswersByQid] = useState<Record<string, unknown>>({});
@@ -431,6 +432,10 @@ export function AdvanceV2ExamClient({ attemptId }: { attemptId: string }) {
         [questions, activeQuestionId],
     );
 
+    useEffect(() => {
+        questionContentRef.current?.scrollTo({ top: 0 });
+    }, [activeQuestionId]);
+
     const parsedMatchingStem = useMemo(() => {
         if (!activeQuestion || activeQuestion.questionType !== "MATCHING_LIST") return null;
         return parseMatchingStem(activeQuestion.stemRich);
@@ -595,6 +600,19 @@ export function AdvanceV2ExamClient({ attemptId }: { attemptId: string }) {
         if (prev) {
             setActiveQuestionType(prev.questionType);
             void goToQuestion(prev.questionId, { persistCurrent: false });
+            return;
+        }
+
+        if (!activeSubject) return;
+        const subjectIndex = subjects.findIndex((subject) => subject === activeSubject);
+        const previousSubject = subjects[subjectIndex - 1];
+        if (!previousSubject) return;
+
+        const previousQuestion = [...questions].reverse().find((question) => question.subject === previousSubject);
+        if (previousQuestion) {
+            setActiveSubject(previousSubject);
+            setActiveQuestionType(previousQuestion.questionType);
+            void goToQuestion(previousQuestion.questionId, { persistCurrent: false });
         }
     };
 
@@ -773,7 +791,7 @@ export function AdvanceV2ExamClient({ attemptId }: { attemptId: string }) {
 
     return (
         <MathJaxContext config={mathjaxConfig}>
-            <div className="min-h-[100dvh] flex flex-col">
+            <div className="min-h-[100dvh] flex flex-col lg:h-[100dvh] lg:min-h-0 lg:overflow-hidden">
                 <header
                     className="sticky top-0 z-50 shrink-0 border-b backdrop-blur-md"
                     style={{
@@ -824,11 +842,14 @@ export function AdvanceV2ExamClient({ attemptId }: { attemptId: string }) {
                     </div>
                 </header>
 
-                <div className={`flex-1 transition ${submitConfirmOpen ? "blur-sm pointer-events-none select-none" : ""}`}>
-                    <div className="max-w-[1680px] mx-auto w-full px-3 sm:px-6 py-2 sm:py-3">
-                        <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-start">
-                            <main className="flex min-w-0 flex-col rounded-2xl border p-3 sm:p-4 lg:min-h-[calc(100dvh-7rem)]" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
-                                <div className="space-y-3">
+                <div className={`flex-1 transition lg:min-h-0 lg:overflow-hidden ${submitConfirmOpen ? "blur-sm pointer-events-none select-none" : ""}`}>
+                    <div className="max-w-[1680px] mx-auto w-full px-3 sm:px-6 py-2 sm:py-3 lg:h-full">
+                        <div className="grid grid-cols-1 gap-3 lg:h-full lg:min-h-0 lg:grid-cols-[minmax(0,1fr)_280px]">
+                            <main className="flex h-[calc(100dvh-7rem)] min-h-96 min-w-0 flex-col rounded-2xl border p-3 sm:p-4 lg:h-full lg:min-h-0" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
+                                <div
+                                    ref={questionContentRef}
+                                    className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain pb-3"
+                                >
                                     <div className="flex min-h-8 flex-wrap items-center gap-x-2 gap-y-1.5">
                                         <div className="mr-auto min-w-0 text-sm font-medium">
                                             Q{subjectQuestionNoByQid[activeQuestion.questionId] ?? (activeIndex + 1)}/{questions.length}
@@ -1011,7 +1032,7 @@ export function AdvanceV2ExamClient({ attemptId }: { attemptId: string }) {
                                 </div>
 
                                 <div
-                                    className="sticky bottom-0 z-20 -mx-3 mt-auto border-t px-3 pt-3 sm:-mx-4 sm:px-4"
+                                    className="z-20 -mx-3 shrink-0 border-t px-3 pt-3 sm:-mx-4 sm:px-4"
                                     style={{
                                         borderColor: "var(--border)",
                                         background: "color-mix(in srgb, var(--card) 94%, transparent)",
@@ -1118,7 +1139,7 @@ export function AdvanceV2ExamClient({ attemptId }: { attemptId: string }) {
                             </main>
 
                             <aside
-                                className="max-h-[70dvh] min-w-0 overflow-y-auto rounded-2xl border p-3 lg:sticky lg:top-20 lg:max-h-[calc(100dvh-5.5rem)] lg:self-start"
+                                className="max-h-[70dvh] min-w-0 overflow-y-auto rounded-2xl border p-3 lg:h-full lg:max-h-full"
                                 style={{ borderColor: "var(--border)", background: "var(--card)" }}
                             >
                                 <h2 className="mb-2 text-sm font-semibold">Question palette</h2>
